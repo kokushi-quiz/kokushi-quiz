@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>整形外科学クイズ（第14回〜第33回）</title>
+<style>
+  :root {
+    --primary: #2c5f8a;
+    --primary-light: #e8f0f8;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --bg: #eef3f8;
+    --card: #ffffff;
+    --text: #1a202c;
+    --text-sub: #718096;
+    --border: #e2e8f0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 14px;
+    --option-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; color: var(--text); }
+
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 14px 16px 10px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .progress-bar-wrap { height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin-top: 10px; }
+  .progress-bar { height: 100%; background: #ffd700; border-radius: 2px; transition: width 0.4s ease; }
+
+  #startScreen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 80px); padding: 24px;
+  }
+  .start-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 32px 24px; width: 100%; max-width: 420px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .start-icon { font-size: 56px; margin-bottom: 16px; }
+  .start-card h2 { font-size: 22px; color: var(--primary); margin-bottom: 8px; }
+  .start-card p { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px 14px; background: var(--bg); border-radius: 10px; }
+  .setting-label { font-size: 14px; font-weight: 600; }
+  .setting-row select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--border); background: white; color: var(--text); appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+  .btn-start {
+    width: 100%; padding: 16px; font-size: 18px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; letter-spacing: 1px; margin-top: 8px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 14px rgba(44,95,138,0.4);
+  }
+  .btn-start:active { transform: scale(0.97); }
+
+  #quizScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .q-num { background: var(--primary); color: white; font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .q-badge-hissu { background: #ff9500; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .q-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .q-text { font-size: 17px; line-height: 1.65; font-weight: 600; }
+  .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .opt-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; cursor: pointer;
+    font-size: 15px; line-height: 1.4; text-align: left;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    min-height: var(--option-h);
+    box-shadow: var(--shadow);
+    -webkit-user-select: none; user-select: none;
+  }
+  .opt-btn:active { transform: scale(0.98); }
+  .opt-btn.selected { border-color: var(--primary); background: var(--primary-light); }
+  .opt-btn.correct { border-color: var(--correct); background: #eafaf1; }
+  .opt-btn.wrong { border-color: var(--wrong); background: #fdecea; }
+  .opt-label {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%; background: var(--border); font-weight: 700; font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .opt-btn.selected .opt-label { background: var(--primary); color: white; }
+  .opt-btn.correct .opt-label { background: var(--correct); color: white; }
+  .opt-btn.wrong .opt-label { background: var(--wrong); color: white; }
+  .opt-text { flex: 1; }
+
+  .feedback { display: none; padding: 14px 16px; border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 15px; align-items: center; gap: 10px; }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: #eafaf1; color: var(--correct); border: 1.5px solid var(--correct); }
+  .feedback.ng { background: #fdecea; color: var(--wrong); border: 1.5px solid var(--wrong); }
+
+  .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .btn-next {
+    flex: 1; padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; transition: transform 0.1s;
+    box-shadow: 0 4px 14px rgba(44,95,138,0.35);
+  }
+  .btn-next:active { transform: scale(0.97); }
+  .btn-next:disabled { background: var(--border); color: var(--text-sub); box-shadow: none; }
+
+  #resultScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .result-hero {
+    background: var(--card); border-radius: var(--radius); padding: 32px 24px;
+    text-align: center; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 12px; }
+  .result-score { font-size: 56px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .result-score span { font-size: 24px; font-weight: 400; }
+  .result-msg { font-size: 17px; font-weight: 600; color: var(--text); margin: 10px 0; }
+  .result-detail { font-size: 14px; color: var(--text-sub); margin-bottom: 4px; }
+  .score-bar-wrap { background: var(--bg); border-radius: 8px; height: 12px; margin: 14px 0; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--primary), #5b9bd5); transition: width 0.8s ease; }
+  .btn-retry, .btn-restart {
+    width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px;
+    transition: transform 0.1s;
+  }
+  .btn-retry { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(44,95,138,0.35); }
+  .btn-restart { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-retry:active, .btn-restart:active { transform: scale(0.97); }
+  .review-section { margin-top: 8px; }
+  .review-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
+  .review-item { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid var(--border); }
+  .review-item.wrong-item { border-left-color: var(--wrong); }
+  .review-item.correct-item { border-left-color: var(--correct); }
+  .review-q { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .review-ans { font-size: 13px; color: var(--text-sub); }
+  .review-ans .label-correct { color: var(--correct); font-weight: 700; }
+  .review-ans .label-wrong { color: var(--wrong); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🦴 整形外科学クイズ</h1>
+  <div class="header-sub" id="headerSub">第14回〜第33回 国家試験問題</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+</div>
+
+<div id="startScreen">
+  <div class="start-card">
+    <div class="start-icon">🦴</div>
+    <h2>整形外科学クイズ</h2>
+    <p>国家試験（第14回〜第33回）から<br>出題された整形外科学問題を学習しましょう。<br>全<strong>254問</strong>収録</p>
+    <div class="setting-row">
+      <span class="setting-label">出題数</span>
+      <select id="selectNum">
+        <option value="10">10問</option>
+        <option value="20">20問</option>
+        <option value="30" selected>30問</option>
+        <option value="50">50問</option>
+        <option value="100">100問</option>
+        <option value="0">全問（254問）</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">出題順</span>
+      <select id="selectOrder">
+        <option value="1" selected>ランダム</option>
+        <option value="0">番号順</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">選択肢順</span>
+      <select id="selectShuffle">
+        <option value="1" selected>ランダム</option>
+        <option value="0">固定</option>
+      </select>
+    </div>
+    <button class="btn-start">スタート ▶</button>
+  </div>
+</div>
+
+<div id="quizScreen">
+  <div class="q-meta">
+    <span class="q-num" id="qNum">問1</span>
+    <span class="q-badge-hissu" id="qBadge" style="display:none">必修</span>
+  </div>
+  <div class="q-card">
+    <p class="q-text" id="qText"></p>
+  </div>
+  <div class="options-grid" id="optionsGrid"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="action-row">
+    <button class="btn-next" id="btnNext" disabled>次の問題 →</button>
+  </div>
+</div>
+
+<div id="resultScreen">
+  <div class="result-hero">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-score" id="resultScore">0<span>点</span></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="score-bar-wrap"><div class="score-bar" id="scoreBar" style="width:0%"></div></div>
+  </div>
+  <button class="btn-retry" id="btnRetry">間違えた問題をやり直す</button>
+  <button class="btn-restart">トップへ戻る</button>
+  <div class="review-section">
+    <div class="review-title">📝 解答一覧</div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<script>
+const ALL_DATA = [{"q": "筋挫傷で正しいのはどれか。", "opts": ["筋肉・筋膜組織の部分皮下断裂である。", "保存治療では筋組織伸張位で固定を行う。", "皮下血腫は形成しない。", "神経損傷を合併することが多い。"], "ans": 0, "essential": true}, {"q": "筋挫傷で正しいのはどれか。", "opts": ["自発的な筋収縮では生じない。", "保存治療では筋組織伸張位で固定を行う。", "患部の圧迫は禁忌である。", "神経損傷を合併することが多い。"], "ans": 0, "essential": true}, {"q": "正しいのはどれか。", "opts": ["エーラース・ダンロス（Ehlers・Danlos）症候群はコラーゲン合成の異常による。", "マルファン（Marfan）症候群は常染色体劣性遺伝である。", "軟骨無形成症はX脚変形が特徴的である。", "モルキオ（Morquio）病は易骨折性が特徴である。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["モルキオ（Morquio）病は体幹短縮型の小人である。", "マルファン（Marfan）症候群は常染色体劣性遺伝である。", "軟骨無形成症はX脚変形が特徴的である。", "エーラース・ダンロス（Ehlers・Danlos）症候群はムコ多糖分解酵素の欠損による。"], "ans": 0, "essential": false}, {"q": "離断性骨軟骨炎で正しいのはどれか。", "opts": ["軟骨移植術は効果的である。", "起炎菌はグラム陽性球菌である。", "病変は骨端線部にみられる。", "高齢者に多くみられる。"], "ans": 0, "essential": false}, {"q": "離断性骨軟骨炎で正しいのはどれか。", "opts": ["病変は軟骨下骨に及ぶ。", "起炎菌はグラム陽性球菌である。", "関節再建術は効果的である。", "高齢者に多くみられる。"], "ans": 0, "essential": false}, {"q": "骨端症で正しいのはどれか。", "opts": ["ブラント（Blount）病は内反膝となる。", "ペルテス（Perthes）病は若年発症者ほど予後が悪い。", "キーンベック（Kienb&ouml;ck）病は成長期男子に多い。", "パンナー病（Panner）病は手術を要する場合が多い。"], "ans": 0, "essential": false}, {"q": "悪性軟部腫瘍で最も発生頻度の高いのはどれか。", "opts": ["脂肪肉腫", "平滑筋肉腫", "神経肉腫", "線維肉腫"], "ans": 0, "essential": false}, {"q": "下垂体性小人症で正しいのはどれか。", "opts": ["全身のプロポーションは正常", "前頭葉の腫瘍が原因", "フレーリッヒ（Frohlich）型では骨成長の障害は軽度", "骨端線は早期に閉鎖"], "ans": 0, "essential": false}, {"q": "下垂体性小人症で正しいのはどれか。", "opts": ["トルコ鞍部の腫瘍が原因", "フレーリッヒ（Frohlich）型では骨成長の障害は軽度", "体幹短縮型を呈する。", "骨端線は早期に閉鎖"], "ans": 0, "essential": false}, {"q": "プロサッカー選手。1ヶ月前から膝痛があり十分なプレーができない。膝蓋骨下端から膝蓋腱上部にかけて圧痛がある。MRI節関節矢状断T2強調画像（別添No.）を別に示す。適切な治療法はどれか。【図】", "opts": ["プレー直後の局所のアイシングと安静", "ステロイド薬の局所注射", "手術による病的部分の切除・再縫合", "大腿から足部までのギプス固定"], "ans": 0, "essential": false}, {"q": "誤っている組み合せはどれか。", "opts": ["腰椎椎間板ヘルニア　&#8722;　アキレス腱反射亢進", "頸椎後縦靱帯骨化症　&#8722;　膝蓋腱反射亢進", "強直性脊椎炎　　　　&#8722;　腰椎可動域制限", "腰部脊柱管狭窄症　　&#8722;　間歇性跛行"], "ans": 0, "essential": false}, {"q": "脊柱管狭窄症の原因はどれか。", "opts": ["黄色靱帯肥厚", "骨巨細胞腫", "骨形成不全症", "腰椎分離症"], "ans": 0, "essential": false}, {"q": "脊柱管狭窄症の原因はどれか。", "opts": ["椎間板ヘルニア", "骨形成不全症", "腰椎分離症", "脊椎カリエス"], "ans": 0, "essential": false}, {"q": "脊髄性小児麻痺で正しいのはどれか。", "opts": ["感覚異常はない。", "脊髄後角細胞が侵される。", "痙直性麻痺がある。", "腱反射は亢進する。"], "ans": 0, "essential": false}, {"q": "新生児股関節脱臼の診断で最も信頼性の高いのはどれか。", "opts": ["オルトラーニ（Ortolani）クリック徴候", "股関節開腓制限", "大腿皮膚溝の非対称", "脚長差"], "ans": 0, "essential": false}, {"q": "人工関節置換術の適応でないのはどれか。", "opts": ["化膿性関節炎後の関節症", "関節リウマチによる関節症", "変形性関節症", "血友病による関節症"], "ans": 0, "essential": false}, {"q": "無菌的な手術が最も必要な部位はどれか。", "opts": ["関節", "腱", "筋肉", "神経"], "ans": 0, "essential": true}, {"q": "良肢位について誤っているのはどれか。", "opts": ["股関節　&#8722;　屈曲45度、外転0〜10度、外旋0〜10度", "手指　　&#8722;　テニスボールを握った肢位", "手関節　&#8722;　伸展（背屈）10〜20度", "肩関節　&#8722;　外転60〜80度、内分廻し30度、外旋20度"], "ans": 0, "essential": false}, {"q": "ステロイド注射の禁忌はどれか。", "opts": ["化膿性関節炎", "変形性関節症", "痛風性関節炎", "リウマチ性関節炎"], "ans": 0, "essential": false}, {"q": "7歳の男児。鉄棒から落ちて来院。エックス線写真で右上腕骨顆上骨折が認められた。右手関節の伸展（背屈）ができない。合併症はどれか。", "opts": ["橈骨神経麻痺", "肘部管症候群", "手関節伸展（背屈）筋腱断裂", "フォルクマン拘縮"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["軟骨無形成症は長管骨の骨幹端が強く障害される。", "モルキオ（Morquio）病は常染色体優性遺伝である。", "骨形成不全症は骨端軟骨に異常を認める。", "大理石病は骨が硬く、骨折し難い。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["大理石病は骨がもろく、骨折しやすい。", "軟骨無形成症は長管骨の骨端核が強く障害される。", "モルキオ（Morquio）病は常染色体優性遺伝である。", "骨形成不全症は骨端軟骨に異常を認める。"], "ans": 0, "essential": false}, {"q": "血行性化膿性骨髄炎の好発部位はどれか。", "opts": ["骨幹端", "骨端", "骨端軟骨", "骨幹"], "ans": 0, "essential": false}, {"q": "悪性二次変化で軟骨肉腫が発生するのはどれか。", "opts": ["多発性外骨腫", "線維性骨異形成症", "骨巨細胞腫", "孤立性骨嚢腫"], "ans": 0, "essential": false}, {"q": "くる病の所見について誤っているのはどれか。", "opts": ["骨端融解", "骨幹端拡大", "長管骨彎曲", "脊椎後彎"], "ans": 0, "essential": false}, {"q": "脊髄腫瘍の初発症状で最も頻度の高いのはどれか。", "opts": ["疼痛", "歩行障害", "感覚障害", "膀胱障害"], "ans": 0, "essential": false}, {"q": "手根管症候群の症状はどれか。", "opts": ["母指対立運動不能", "手指開排運動不能", "手背感覚鈍麻", "小指球筋萎縮"], "ans": 0, "essential": false}, {"q": "大腿骨骨頭壊死の病因で誤っているのはどれか。", "opts": ["肥満", "ステロイド使用", "大腿骨頚部内側骨折", "アルコール多飲"], "ans": 0, "essential": false}, {"q": "変形性膝関節症について誤っているのはどれか。", "opts": ["男性に好発", "内反変形", "動作開始時痛", "屈曲拘縮"], "ans": 0, "essential": false}, {"q": "椎間板ヘルニアで第1仙骨神経根が障害された時の所見はどれか。", "opts": ["つま先立ち不能", "膝蓋腱反射低下", "下腿内側の感覚障害", "大腿神経伸展試験陽性"], "ans": 0, "essential": true}, {"q": "軟骨無形成症について正しいのはどれか。", "opts": ["Ｏ脚変形を伴う。", "骨端の異常である。", "常染色体劣性遺伝である。", "体幹短縮型小人症である。"], "ans": 0, "essential": false}, {"q": "軟骨無形成症について正しいのはどれか。", "opts": ["常染色体優性遺伝である。", "Ｘ脚変形を伴う。", "骨端の異常である。", "体幹短縮型小人症である。"], "ans": 0, "essential": false}, {"q": "マルファン（Marfan）症候群で誤っているのはどれか。", "opts": ["常染色体劣性遺伝", "高身長", "くも指", "心奇形"], "ans": 0, "essential": false}, {"q": "結核性脊椎炎で誤っているのはどれか。", "opts": ["安静時痛", "脊髄麻痺", "腸骨窩膿瘍", "脊椎不撓性"], "ans": 0, "essential": false}, {"q": "関節リウマチで正しいのはどれか。", "opts": ["関節液の粘性は低下する。", "足の指関節炎はまれである。", "脊椎の障害は生じない。", "リウマチ反応陰性であれば関節リウマチでない。"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["関節リウマチ　　　　　−　手関節", "マレット・フィンガー　−　中手指節間（MP）関節", "へバーデン（Heberden）結節　−　手の近位指節間（PIP）関節", "痛風性関節炎　　　　　−　足の母指指節間（IP）関節"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["マレット・フィンガー　−　手の遠位指節間（DIP）関節", "関節リウマチ　−　冠状縫合", "へバーデン（Heberden）結節　−　手の近位指節間（PIP）関節", "痛風性関節炎　−　足の母指指節間（IP）関節"], "ans": 0, "essential": false}, {"q": "52歳の男性。高校教師。既往歴に特記すべきことはない。毎日タバコを20本と晩酌に2合の酒を30年続けている。3か月前から歩行時に左股関節から大腿にかけて、刺すような痛みがあった。2〜3週間隔で疼痛緩解を繰り返すので心配になり、整形外科を受診した。MRI（別冊No．1）を別に示す。考えられる疾患はどれか。図", "opts": ["大腿骨頭壊死症", "大腿骨頭疲労骨折", "大腿骨頭骨髄腫", "大腿骨頭すべり症"], "ans": 0, "essential": false}, {"q": "好発年齢で誤っているのはどれか。", "opts": ["良性骨芽細胞腫　−　5歳以下", "骨肉腫　　　　　−　10歳代", "巨細胞腫　　　　−　30歳代", "多発性骨髄腫　　−　50歳以上"], "ans": 0, "essential": false}, {"q": "骨悪性線維性組織球腫の前駆病変はどれか。", "opts": ["パジェット（Paget）病", "ガングリオン", "骨軟骨腫", "オリエール（Ollier）病"], "ans": 0, "essential": false}, {"q": "骨悪性線維性組織球腫の前駆病変はどれか。", "opts": ["線維性骨異形成症", "骨好酸球性肉芽腫", "骨軟骨腫", "オリエール（Ollier）病"], "ans": 0, "essential": false}, {"q": "内分泌異常疾患で誤っている組合せはどれか。", "opts": ["脳下垂体小人症　−　骨端線早期閉鎖", "先端巨大症　　　−　成長ホルモン過剰産生", "過剰化骨形成　　−　グルココルチコイド過剰産生", "副甲状腺線腫　　−　歯槽硬線消失"], "ans": 0, "essential": false}, {"q": "脊髄手術の適応となるのはどれか。", "opts": ["脊髄空洞症", "脊髄癆", "筋萎縮性側索硬化症", "神経性進行性筋萎縮症"], "ans": 0, "essential": false}, {"q": "フォルクマン（Volkmann）拘縮の5主徴でないのはどれか。", "opts": ["発赤", "脈拍触知不能", "激痛", "感覚障害"], "ans": 0, "essential": false}, {"q": "5歳児の長管骨骨幹部骨折で正しいのはどれか。", "opts": ["屈曲変形は自然矯正される。", "短縮変形は永続する。", "回旋変形は自然矯正される。", "側方転位は永続する。"], "ans": 0, "essential": true}, {"q": "画像診断法で誤っている組合せはどれか。", "opts": ["関節造影　　&#8722;　炎症と悪性腫瘍との鑑別", "ＣＴ　　　　&#8722;　骨破壊の状態把握", "ＭＲＩ　　　&#8722;　骨壊死の診断", "超音波検査　&#8722;　ガングリオンの診断"], "ans": 0, "essential": false}, {"q": "変形性膝関節症の手術療法で誤っているのはどれか。", "opts": ["同種半月板移植術", "関節鏡視下デブリドマン", "高位脛骨骨切り術", "人工関節置換術"], "ans": 0, "essential": false}, {"q": "7歳の男児。鉄棒から右手を衝いて落ちた。救急病院を受診し、エックス線検査を行った。単純エックス線写真（上腕骨顆上伸展型骨折）を別に示す。整復直後、右手関節が伸展できないのに気付いた。原因で考えられるのはどれか。図", "opts": ["橈骨神経麻痺", "フォルクマン拘縮", "上腕骨遠位骨端線損傷", "橈側手根伸筋腱断裂"], "ans": 0, "essential": false}, {"q": "四肢短縮型小人症を特徴とするのはどれか。", "opts": ["軟骨無形成症", "下垂体性小人症", "モルキオ（Morquio）病", "マルファン（Marfan）症候群"], "ans": 0, "essential": false}, {"q": "疾患と好発部位との組合せで誤っているのはどれか。", "opts": ["血友病性関節症　&#8722;　第1趾中足指節（MTP）関節", "関節リウマチ　　&#8722;　手関節", "変形性関節症　　&#8722;　手指遠位指節間（DIP）関節", "強直性脊椎炎　　&#8722;　仙腸関節"], "ans": 0, "essential": false}, {"q": "骨端症で女性に多いのはどれか。", "opts": ["フライバーク（Freiberg）病", "ペルテス（Perthes）病", "キーンベック（Kienb&ouml;ck）病", "セーバー（Sever）病"], "ans": 0, "essential": false}, {"q": "骨肉腫で正しいのはどれか。", "opts": ["肺転移を生じやすい。", "5歳未満の小児に好発する。", "上腕骨遠位端が好発部位である。", "可及的早期に患肢の切断をする。"], "ans": 0, "essential": false}, {"q": "骨粗鬆症と関連するのはどれか。", "opts": ["上腕骨頸部骨折", "上腕骨骨幹部骨折", "脛骨高原骨折", "中足骨骨折"], "ans": 0, "essential": false}, {"q": "デュシェンヌ（Duchenne）型筋ジストロフィーで誤っているのはどれか。", "opts": ["血清アルカリホスファターゼ値が上昇する。", "登はん性起立がみられる。", "腰帯筋から初発する。", "対称的な筋の罹患がみられる。"], "ans": 0, "essential": false}, {"q": "腰椎椎間板ヘルニアの診断に有用なのはどれか。", "opts": ["ラセーグ徴候", "チネル徴候", "マックマレー試験", "トレンデレンブルグ徴候"], "ans": 0, "essential": false}, {"q": "フォルクマン拘縮で誤っているのはどれか。", "opts": ["皮膚が紅潮する。", "皮膚に水疱形成がみられる。", "末梢の脈が触知困難である。", "激しい疼痛を伴う。"], "ans": 0, "essential": false}, {"q": "徒手筋力テストで正しい組合せはどれか。", "opts": ["Trace &#8722;　関節は動かないが筋の収縮を認める。", "Good　&#8722;　強い抵抗を加えてもなお重力に打ち勝って完全に動く。", "Fair　&#8722;　いくらか抵抗を加えてもなお重力に打ち勝って完全に動く。", "Poor　&#8722;　抵抗を加えなければ重力に打ち勝って完全に動く。"], "ans": 0, "essential": true}, {"q": "先天性骨系統疾患で誤っている組合せはどれか。", "opts": ["モルキオ（Morquio）病　　　　&#8722;　知能低下", "軟骨無形成症　　　　　　　　　&#8722;　四肢短縮型低身長", "骨形成不全症　　　　　　　　　&#8722;　歯牙形成不全", "マルファン（Marfan）症候群　&#8722;　解離性大動脈瘤"], "ans": 0, "essential": false}, {"q": "成長ホルモン過剰分泌で誤っているのはどれか。", "opts": ["小児では末端肥大が生じる。", "変形性関節症の原因となる。", "骨粗鬆症の原因となる。", "下垂体腺腫によるものが多い。"], "ans": 0, "essential": false}, {"q": "脂肪塞栓症候群の症状で誤っているのはどれか。", "opts": ["低体温", "低酸素血症", "意識障害", "皮膚の点状出血"], "ans": 0, "essential": false}, {"q": "骨折治癒の遷延化に影響が少ないのはどれか。", "opts": ["血腫", "局所感染", "低蛋白血症", "転位"], "ans": 0, "essential": false}, {"q": "急性化膿性骨髄炎で正しいのはどれか。", "opts": ["早期は単純エックス線像に骨変化がみられない。", "主として成人に発症する。", "連鎖球菌によるものが多い。", "主として扁平骨に発生する。"], "ans": 0, "essential": false}, {"q": "破傷風の症状はどれか。", "opts": ["開口障害", "発汗減少", "徐脈", "企図振戦"], "ans": 0, "essential": false}, {"q": "破傷風の症状はどれか。", "opts": ["けいれん", "閉口障害", "発汗減少", "徐脈"], "ans": 0, "essential": false}, {"q": "膝の単純エックス線像で高度の関節破壊がみられる。最も考えられる疾患はどれか。", "opts": ["神経病性関節症", "強直性脊椎炎", "変形性関節症", "離断性骨軟骨炎"], "ans": 0, "essential": false}, {"q": "ペルテス（Perthes）病で誤っているのはどれか。？", "opts": ["ドレーマン徴候がみられる。", "男児に好発する。", "関節症の原因となる。", "股関節の開排制限がみられる。"], "ans": 0, "essential": false}, {"q": "疾患と好発年齢との組合せで正しいのはどれか。", "opts": ["多発性骨髄腫　　　　　　　&#8722;　60歳代", "軟骨肉腫　　　　　　　　　&#8722;　10歳代", "ユーイング（Ewing）肉腫　&#8722;　40歳代", "骨巨細胞腫　　　　　　　　&#8722;　50歳代"], "ans": 0, "essential": false}, {"q": "腰椎椎間板ヘルニアで誤っているのはどれか。", "opts": ["痙性歩行", "感覚障害", "SLRテスト陽性", "膀胱直腸障害"], "ans": 0, "essential": false}, {"q": "74歳の女性．身長147cm．体重74kg．10年前から続く両膝の痛みを主訴に来所した．痛みは体重をかけると増悪する．両膝とも内反膝を呈し、可動域は伸展が&#8722;20°、屈曲100°．脛骨近位内側に圧痛がある．発赤・腫脹および熱感はない．この患者に対する指導で誤っているのはどれか。", "opts": ["しゃがみ込み動作訓練", "大腿四頭筋の筋力強化", "減量", "足底挿板の装着"], "ans": 0, "essential": false}, {"q": "偽関節になりにくい部位はどれか。〔必〕", "opts": ["脛骨近位", "大腿骨頸部", "距骨頸部", "手舟状骨"], "ans": 0, "essential": false}, {"q": "中心性頸髄損傷で正しいのはどれか。", "opts": ["運動麻痺は下肢より上肢に著しい。", "過屈曲損傷で生じる。", "下位頸椎の脱臼を伴う。", "会陰部の感覚が障害される。"], "ans": 0, "essential": false}, {"q": "軟骨無形成症で誤っているのはどれか。", "opts": ["体幹短縮型の低身長を示す。", "常染色体優性遺伝疾患である。", "前額部が突出している。", "腰部脊柱管狭窄症を合併する。"], "ans": 0, "essential": false}, {"q": "くる病で正しいのはどれか。", "opts": ["O脚を生じる。", "成人に発症する。", "ビタミンCの欠乏である。", "身長は正常である。"], "ans": 0, "essential": false}, {"q": "疾患と症状との組合せで正しいのはどれか。", "opts": ["脊髄癆　　　　　　　&#8722;　深部感覚低下", "脳性麻痺　　　　　　&#8722;　感覚障害", "脊髄性小児麻痺　　　&#8722;　下肢腱反射亢進", "筋萎縮性側索硬化症　&#8722;　膀胱直腸障害"], "ans": 0, "essential": false}, {"q": "小児長管骨の急性化膿性骨髄炎の局所症状で誤っているのはどれか。", "opts": ["異常可動性", "熱　感", "腫　脹", "運動痛"], "ans": 0, "essential": false}, {"q": "関節リウマチによる手指のしびれの原因で誤っているのはどれか。", "opts": ["尺側偏位", "環軸関節亜脱臼", "手根管症候群", "血管炎"], "ans": 0, "essential": false}, {"q": "手の変形性関節症で罹患頻度が最も高いのはどれか。", "opts": ["DIP関節", "PIP関節", "母指CM関節", "手関節"], "ans": 0, "essential": false}, {"q": "女児に多い骨端症はどれか。", "opts": ["フライバーグ（Freiberg）病", "ペルテス（Perthes）病", "セーバー（Sever）病", "ケーラー（Kohler）病"], "ans": 0, "essential": false}, {"q": "20歳以下に好発する腫瘍はどれか。", "opts": ["ユーイング（Ewing）肉腫", "骨巨細胞腫", "多発性骨髄腫", "軟骨肉腫"], "ans": 0, "essential": false}, {"q": "上肢のコンパートメント症候群で正しいのはどれか。", "opts": ["手指の他動的伸展で疼痛が増強する。", "受傷後1ヶ月以降に発生する。", "コンパートメント圧は10mmHg以下となる。", "皮膚に点状出血がみられる。"], "ans": 0, "essential": false}, {"q": "15歳の女子．体幹の変形を主訴に来院した。身長が180cmと高く、体幹に比して四肢が長い。写真（別冊No.1：背部外観において、脊柱がS字形状または螺旋に左右に乱れてねじれている）を示す。この疾患にあてはまらないのはどれか。図", "opts": ["カフェオレ斑", "くも状指", "水晶体亜脱臼", "関節弛緩性"], "ans": 0, "essential": false}, {"q": "腰椎椎間板ヘルニアの所見で誤っているのはどれか。〔必〕", "opts": ["下肢深部腱反射の亢進", "下肢の筋力低下", "下肢の感覚低下", "膀胱直腸障害"], "ans": 0, "essential": false}, {"q": "造影剤非使用のMRI撮影で注意を要する患者はどれか。", "opts": ["心臓ペースメーカー装着", "腎機能低下", "肝機能低下", "中心静脈カテーテル留置"], "ans": 0, "essential": false}, {"q": "理学療法の適応で正しいのはどれか。", "opts": ["脊髄損傷患者に水中訓練を行う。", "神経麻痺による筋萎縮に紫外線療法を行う。", "感覚神経障害に温熱療法を行う。", "心臓ペースメーカー装着患者に極超短波療法を行う。"], "ans": 0, "essential": false}, {"q": "理学療法の適応で正しいのはどれか。", "opts": ["神経麻痺による筋萎縮に低周波療法を行う。", "脊髄損傷患者にトレッドミル訓練を行う。", "感覚神経障害に温熱療法を行う。", "心臓ペースメーカー装着患者に極超短波療法を行う。"], "ans": 0, "essential": false}, {"q": "牽引療法と適応との組合せで正しいのはどれか。", "opts": ["ブライアント牽引　　　　−　小児大腿骨骨幹部骨折", "クラッチフィールド牽引　−　腰椎脱臼骨折", "グリソン係蹄牽引　　　　−　大腿骨頸部骨折", "ダンロップ牽引　　　　　−　小児前腕骨骨折"], "ans": 0, "essential": false}, {"q": "骨折の治癒過程で最も時間を要するのはどれか。", "opts": ["リモデリング期", "炎症期", "細胞増殖期", "仮骨形成期"], "ans": 0, "essential": false}, {"q": "骨形成不全症でみられるのはどれか。", "opts": ["歯牙形成不全", "角膜混濁", "カフェオレ斑", "知能低下"], "ans": 0, "essential": false}, {"q": "骨形成不全症でみられるのはどれか。", "opts": ["難　聴", "角膜混濁", "カフェオレ斑", "四肢短縮型低身長"], "ans": 0, "essential": false}, {"q": "筋萎縮性側索硬化症でみられないのはどれか。", "opts": ["膀胱直腸障害", "筋力低下", "構音障害", "呼吸障害"], "ans": 0, "essential": false}, {"q": "四肢長管骨の骨幹端に好発し、単純エックス線像で透亮巣の周囲に反応性の骨硬化を認めるのはどれか。", "opts": ["ブロディ（Brodie）膿瘍", "グロームス腫瘍", "シャルコー（Charcot）関節", "オルブライト（Albright）症候群"], "ans": 0, "essential": false}, {"q": "骨端症と罹患部位との組合せで誤っているのはどれか。", "opts": ["キーンベック（Kienb&#246;ck）病　−　手の舟状骨", "セーバー（Sever）病　−　踵骨隆起部", "オスグッド・シュラッター（Osgood−Schlatter）病　−　脛骨粗面", "フライバーグ（Freiberg）病　−　中足骨骨頭"], "ans": 0, "essential": false}, {"q": "53歳の男性。単純エックス線撮影で仙骨に大きな骨吸収像を認めた。考えられるのはどれか。", "opts": ["骨転移癌", "孤立性骨嚢腫", "ユーイング（Ewing）肉腫", "線維性骨異形成症"], "ans": 0, "essential": false}, {"q": "棘上筋腱単独の完全断裂慢性期の所見で正しいのはどれか。", "opts": ["上肢の挙上は可能である。", "筋萎縮は棘上筋に限局している。", "肩峰骨頭間距離が広がる。", "モーレーテスト陽性となる。"], "ans": 0, "essential": false}, {"q": "4歳の男児。転びやすいことを主訴に来院した。しゃがんだ姿勢から立ち上がる際に、両手を膝に当てて力を込めないと立ち上がれない。両側の下腿三頭筋は肥大している。正しいのはどれか。", "opts": ["呼吸筋の障害が現れてくる。", "下肢深部腱反射は亢進する。", "遺伝性はない。", "鶏歩跛行がみられる。"], "ans": 0, "essential": false}, {"q": "脆弱性骨折で頻度の高いのはどれか。〔必〕", "opts": ["上腕骨外科頸骨折", "鎖骨骨折", "脛骨骨折", "踵骨骨折"], "ans": 0, "essential": false}, {"q": "関節軟骨にみられるのはどれか。", "opts": ["プロテオグリカン", "フォルクマン管", "毛細血管", "I型コラーゲン"], "ans": 0, "essential": false}, {"q": "関節軟骨にみられるのはどれか。", "opts": ["II型コラーゲン", "フォルクマン管", "毛細血管", "オステオン"], "ans": 0, "essential": false}, {"q": "歩行異常と原因との組合せで正しいのはどれか。", "opts": ["はさみ状歩行　 　　　　 ー　両下肢痙性麻痺", "分回し歩行　　　　　　　ー　先天性股関節脱臼", "トレンデレンブルグ歩行　ー　腰部脊柱管狭窄症", "間欠性跛行　　　　　　　ー　変形性股関節症"], "ans": 0, "essential": false}, {"q": "成長ホルモン分泌不全でみられるのはどれか。", "opts": ["二次性徴遅延", "四肢短縮", "関節弛緩", "骨端早期閉鎖"], "ans": 0, "essential": false}, {"q": "発症１日目の乳児化膿性股関節炎の所見はどれか。", "opts": ["患肢を動かさない。", "ガワーズ徴候がある。", "アリス徴候がある。", "単純エックス線検査で骨膜反応がみられる。"], "ans": 0, "essential": false}, {"q": "関節リウマチの関節外症状でないのはどれか。", "opts": ["満月様顔貌", "骨粗鬆症", "心膜炎", "間質性肺炎"], "ans": 0, "essential": false}, {"q": "痛風の症状で誤っているのはどれか。", "opts": ["朝のこわばり", "急性関節炎", "腱鞘滑膜炎", "皮下結節"], "ans": 0, "essential": false}, {"q": "高齢者の急性膝痛の原因にならないのはどれか。", "opts": ["神経病性関節症", "化膿性膝関節炎", "変形性膝関節症", "大腿骨顆部壊死"], "ans": 0, "essential": false}, {"q": "ペルテス（Perthes）病の初期症状でないのはどれか。", "opts": ["下肢長差", "跛 行", "大腿部痛", "股関節可動域制限"], "ans": 0, "essential": false}, {"q": "多発性骨髄腫の症状でないのはどれか。", "opts": ["低血糖", "易感染性", "貧血", "病的骨折"], "ans": 0, "essential": false}, {"q": "示指から小指までの深指屈筋のＭＭＴが５で、フローマン徴候陽性の場合、考えられるのはどれか。", "opts": ["ギヨン（Guyon）管症候群", "前骨間神経麻痺", "後骨間神経麻痺", "肘部管症候群"], "ans": 0, "essential": false}, {"q": "11か月の乳児。ハイハイをしていて急に泣いたため受診した。左下肢をあまり動かさない。受診時の両大腿骨単純エックス線写真（別冊No.1）を別に示す。2か月前にも似たような既往があり、右大腿骨骨折に対してギプス固定による治療を受けたという。皮下出血など虐待を疑わせる所見はない。考えられる診断の合併症で誤っているのはどれか。", "opts": ["三叉手", "歯牙形成不全", "青色強膜", "難聴"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。〔必〕", "opts": ["正中神経麻痺　−　母指対立運動障害", "尺骨神経麻痺　−　下垂手", "橈骨神経麻痺　−　猿手変形", "坐骨神経麻痺　−　膝伸展不能"], "ans": 0, "essential": false}, {"q": "力学的にストレス集中が生じにくい部位はどれか。", "opts": ["長管骨骨幹部", "骨嚢腫", "変形癒合部", "スクリュー抜去部"], "ans": 0, "essential": false}, {"q": "第６胸髄レベルの脊髄損傷で生じるのはどれか。", "opts": ["肋間筋の麻痺", "ホルネル徴候", "上腕内側の感覚障害", "横隔膜の麻痺"], "ans": 0, "essential": false}, {"q": "コラーゲンの異常が原因となるのはどれか。", "opts": ["骨形成不全症", "軟骨無形成症", "モルキオ（Morquio）症候群", "大理石骨病"], "ans": 0, "essential": false}, {"q": "関節リウマチの手指の所見でないのはどれか。", "opts": ["鷲手変形", "尺側偏位", "ボタン穴変形", "スワンネック変形"], "ans": 0, "essential": false}, {"q": "上肢の関節で離断性骨軟骨炎の頻度が最も高いのはどれか。", "opts": ["肘関節", "肩関節", "手関節", "MP関節"], "ans": 0, "essential": false}, {"q": "一次性変形性膝関節症の下肢アライメントで正しいのはどれか。", "opts": ["大腿脛骨角は大きくなる。", "Q角は大きくなる。", "CE角は小さくなる。", "機能軸は膝外側を通る。"], "ans": 0, "essential": false}, {"q": "キーンベック（Kienb&ouml;ck）病で正しいのはどれか。", "opts": ["リキトマンの分類が用いられる。", "先天性の疾患である。", "尺屈回外テストは陽性となる。", "後遺症は残らない。"], "ans": 0, "essential": false}, {"q": "骨膜反応を伴う腫瘍はどれか。", "opts": ["ユーイング(Ewing)肉腫", "骨巨細胞腫", "内軟骨腫", "多発性骨髄腫"], "ans": 0, "essential": false}, {"q": "３歳女児。身長が78cmと低く、特に四肢の短縮が目立つ。左手（三尖手）の写真（別冊No.１）を別に示す。診断はどれか。", "opts": ["軟骨無形成症", "骨形成不全症", "マルファン（Marfan）症候群", "モルキオ（Morquio）症候群"], "ans": 0, "essential": false}, {"q": "病的骨折の誘因となる基礎的疾患で誤っているのはどれか。", "opts": ["軟骨無形成症", "骨形成不全症", "上皮小体機能亢進症", "骨粗鬆症"], "ans": 0, "essential": false}, {"q": "骨粗鬆症で正しいのはどれか。", "opts": ["椎体の圧迫骨折が生じやすい。", "骨吸収が骨形成に比べ減少している。", "骨量の減少は骨皮質に著しい。", "力学的免荷が骨量維持に重要である。"], "ans": 0, "essential": false}, {"q": "デュシャンヌ（Duchenne）型進行性筋ジストロフィーで正しいのはどれか。", "opts": ["伴性劣性遺伝である。", "20歳代に発症する。", "筋力低下は四肢遠位筋に強い。", "痙性歩行がみられる。"], "ans": 0, "essential": false}, {"q": "骨粗鬆症で正しいのはどれか。", "opts": ["力学的負荷が骨量維持に重要である。", "椎体の無腐性壊死が生じやすい。", "骨吸収が骨形成に比べ減少している。", "骨量の減少は骨皮質に著しい。"], "ans": 0, "essential": false}, {"q": "デュシャンヌ（Duchenne）型進行性筋ジストロフィーで正しいのはどれか。", "opts": ["筋力低下は四肢近位筋に強い。", "多因子性遺伝である。", "20歳代に発症する。", "痙性歩行がみられる。"], "ans": 0, "essential": false}, {"q": "脊髄損傷患者の機能で誤っているのはどれか。", "opts": ["C５レベルでは手関節の背屈が可能である。", "C３レベルでは呼吸補助が必要となる。", "C７レベルでは肘関節の伸展が可能である。", "C８レベルでは車椅子の駆動が可能である。"], "ans": 0, "essential": false}, {"q": "小人症をきたす疾患で均衡型を特徴とするのはどれか。", "opts": ["下垂体性小人症", "軟骨無形成症", "モルキオ（Morquio）病", "先天性脊椎骨端異形成症"], "ans": 0, "essential": false}, {"q": "老人性骨粗鬆症で正しいのはどれか。", "opts": ["低回転型骨粗鬆症である。", "石灰化障害がみられる。", "骨梁は保たれている。", "血清カルシウム値は減少する。"], "ans": 0, "essential": false}, {"q": "老人性骨粗鬆症で正しいのはどれか。", "opts": ["石灰化障害はない。", "高回転型骨粗鬆症である。", "骨梁は保たれている。", "血清カルシウム値は減少する。"], "ans": 0, "essential": false}, {"q": "疾患と障害部位との組合せで正しいのはどれか。", "opts": ["若年性一側性上肢筋萎縮症　−　脊髄前角細胞", "脊髄性小児麻痺　　　　　　−　脊髄側索", "進行性筋ジストロフィー　　−　筋皮神経", "神経性進行性筋萎縮症　　　−　脊髄後索"], "ans": 0, "essential": false}, {"q": "手のPIP関節に屈曲変形がみられるのはどれか。", "opts": ["ボタン穴変形", "ヘバーデン結節", "マレットフィンガー", "スワンネック変形"], "ans": 0, "essential": false}, {"q": "変形性膝関節症の単純エックス線所見でないのはどれか。", "opts": ["びまん性骨萎縮", "骨棘形成", "軟骨下骨嚢腫", "関節裂隙狭小化"], "ans": 0, "essential": false}, {"q": "悪性化する可能性があるのはどれか。", "opts": ["骨軟骨腫", "孤立性骨嚢腫", "線維性骨異形成", "ガングリオン"], "ans": 0, "essential": false}, {"q": "悪性化する可能性があるのはどれか。", "opts": ["内軟骨腫", "線維性骨異形成", "孤立性骨嚢腫", "類表皮嚢胞"], "ans": 0, "essential": false}, {"q": "転移性骨腫瘍で正しいのはどれか。", "opts": ["造骨性転移では病的骨折は少ない。", "温熱療法の適応となる。", "長管骨の骨幹端部に好発する。", "原発巣の症状が先行する。"], "ans": 0, "essential": false}, {"q": "検査と疾患との組合せで正しいのはどれか。", "opts": ["トーマステスト　　　−　腸腰筋炎", "リフトオフテスト　　−　小円筋断裂", "大腿神経伸展テスト　−　下位腰椎椎間板ヘルニア", "前方引き出しテスト　−　後十字靭帯断裂"], "ans": 0, "essential": false}, {"q": "検査と疾患との組合せで正しいのはどれか。", "opts": ["前方引き出しテスト　−　前距腓靭帯断裂", "トーマステスト　　　−　腸脛靭帯炎", "リフトオフテスト　　−　小円筋断裂", "大腿神経伸展テスト　−　下位腰椎椎間板ヘルニア"], "ans": 0, "essential": false}, {"q": "肋骨骨折で緊急性が高いのはどれか。", "opts": ["胸部の握雪感", "胸部の皮下出血", "骨折部の轢音", "吸気時の胸痛"], "ans": 0, "essential": false}, {"q": "57歳の男性。建設業。２週前から左肩甲部に刺すような痛みを自覚した。１週前から痛みは左上肢尺側に放散し同部にしびれも感じるようになった。手指の運動障害はない。最も考えられる疾患はどれか。", "opts": ["頸椎症性神経根症", "石灰沈着性肩関節周囲炎", "肘部管症候群", "胸郭出口症候群"], "ans": 0, "essential": false}, {"q": "大腿骨頚部内側型骨折が難治性になる理由で誤っているのはどれか。〔必〕", "opts": ["骨折面に牽引力が作用する。", "骨膜を欠く。", "骨頭が壊死しやすい。", "骨萎縮が強い。"], "ans": 0, "essential": false}, {"q": "急性化膿性骨髄炎で正しいのはどれか。〔必〕", "opts": ["好発部位は長管骨骨幹端部である。", "高齢者に多い。", "起炎菌は大腸菌が多い。", "原因は外傷によることが多い。"], "ans": 0, "essential": false}, {"q": "脊髄損傷で正しいのはどれか。", "opts": ["フランケル分類Ｄでは歩行可能である。", "第5頸髄節損傷で呼吸不能となる。", "脊髄ショックの間は痙性麻痺となる。", "胸髄完全損傷では片麻痺となる。"], "ans": 0, "essential": false}, {"q": "アキレス腱断裂で正しいのはどれか。", "opts": ["下腿三頭筋の遠心性収縮時に生じる。", "アキレス腱周囲炎から移行する。", "好発年齢は20歳代である。", "断裂後は歩行できない。"], "ans": 0, "essential": false}, {"q": "骨系統疾患で常染色体劣性遺伝はどれか。", "opts": ["モルキオ(Morquio)病", "軟骨無形成症", "骨形成不全症 I 型", "マルファン(Marfan)症候群"], "ans": 0, "essential": false}, {"q": "骨粗鬆症の危険因子でないのはどれか。", "opts": ["肥　満", "糖尿病", "胃切除", "関節リウマチ"], "ans": 0, "essential": false}, {"q": "筋萎縮性側索硬化症でみられないのはどれか。", "opts": ["感覚障害", "病的反射", "嚥下障害", "呼吸障害"], "ans": 0, "essential": false}, {"q": "化膿性脊椎炎で正しいのはどれか。", "opts": ["頚椎ではまれである。", "小児に多い。", "流注膿瘍が合併する。", "疼痛は軽度である。"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["指伸筋腱皮下断裂　　　　　 ─　関節リウマチ", "仙腸関節炎　　　　　　　　 ─　変形性関節症", "カフェオレ斑　　　　　　　 ─　神経障害性関節症", "ブシャール(Bouchard)結節　─　掌蹠嚢疱症性関節炎"], "ans": 0, "essential": false}, {"q": "膝痛が初発症状となるのはどれか。", "opts": ["ペルテス(Perthes)病", "セーバー(Sever)病", "ブラント(Blount)病", "フライバーグ(Freiberg)病"], "ans": 0, "essential": false}, {"q": "多発する傾向がない骨腫瘍はどれか。", "opts": ["骨巨細胞腫", "骨軟骨腫", "内軟骨腫", "線維性骨異形成症"], "ans": 0, "essential": false}, {"q": "ファーレンテスト陽性の際に筋力が低下するのはどれか。", "opts": ["短母指外転筋", "深指屈筋", "長母指屈筋", "橈側手根屈筋"], "ans": 0, "essential": false}, {"q": "10歳の男児。サッカークラブに入っている。2日前からの右膝痛のため来院した。痛みが急激に強くなっているという。右膝に腫脹と熱感がみられ、関節エコー検査で膝関節内に液体貯留がみられた。考えられないのはどれか。", "opts": ["オスグッド-シュラッター(Osgood-Schlatter)病", "離断性骨軟骨炎", "前十字靭帯付着部脛骨裂離骨折", "化膿性関節炎"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。〔必〕", "opts": ["鎖骨骨折　　　　　−　尺骨神経麻痺", "頸椎脱臼骨折　　　−　四肢麻痺", "胸椎脱臼骨折　　　−　対麻痺", "上腕骨骨幹部骨折　−　橈骨神経麻痺"], "ans": 0, "essential": false}, {"q": "徒手筋力テストで正しいのはどれか。", "opts": ["片足でのつま先立ちが１回から９回まで可能な時は３である。", "重力を除けば全可動域で完全に動くのは５である。", "関節は動かず筋電図上で筋収縮も認められなければ１である。", "重錘を用いて計測する。"], "ans": 0, "essential": false}, {"q": "骨形成不全症でみられないのはどれか。", "opts": ["水頭症", "青色強膜", "難　聴", "大腿骨弯曲変形"], "ans": 0, "essential": false}, {"q": "神経疾患の所見で正しい組合せはどれか。", "opts": ["脊髄空洞症　　　　　　-　解離性感覚障害", "ポリオ　　　　　　　　-　腱反射亢進", "筋萎縮性側索硬化症　　-　感覚障害", "神経性進行性筋萎縮症　-　内反足"], "ans": 0, "essential": false}, {"q": "化膿性骨髄炎で誤っているのはどれか。", "opts": ["初発時から骨膜反応を認める。", "化膿巣の周囲は骨柩を形成する。", "感染経路に骨付近の化膿創からの波及がある。", "成人では基礎疾患として糖尿病がある。"], "ans": 0, "essential": false}, {"q": "関節リウマチの脱臼･変形でないのはどれか。", "opts": ["肘関節の内反変形", "尺骨頭の背側亜脱臼", "股関節の中心性脱臼", "外反母趾変形"], "ans": 0, "essential": false}, {"q": "変形性膝関節症にみられないのはどれか。", "opts": ["関節液混濁", "運動開始時の痛み", "大腿四頭筋萎縮", "骨棘形成"], "ans": 0, "essential": false}, {"q": "骨腫瘍の単純エックス線所見で誤っている組合せはどれか。", "opts": ["骨巨細胞腫　-　スリガラス状透明像", "線維性骨異形成　-　羊飼いの杖変形", "ユーイング(Ewing)肉腫　-　玉ねぎ様骨膜反応", "多発性骨髄腫　-　打ち抜き像"], "ans": 0, "essential": false}, {"q": "第４･第５腰椎椎間板の突出型ヘルニアの臨床所見で正しいのはどれか。", "opts": ["長母趾伸筋筋力低下", "ＦＮＳテスト陽性", "足関節クローヌス陽性", "下腿内側の感覚障害"], "ans": 0, "essential": false}, {"q": "分娩麻痺で正しいのはどれか。", "opts": ["腕神経叢損傷である。", "下位型ではwaiter’s tip positionが定型的な肢位である。", "自然回復することはない。", "節後損傷では手術による神経修復は期待できない。"], "ans": 0, "essential": false}, {"q": "アキレス腱周囲炎の所見で誤っているのはどれか。", "opts": ["アキレス腱の付着部に圧痛と腫脹が存在する。", "背屈制限が存在する。", "背屈するとアキレス腱部に轢音が生じる。", "足部は回内変形している。"], "ans": 0, "essential": false}, {"q": "63歳の女性。特に誘因なく３週前から腰痛が出現したため受診した、単純エックス線写真で第１腰椎の圧迫骨折を認め、骨密度を計測したところ、Ｔ値(若年成人の平均値：ＹＡＭ値)に対する比率は74％であった。誤っているのはどれか。", "opts": ["骨密度の数値から骨粗鬆症と診断する。", "定期的な骨密度の測定を行う。", "適度な運動を指導する。", "選択的エストロゲン受容体調整薬の適応となる。"], "ans": 0, "essential": false}, {"q": "正中神経麻痺でみられないのはどれか。［必］", "opts": ["ボタン穴変形", "母指球筋萎縮", "猿　手", "示指のしびれ"], "ans": 0, "essential": false}, {"q": "スポーツ障害肩で正しいのはどれか。", "opts": ["ベネット（Bennett）リージョンは下方関節唇の骨棘である。", "肩甲上神経麻痺は肩鎖靱帯による絞扼で生じる。", "インピンジメント症候群は上腕二頭筋と関節窩との衝突で生じる。", "スラップリージョンは関節窩下方の骨棘である。"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["マルファン症候群 − 解離性大動脈瘤", "軟骨無形成症  − 青色強膜", "骨形成不全症  − 顔面神経麻痺", "大理石病  − 骨形成障害"], "ans": 0, "essential": false}, {"q": "くる病で誤っているのはどれか。", "opts": ["骨端線閉鎖後の発症", "成長の障害", "歩行開始の遅延", "下肢の高度な変形"], "ans": 0, "essential": false}, {"q": "アテトーゼ型脳性麻痺で誤っているのはどれか。", "opts": ["知能低下がある。", "麻痺は永続的である。", "緊張時の不随意運動がある。", "大脳基底核に障害がある。"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["脊椎カリエス − 流注膿瘍", "小児急性化膿性骨髄炎  − 骨端に好発", "ブロディ（Brodie）膿瘍  − 瘻　孔", "化膿性関節炎  − 肺炎球菌"], "ans": 0, "essential": false}, {"q": "痛風発作時の治療として適切でないのはどれか。", "opts": ["尿酸のコントロール", "インドメタシンの投与", "飲水の奨励", "コルヒチンの投与？"], "ans": 0, "essential": false}, {"q": "ペルテス（Perthes）病で誤っているのはどれか。", "opts": ["ドレーマン（Drehmann）徴候がみられる。", "男児に好発する。", "関節症の原因となる。", "股関節の開排制限がみられる。"], "ans": 0, "essential": false}, {"q": "骨腫瘍と好発部位の組合せで誤っているのはどれか。", "opts": ["骨軟骨腫 − 骨幹部", "骨肉腫 − 骨幹端部", "ユーイング（Ewing）肉腫 − 骨幹部", "骨巨細胞腫 − 骨端部"], "ans": 0, "essential": false}, {"q": "下腿コンパートメント症候群の症状でないのはどれか。", "opts": ["皮膚萎縮", "疼　痛", "運動麻痺", "蒼　白"], "ans": 0, "essential": false}, {"q": "外反母趾で正しいのはどれか。", "opts": ["女性に多い。", "第1中足骨が外反している。", "凹側変形を合併する。", "母趾は外旋する。"], "ans": 0, "essential": false}, {"q": "43歳の男性。右下肢の疼痛と脱力を主訴として来院した。3週前に重量物を挙上した際に、いわゆるぎっくり腰になった。右下腿遠位外側から足背に感覚障害を認める。この患者にみられる所見はどれか。", "opts": ["母趾伸展筋力低下", "スパーリングテスト陽性", "膝伸展筋力低下", "膝蓋腱反射低下"], "ans": 0, "essential": false}, {"q": "疾患と原因の組合せで誤っているのはどれか。〔必〕", "opts": ["テニス肘　　　　−　上腕骨内側上顆炎", "内反肘　　　　　−　上腕骨顆上骨折", "関節ねずみ　　　−　離断性骨軟骨炎", "リトルリーグ肘　−　上腕骨内側上顆骨端線離開"], "ans": 0, "essential": false}, {"q": "骨癒合を促進させる因子でないのはどれか。", "opts": ["解剖学的な整復", "血流の存在", "骨膜の残存", "力学的安定性の保持"], "ans": 0, "essential": false}, {"q": "大理石骨病で誤っているのはどれか。", "opts": ["水頭症を合併する。", "骨硬化像を示す。", "視力障害をきたす。", "病的骨折を生じる。"], "ans": 0, "essential": false}, {"q": "続発性骨粗鬆症の原因で誤っているのはどれか。", "opts": ["甲状腺機能低下症", "関節リウマチ", "副腎皮質ステロイド薬", "安静臥床"], "ans": 0, "essential": false}, {"q": "6歳の男児。ガワーズ徴候陽性で、両側の下腿三頭筋は肥大している。病状が進行するとみられる所見はどれか。", "opts": ["呼吸量減少", "下肢深部腱反射亢進", "分回し歩行", "外眼筋麻痺"], "ans": 0, "essential": false}, {"q": "化膿性関節炎で誤っているのはどれか。", "opts": ["治療の第一選択は保存療法である。", "起炎菌は黄色ブドウ球菌が多い。", "小児では血行感染が多い。", "糖尿病は発症の危険因子となる。"], "ans": 0, "essential": false}, {"q": "シャルコー（Charcot）関節の原因疾患となりうるのはどれか。", "opts": ["糖尿病性神経炎", "神経痛性筋萎縮症", "エルブ（Erb）麻痺", "シャルコー・マリー・トゥース（Charcot-Marie-Tooth）病"], "ans": 0, "essential": false}, {"q": "変形と原因との組合せで正しいのはどれか。", "opts": ["鷲　手 −−− 外反肘", "三尖手 −−− 胸郭出口症候群", "下垂手 −−− 後骨間神経麻痺", "猿　手 −−− ギヨン（Guyon）管症候群"], "ans": 0, "essential": false}, {"q": "つま先歩き跛行になるのはどれか。", "opts": ["セーバー（Saver）病", "フライバーグ（Freiberg）病", "ブラント（Blount）病", "ケーラー（Kohler）病"], "ans": 0, "essential": false}, {"q": "化学療法に感受性の低い悪性骨腫瘍はどれか。", "opts": ["軟骨肉腫", "悪性リンパ腫", "骨肉腫", "ユーイング（Ewing）肉腫"], "ans": 0, "essential": false}, {"q": "30歳の男性。6か月前から運動で軽減する腰痛があり、腰椎の背屈制限を伴っている。この患者にみられる所見はどれか。", "opts": ["腱付着部炎", "間欠性跛行", "関節内石灰沈着", "腸骨翼形成不良"], "ans": 0, "essential": false}, {"q": "70歳の女性。転倒して大腿骨近位部を骨折した。二重エネルギーエックス線吸収法による腰椎の骨密度は若年成人平均値の78%であった。骨粗鬆症の薬物治療を開始する判断で正しいのはどれか。", "opts": ["今すぐ開始する。", "喫煙歴があれば開始する。", "脆弱性骨折の家族歴があれば開始する。", "今後骨密度の低下が生じれば開始する。"], "ans": 0, "essential": false}, {"q": "スポ一ツ中の突然死に関連しないのはどれか。", "opts": ["慢性硬膜下血腫", "脳しんとう", "心臓しんとう", "肥大型心筋症"], "ans": 0, "essential": false}, {"q": "関節リウマチの手指変形と原因となる関節の組合せで誤っているのはどれか。", "opts": ["尺側変位−−−−−−−手根中手関節", "下垂指変形−−−−−−−遠位撓尺関節", "ボタン穴変形−−−−−−−近位指節間関節", "スワンネック変形−−−−−中手指節関節"], "ans": 0, "essential": false}, {"q": "原発性骨粗鬆症で正しいのはどれか。", "opts": ["やせが危険因子の一つである。", "石灰化の障害によって骨が弱くなる疾患である。", "若年者ではみられない。", "血清カルシウムは低値である。"], "ans": 0, "essential": false}, {"q": "常染色体劣性の遺伝形式を示すのはどれか。", "opts": ["モルキオ(Morquio) 病", "マルファン (Marfan) 症候群", "多発性神経線維腫症", "軟骨無形成症"], "ans": 0, "essential": false}, {"q": "静脈血栓塞栓症のリスクが低いのはどれか。", "opts": ["上肢手術", "人工股関節手術", "大腿骨骨折手術", "多発外傷"], "ans": 0, "essential": false}, {"q": "肩腱板断裂の慢性期所見で正しいのはどれか。", "opts": ["夜間痛がある。", "上肢の挙上が不可能である。", "肩関節の回旋拘縮がある。", "肩峰骨頭間距離が広がる。"], "ans": 0, "essential": false}, {"q": "フォルクマン(Volkmann)拘縮で生じない変形はどれか。", "opts": ["母指橈側外転", "前腕回内", "IP 関節屈曲", "第2〜5MP関節過伸展"], "ans": 0, "essential": false}, {"q": "スポ一ツによる骨盤周囲の裂離骨折と起因筋腱の組合せで正しいのはどれか。", "opts": ["大腿骨小転子−−−−−腸腰筋", "上前腸骨棘−−−−−−−大腿直筋", "下前腸骨棘−−−−−−−ハムストリングス", "大腿骨大転子−−−−−大殿筋"], "ans": 0, "essential": false}, {"q": "前十字靱帯損傷の保存的治療後、歩行時に向きを変えたら膝くずれを起こし、膝関節が伸展できなくなった。病態で正しいのはどれか。", "opts": ["半月板嵌頓", "膝蓋骨脱臼", "膝蓋腱断裂", "膝関節内骨折"], "ans": 0, "essential": false}, {"q": "42 歳の男性。ピロン骨折後、半日経過して創部疼痛に加え足に感覚障害が生じてきた。この感覚障害の部位で正しいのはどれか。", "opts": ["母趾 ・第2趾間の背側", "足底の内側", "前足部の内側", "後足部の外側"], "ans": 0, "essential": false}, {"q": "異常歩行の組合せで誤っているのはどれか。", "opts": ["鶏　歩−−−−−−−−−−−−−−−−−−−−−−腓腹筋麻痺", "トレンデレンブルグ歩行−−−−−−先天性股関節脱臼", "逃避歩行−−−−−−−−−−−−−−−−−−−−腰椎椎間板ヘルニア", "分回し歩行−−−−−−−−−−−−−−−−−−−脳血管障害"], "ans": 0, "essential": false}, {"q": "側弯症に伴う体幹変形はどれか。", "opts": ["肋骨隆起", "亀　背", "円　背", "鳩　胸"], "ans": 0, "essential": false}, {"q": "学校管理下の柔道で頭部外傷による死亡事故を最もきたしやすい技はどれか。", "opts": ["大外刈り", "袈裟固め", "払い腰", "内　股"], "ans": 0, "essential": false}, {"q": "単純エックス線で多房性の骨透過像を示す腫瘍はどれか。", "opts": ["骨巨細胞腫", "内軟骨腫", "孤立性骨嚢腫", "線維性骨異形成"], "ans": 0, "essential": false}, {"q": "悪性化あるいは悪性腫瘍併発の可能性があるのはどれか。", "opts": ["フォン・レックリングハウゼン(Von Recklinghausen)病", "モルキオ(Morquio)病", "ターナー(Turner)症候群", "マルファン(Marfan)症候群"], "ans": 0, "essential": false}, {"q": "静脈瘤で正しいのはどれか。", "opts": ["表在静脈に多く発生する。", "男性に多い。", "立位で消失する。", "上肢に多く発生する。"], "ans": 0, "essential": false}, {"q": "手根管症候群の症状で正しいのはどれか。", "opts": ["母指対立運動低下", "小指球筋萎縮", "手背感覚鈍麻", "手指開排運動低下"], "ans": 0, "essential": false}, {"q": "化膿性関節炎で正しいのはどれか。", "opts": ["小児では血行感染が多い。", "起炎菌は連鎖球菌が多い。", "安静時に疼痛はない。", "関節穿刺は禁忌である。"], "ans": 0, "essential": false}, {"q": "骨折と受傷機転の組合せで誤っているのはどれか。", "opts": ["ベネット(Bennett)骨折 −−−− 母指 MP関節背屈位強制", "骨性槌指 −−−−−−−−−−−−−−−−− DIP 関節屈曲位強制", "舟状骨骨折 −−−−−−−−−−−−−−− 手関節背屈位強制", "スミス(Smith)骨折 −−−−−−−− 手関節掌屈位強制"], "ans": 0, "essential": false}, {"q": "足の変形の組合せで正しいのはどれか。", "opts": ["凹　足 −−−−− 内側縦アーチが高い。", "尖　足 −−−−− 脛骨神経麻痺で生じる。", "内反足 −−−−− 前足部の外転を伴う。", "扁平足 −−−−− 踵部が内反する。"], "ans": 0, "essential": false}, {"q": "初期の後脛骨筋腱機能不全にみられるのはどれか。 加点・疑義削除", "opts": ["外脛骨", "扁平足", "踵部外反", "外反母趾"], "ans": 0, "essential": false}, {"q": "25歳の男性。オートバイ事故で頸椎を損傷した。三角筋、上腕二頭筋は徒手筋力検査で両側5、手関節伸展は右1、左2である。下肢運動機能は全廃している。 この患者の残存機能の髄節はどれか。", "opts": ["第5頸髄節", "第4頸髄節", "第6頸髄節", "第7頸髄節"], "ans": 0, "essential": false}, {"q": "異常歩行と要因の組合せで正しいのはどれか。", "opts": ["トレンデレンブルグ歩行 −−−−− 変形性股関節症", "鶏　歩 −−−−−−−−−−−−− 大腿神経麻痺", "失調性歩行 −−−−−−−−−−− 腰部脊柱管狭窄症", "分回し歩行 −−−−−−−−−−− 脳性麻痺"], "ans": 0, "essential": false}, {"q": "小児骨折で誤っているのはどれか。", "opts": ["回旋変形は自家矯正される。", "若木骨折は特徴的な骨折である。", "骨端線損傷は剪断力が加わることで起こりやすい。", "ソルター・ハリス分類のタイプIIでは予後は良い。"], "ans": 0, "essential": false}, {"q": "急性のスポーツ外傷で正しいのはどれか。", "opts": ["足関節が多い。", "陸上競技で多い。", "打撲が捻挫よりも多い。", "繰り返し外力で生じる。"], "ans": 0, "essential": false}, {"q": "骨関節結核で最も多い部位はどれか。", "opts": ["脊　椎", "肩関節", "股関節", "膝関節"], "ans": 0, "essential": false}, {"q": "骨形成不全症で正しいのはどれか。", "opts": ["骨折の癒合は比較的良好である。", "視覚障害を合併する。", "ステロイド薬が有効である。", "II型コラーゲンの形成異常が原因である。"], "ans": 0, "essential": false}, {"q": "キーンベック(Kienbock)病で正しいのはどれか。", "opts": ["進行すると手根骨の配列異常がみられる。", "保存療法は無効である。", "舟状骨の壊死性疾患である。", "手関節掌側の腫脹がみられる。"], "ans": 0, "essential": false}, {"q": "頚椎後縦靱帯骨化症で正しいのはどれか。", "opts": ["糖尿病を合併することが多い。", "女性に多い。", "骨化の進行は早い。", "進行すると弛緩性麻痺を呈する。"], "ans": 0, "essential": false}, {"q": "モンテギア(Monteggia)骨折で正しいのはどれか。", "opts": ["橈骨頭の前方脱臼を伴う。", "尺骨神経麻痺を伴う。", "尺骨の遠位 1/3 で骨折する。", "成人では外固定法が適応となる。"], "ans": 0, "essential": false}, {"q": "手指伸筋腱皮下断裂の原因で誤っているのはどれか。", "opts": ["手関節ガングリオン", "変形性手関節症", "関節リウマチ", "コーレス(Colles)骨折"], "ans": 0, "essential": false}, {"q": "特発性大腿骨頭壊死で正しいのはどれか。", "opts": ["ステロイド薬服用が関係している。", "初期の免荷は不要である。", "成長期の血流障害が背景となる。", "ＣＴ検査は確定診断に有用である。"], "ans": 0, "essential": false}, {"q": "16歳の女子。バレーボールの試合中、ジャンプで着地した際に左膝に激痛が走った。試合は続行できたが、痛みが引かないため来所した。来所時、ラックマンテストが陽性であった。来所時の対応で誤っているのはどれか。", "opts": ["早期からスクワット訓練を指導する。", "膝蓋跳動の有無を確認する。", "ＭＲＩ検査を勧める。", "発症予防プログラムが有効である。"], "ans": 0, "essential": false}, {"q": "スポーツ外傷で誤っているのはどれか。", "opts": ["打撲が捻挫よりも多い。", "中学校では原因として球技が多い 。", "サッカーでは足関節の外傷が多い。", "スノーボードでは上肢の外傷が多い。"], "ans": 0, "essential": false}, {"q": "スポーツ外傷で誤っているのはどれか。", "opts": ["スノーボードでは膝関節の外傷が多い。", "捻挫が打撲よりも多い。", "中学校では原因として球技が多い 。", "サッカーでは足関節の外傷が多い。"], "ans": 0, "essential": false}, {"q": "厚生労働省の早期リウマチの診断基準の項目で誤っているのはどれか。", "opts": ["リウマトイド結節", "朝のこわばり", "リウマトイド因子", "三つ以上の関節の腫脹"], "ans": 0, "essential": false}, {"q": "脆弱性骨折でないのはどれか。", "opts": ["膝蓋骨骨折", "肋骨骨折", "胸椎圧迫骨折", "大腿骨頸部骨折"], "ans": 0, "essential": false}, {"q": "高身長を呈するのはどれか。", "opts": ["マルファン (Marfan) 症候群", "大理石骨病", "軟骨無形成症", "モルキオ (Morquio)病"], "ans": 0, "essential": false}, {"q": "足の舟状骨が無腐性壊死となるのはどれか。", "opts": ["ケーラー (Kohler)病", "セーバー (Sever) 病", "ブラント (Blount)病", "ペルテス (Perthes)病"], "ans": 0, "essential": false}, {"q": "四肢循環障害で正しいのはどれか。", "opts": ["バージャー (Buerger) 病は生命予後が良好である。", "レイノー(Raynaud) 症候群は若い男性が多い。", "静脈瘤は深部静脈血栓に続発するものが多い。", "閉塞性動脈硬化症は精神的ストレスが関係する。"], "ans": 0, "essential": false}, {"q": "腰部脊柱管狭窄症で陽性となるテストはどれか。", "opts": ["ケンプ", "アドソン", "ジャクソン", "スパーリング"], "ans": 0, "essential": false}, {"q": "上肢疾患と好発年齢の組合せで正しいのはどれか。", "opts": ["上腕骨外科頸骨折 ──── 老年期", "離断性骨軟骨炎 ───── 壮年期", "石灰沈着性滑液包炎 ─── 学童期", "上腕二頭筋断裂 ───── 青年期"], "ans": 0, "essential": false}, {"q": "フォルクマン (Volkmann) 拘縮の阻血症状でないのはどれか。", "opts": ["皮膚紅潮", "疼　痛", "運動麻痺", "脈拍消失"], "ans": 0, "essential": false}, {"q": "大腿骨頭すべり症で正しいのはどれか。", "opts": ["肥満型に多い。", "女性に多い。", "アリス徴候陽性となる。", "好発年齢は壮年期である。"], "ans": 0, "essential": false}, {"q": "<img src=\\", "opts": ["手関節尺側の疼痛", "弾発指", "母指の屈曲障害", "スワンネック変形"], "ans": 0, "essential": false}, {"q": "骨粗鬆症の治療薬でないのはどれか。", "opts": ["ビタミンＣ製剤", "活性型ビタミンＤ製剤", "ビスフォスフォネート製剤", "選択的エストロゲン受容体調整薬"], "ans": 0, "essential": false}, {"q": "低身長をきたさないのはどれか。", "opts": ["マルファン(Marfan)症候群", "軟骨無形成症", "モルキオ (Morquio) 病", "偽性上皮小体機能低下症"], "ans": 0, "essential": false}, {"q": "骨端症と発症部位の組合せで正しいのはどれか。", "opts": ["フライバーグ(Freiberg)病──第2中足骨骨頭", "セーバー(Sever)病 ─────大腿骨骨頭", "ペルテス(Perthes)病 ────脛骨粗面", "ブラント(Blount)病─────橈骨近位骨端"], "ans": 0, "essential": false}, {"q": "深部静脈血栓症で正しいのはどれか。", "opts": ["下肢手術が原因となる。", "動脈瘤が続発する。", "症状に感覚過敏がある。", "治療に硬化療法がある。"], "ans": 0, "essential": false}, {"q": "胸郭出口症候群の誘発テストでないのはどれか。", "opts": ["ジャクソン", "モーリー", "ライト", "エデン"], "ans": 0, "essential": false}, {"q": "環軸関節回旋位固定で正しいのはどれか。", "opts": ["cock robin positionをとる。", "成人に多く発症する。", "超音波検査が有用である。", "胸鎖乳突筋内に腫瘤を触知する。"], "ans": 0, "essential": false}, {"q": "肩関節疾患と合併症の組合せで正しいのはどれか。", "opts": ["肩関節脱臼────腱板断裂", "肩関節周囲炎───橈骨神経麻痺", "肩鎖関節脱臼───血栓症", "野球肩──────異所性骨化"], "ans": 0, "essential": false}, {"q": "足部に生じないのはどれか。", "opts": ["キーンベック (Kienbeck) 病", "ケーラー(K?hler)病", "ジョーンズ(Jones) 骨折", "モートン (Morton)病"], "ans": 0, "essential": false}, {"q": "<img src=\\", "opts": ["脆弱性骨折である。", "皮膚症状を合併する。", "疼痛は軟骨の摩耗による。", "手術治療が第一選択である。"], "ans": 0, "essential": false}, {"q": "骨肉腫で正しいのはどれか。", "opts": ["単純エックス線でスピクラ状骨形成を示す。", "長管骨骨幹部に好発する。", "高率に肝転移をきたす。", "血液所見でアルカリフォスファターゼは低値を示す。"], "ans": 0, "essential": false}, {"q": "スポーツ障害で正しいのはどれか。", "opts": ["要因に関節弛緩性がある。", "急激な外力が加わることで生じる。", "捻挫はスポーツ障害にあたる。", "用具は原因とならない。"], "ans": 0, "essential": false}, {"q": "偽関節を生じやすいのはどれか。", "opts": ["手舟状骨骨折", "橈骨遠位端骨折", "大腿骨転子部骨折", "脛骨近位端骨折"], "ans": 0, "essential": false}, {"q": "スポーツ整形外科の対象となるのはどれか。", "opts": ["変形性膝関節症", "痛　風", "関節リウマチ", "後縦靭帯骨化症"], "ans": 0, "essential": false}, {"q": "急性化膿性骨髄炎で正しいのはどれか。", "opts": ["長管骨骨幹端部に多い。", "成人に多い。", "連鎖球菌によるものが多い。", "単純エックス線像では初期から骨変化がみられる。"], "ans": 0, "essential": false}, {"q": "離断性骨軟骨炎で誤っているのはどれか。", "opts": ["股関節に多い。", "変性壊死である。", "MRI は診断に有用である。", "野球をする小学生に好発する。"], "ans": 0, "essential": false}, {"q": "軟骨無形成症でみられるのはどれか。", "opts": ["腰椎前弯の増強", "Ｘ　脚", "青色強膜", "解離性大動脈瘤"], "ans": 0, "essential": false}, {"q": "骨端症と好発部位の組合せで正しいのはどれか。", "opts": ["キーンベック(Kienbock) 病──月状骨", "セーバー(Sever) 病─────第2中足骨骨頭", "ペルテス(Perthes) 病────上腕骨骨頭", "フライバーグ(Freiberg) 病──踵骨隆起"], "ans": 0, "essential": false}, {"q": "深部静脈血栓症でみられるのはどれか。", "opts": ["ホーマンズ徴候", "足爪の変形", "チアノーゼ", "上下肢の血圧差"], "ans": 0, "essential": false}, {"q": "胸郭出口症候群の徒手検査でないのはどれか。", "opts": ["スパーリングテスト", "アドソンテスト", "モーリーテスト", "ライトテスト"], "ans": 0, "essential": false}, {"q": "頸椎症性神経根症で正しいのはどれか。", "opts": ["ジャクソンテストが陽性となる。", "CRPが陽性となる。", "下肢の痙性が出現する。", "cock robin position をとる。"], "ans": 0, "essential": false}, {"q": "大腿骨顆部骨壊死で正しいのはどれか。", "opts": ["突然の強い痛みで発症することが多い。", "若年男性に多い。", "外側に発症することが多い。", "関節裂隙に石灰化がみられる。"], "ans": 0, "essential": false}, {"q": "<img src=\\", "opts": ["深指屈筋腱損傷", "側索損傷", "伸筋腱損傷", "浅指屈筋腱損傷"], "ans": 0, "essential": false}];
+
+let questions = [], current = 0, selected = null, results = [], optMap = [], shuffleOpts = true;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const numVal = parseInt(document.getElementById('selectNum').value);
+  const isRandom = document.getElementById('selectOrder').value === '1';
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  let pool = [...ALL_DATA];
+  if (isRandom) pool = shuffle(pool);
+  questions = numVal === 0 ? pool : pool.slice(0, numVal);
+  current = 0; results = [];
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current];
+  const total = questions.length;
+  document.getElementById('progressBar').style.width = (current / total * 100) + '%';
+  document.getElementById('headerSub').textContent = `${current + 1} / ${total} 問`;
+  document.getElementById('qNum').textContent = `問${current + 1}`;
+  document.getElementById('qText').textContent = q.q;
+  const badge = document.getElementById('qBadge');
+  badge.style.display = q.essential ? 'inline-block' : 'none';
+
+  let indices = [0, 1, 2, 3];
+  if (shuffleOpts) indices = shuffle(indices);
+  optMap = indices;
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  const labels = ['ア', 'イ', 'ウ', 'エ'];
+  indices.forEach((origIdx, dispIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[dispIdx]}</span><span class="opt-text">${q.opts[origIdx]}</span>`;
+    btn.onclick = () => selectOption(dispIdx, origIdx, q.ans);
+    grid.appendChild(btn);
+  });
+
+  selected = null;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('btnNext').disabled = true;
+  document.getElementById('btnNext').textContent = current < questions.length - 1 ? '次の問題 →' : '結果を見る';
+}
+
+function selectOption(dispIdx, origIdx, ans) {
+  if (selected !== null) return;
+  selected = origIdx;
+  const btns = document.querySelectorAll('.opt-btn');
+  const isCorrect = origIdx === ans;
+  btns.forEach((btn, i) => {
+    btn.onclick = null;
+    if (optMap[i] === ans) btn.classList.add('correct');
+    if (i === dispIdx && !isCorrect) btn.classList.add('wrong');
+    if (i === dispIdx && isCorrect) btn.classList.add('correct');
+  });
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'ng');
+  fb.innerHTML = isCorrect ? '✅ 正解！' : `❌ 不正解　正解：${questions[current].opts[ans]}`;
+  results.push({ q: questions[current], chosen: origIdx, correct: isCorrect });
+  document.getElementById('btnNext').disabled = false;
+  if (navigator.vibrate) navigator.vibrate(isCorrect ? 30 : [50, 30, 50]);
+}
+
+function nextQuestion() {
+  if (selected === null) return;
+  current++;
+  if (current >= questions.length) { showResult(); } else { showQuestion(); }
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  document.getElementById('progressBar').style.width = '100%';
+  const total = results.length;
+  const correct = results.filter(r => r.correct).length;
+  const score = Math.round(correct / total * 100);
+  document.getElementById('resultScore').innerHTML = `${score}<span>点</span>`;
+  document.getElementById('resultDetail').textContent = `${total}問中 ${correct}問正解`;
+  document.getElementById('headerSub').textContent = '結果';
+  let emoji = '😢', msg = 'もう少し頑張りましょう！';
+  if (score >= 60) { emoji = '🙂'; msg = '合格ライン到達！'; }
+  if (score >= 80) { emoji = '😊'; msg = 'よくできました！'; }
+  if (score === 100) { emoji = '🎉'; msg = 'Perfect!! おめでとう！'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultMsg').textContent = msg;
+  setTimeout(() => { document.getElementById('scoreBar').style.width = score + '%'; }, 100);
+  const wrongCount = results.filter(r => !r.correct).length;
+  const btnRetry = document.getElementById('btnRetry');
+  btnRetry.style.display = wrongCount > 0 ? 'block' : 'none';
+  btnRetry.textContent = `間違えた${wrongCount}問をやり直す`;
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (r.correct ? 'correct-item' : 'wrong-item');
+    div.innerHTML = `
+      <div class="review-q">問${i+1}：${r.q.q}</div>
+      <div class="review-ans">
+        ${r.correct
+          ? `<span class="label-correct">✅ 正解：${r.q.opts[r.q.ans]}</span>`
+          : `<span class="label-wrong">❌ あなた：${r.q.opts[r.chosen]}</span>　正解：<span class="label-correct">${r.q.opts[r.q.ans]}</span>`
+        }
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function retryWrong() {
+  const wrongItems = results.filter(r => !r.correct).map(r => r.q);
+  if (wrongItems.length === 0) return;
+  questions = wrongItems; current = 0; results = [];
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function backToStart() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('headerSub').textContent = '第14回〜第33回 国家試験問題';
+}
+
+// iOSのSafari対応: addEventListenerでイベントを登録
+document.addEventListener('DOMContentLoaded', function() {
+  var btnStart = document.querySelector('.btn-start');
+  var btnNext = document.getElementById('btnNext');
+  var btnRetry = document.getElementById('btnRetry');
+  var btnRestart = document.querySelector('.btn-restart');
+  if (btnStart)   btnStart.addEventListener('click', startQuiz);
+  if (btnNext)    btnNext.addEventListener('click', nextQuestion);
+  if (btnRetry)   btnRetry.addEventListener('click', retryWrong);
+  if (btnRestart) btnRestart.addEventListener('click', backToStart);
+});
+</script>
+</body>
+</html>
