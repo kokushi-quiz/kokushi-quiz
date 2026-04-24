@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>公衆衛生学クイズ（第14回〜第34回）</title>
+<style>
+  :root {
+    --primary: #0e7c86;
+    --primary-light: #e6f6f7;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --bg: #eef8f9;
+    --card: #ffffff;
+    --text: #1a202c;
+    --text-sub: #718096;
+    --border: #e2e8f0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 14px;
+    --option-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; color: var(--text); }
+
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 14px 16px 10px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .progress-bar-wrap { height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin-top: 10px; }
+  .progress-bar { height: 100%; background: #ffd700; border-radius: 2px; transition: width 0.4s ease; }
+
+  #startScreen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 80px); padding: 24px;
+  }
+  .start-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 32px 24px; width: 100%; max-width: 420px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .start-icon { font-size: 56px; margin-bottom: 16px; }
+  .start-card h2 { font-size: 22px; color: var(--primary); margin-bottom: 8px; }
+  .start-card p { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px 14px; background: var(--bg); border-radius: 10px; }
+  .setting-label { font-size: 14px; font-weight: 600; }
+  .setting-row select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--border); background: white; color: var(--text); appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+  .btn-start {
+    width: 100%; padding: 16px; font-size: 18px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; letter-spacing: 1px; margin-top: 8px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 14px rgba(14,124,134,0.4);
+  }
+  .btn-start:active { transform: scale(0.97); }
+
+  #quizScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .q-num { background: var(--primary); color: white; font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .q-badge-hissu { background: #ff9500; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .q-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .q-text { font-size: 17px; line-height: 1.65; font-weight: 600; }
+  .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .opt-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; cursor: pointer;
+    font-size: 15px; line-height: 1.4; text-align: left;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    min-height: var(--option-h);
+    box-shadow: var(--shadow);
+    -webkit-user-select: none; user-select: none;
+  }
+  .opt-btn:active { transform: scale(0.98); }
+  .opt-btn.selected { border-color: var(--primary); background: var(--primary-light); }
+  .opt-btn.correct { border-color: var(--correct); background: #eafaf1; }
+  .opt-btn.wrong { border-color: var(--wrong); background: #fdecea; }
+  .opt-label {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%; background: var(--border); font-weight: 700; font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .opt-btn.selected .opt-label { background: var(--primary); color: white; }
+  .opt-btn.correct .opt-label { background: var(--correct); color: white; }
+  .opt-btn.wrong .opt-label { background: var(--wrong); color: white; }
+  .opt-text { flex: 1; }
+
+  .feedback { display: none; padding: 14px 16px; border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 15px; align-items: center; gap: 10px; }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: #eafaf1; color: var(--correct); border: 1.5px solid var(--correct); }
+  .feedback.ng { background: #fdecea; color: var(--wrong); border: 1.5px solid var(--wrong); }
+
+  .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .btn-next {
+    flex: 1; padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; transition: transform 0.1s;
+    box-shadow: 0 4px 14px rgba(14,124,134,0.35);
+  }
+  .btn-next:active { transform: scale(0.97); }
+  .btn-next:disabled { background: var(--border); color: var(--text-sub); box-shadow: none; }
+
+  #resultScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .result-hero {
+    background: var(--card); border-radius: var(--radius); padding: 32px 24px;
+    text-align: center; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 12px; }
+  .result-score { font-size: 56px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .result-score span { font-size: 24px; font-weight: 400; }
+  .result-msg { font-size: 17px; font-weight: 600; color: var(--text); margin: 10px 0; }
+  .result-detail { font-size: 14px; color: var(--text-sub); margin-bottom: 4px; }
+  .score-bar-wrap { background: var(--bg); border-radius: 8px; height: 12px; margin: 14px 0; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--primary), #3ab8c4); transition: width 0.8s ease; }
+  .btn-retry, .btn-restart {
+    width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px;
+    transition: transform 0.1s;
+  }
+  .btn-retry { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(14,124,134,0.35); }
+  .btn-restart { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-retry:active, .btn-restart:active { transform: scale(0.97); }
+  .review-section { margin-top: 8px; }
+  .review-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
+  .review-item { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid var(--border); }
+  .review-item.wrong-item { border-left-color: var(--wrong); }
+  .review-item.correct-item { border-left-color: var(--correct); }
+  .review-q { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .review-ans { font-size: 13px; color: var(--text-sub); }
+  .review-ans .label-correct { color: var(--correct); font-weight: 700; }
+  .review-ans .label-wrong { color: var(--wrong); font-weight: 700; }
+
+  .btn-weak {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
+    background: #fff3e0; color: #e65100; border: 2px solid #ffb74d;
+    border-radius: 12px; cursor: pointer; margin-top: 10px;
+    -webkit-user-select: none; user-select: none; display: block; text-align: center;
+  }
+  .btn-weak:active { transform: scale(0.97); }
+  .history-btn {
+    position: fixed; bottom: 24px; right: 20px; z-index: 200;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--primary); color: white; border: none;
+    font-size: 22px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .history-panel {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.55); overflow-y: auto;
+  }
+  .history-panel.show { display: block; }
+  .history-inner {
+    background: white; border-radius: 16px 16px 0 0;
+    padding: 24px 16px 60px; margin-top: 60px;
+    min-height: calc(100vh - 60px);
+  }
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .history-header h2 { font-size: 18px; font-weight: 700; }
+  .history-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f0f0f0; border: none; font-size: 18px; cursor: pointer;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: #f8f9fa; border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+  .stat-label { font-size: 11px; color: #718096; margin-top: 2px; }
+  .weak-stat { background: #fff3e0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .weak-count { font-size: 24px; font-weight: 800; color: #e65100; }
+  .hist-section-title { font-size: 13px; font-weight: 700; color: #718096; margin: 16px 0 10px; }
+  .hist-row {
+    background: #f8f9fa; border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 8px; font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .hist-score { font-weight: 800; font-size: 18px; color: var(--primary); }
+  .hist-date { color: #718096; font-size: 12px; }
+  .btn-clear {
+    width: 100%; padding: 12px; font-size: 13px;
+    background: white; color: #e74c3c; border: 1.5px solid #e74c3c;
+    border-radius: 10px; cursor: pointer; margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🌍 公衆衛生学クイズ</h1>
+  <div class="header-sub" id="headerSub">第14回〜第34回 国家試験問題</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+</div>
+
+<div id="startScreen">
+  <div class="start-card">
+    <div class="start-icon">🌍</div>
+    <h2>公衆衛生学クイズ</h2>
+    <p>国家試験（第14回〜第34回）から<br>出題された公衆衛生学問題を学習しましょう。<br>全<strong>282問</strong>収録</p>
+    <div class="setting-row">
+      <span class="setting-label">出題数</span>
+      <select id="selectNum">
+        <option value="10">10問</option>
+        <option value="20">20問</option>
+        <option value="30" selected>30問</option>
+        <option value="50">50問</option>
+        <option value="100">100問</option>
+        <option value="0">全問（282問）</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">出題順</span>
+      <select id="selectOrder">
+        <option value="1" selected>ランダム</option>
+        <option value="0">番号順</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">選択肢順</span>
+      <select id="selectShuffle">
+        <option value="1" selected>ランダム</option>
+        <option value="0">固定</option>
+      </select>
+    </div>
+    <button class="btn-start" id="btnStart">スタート ▶</button>
+    <button class="btn-weak" id="btnWeak">⚡ 苦手問題だけ出題する</button>
+  </div>
+</div>
+
+<div id="quizScreen">
+  <div class="q-meta">
+    <span class="q-num" id="qNum">問1</span>
+    <span class="q-badge-hissu" id="qBadge" style="display:none">必修</span>
+  </div>
+  <div class="q-card">
+    <p class="q-text" id="qText"></p>
+  </div>
+  <div class="options-grid" id="optionsGrid"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="action-row">
+    <button class="btn-next" id="btnNext" disabled>次の問題 →</button>
+  </div>
+</div>
+
+<div id="resultScreen">
+  <div class="result-hero">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-score" id="resultScore">0<span>点</span></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="score-bar-wrap"><div class="score-bar" id="scoreBar" style="width:0%"></div></div>
+  </div>
+  <button class="btn-retry" id="btnRetry">間違えた問題をやり直す</button>
+  <button class="btn-restart" id="btnRestart">トップへ戻る</button>
+  <div class="review-section">
+    <div class="review-title">📝 解答一覧</div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<script>
+const ALL_DATA = [{"q": "皮膚面の消毒に適さないのはどれか。", "opts": ["次亜塩素酸ナトリウム", "塩化ベンゼトニウム", "塩化ベンザルコニウム", "グルコン酸クロルヘキシジン"], "ans": 0, "essential": true}, {"q": "WHO憲章前文の健康の定義で誤っているのはどれか。", "opts": ["それぞれの国の実情に応じた健康亭受の権利", "障害を持っていても社会人として共存できる状況", "健康づくり活動を通じて世界平和を目標に共存", "身体的に、精神的に、社会的に調和のとれた良好な状態"], "ans": 0, "essential": false}, {"q": "住居環境について誤っているのはどれか。", "opts": ["室内気流をアスマン通風乾湿温度計を使い測定する。", "室内の二酸化炭素濃度が0.1を超えたら換気をする。", "冬期の室内温度22〜23℃に設定する。", "昼光率は1％以上あれば良好である。"], "ans": 0, "essential": false}, {"q": "自動車が主要発生源となっている大気汚染物質はどれか。", "opts": ["窒素酸化物", "二酸化硫黄", "石綿（アスベスト）", "ダイオキシン"], "ans": 0, "essential": false}, {"q": "フロンガス空中放出に伴い増加が予想されるのはどれか。", "opts": ["皮膚癌", "肺癌", "肝臓癌", "大腸癌"], "ans": 0, "essential": false}, {"q": "予防医学の概念における第二次予防はどれか。", "opts": ["健康診断", "機能訓練", "禁煙運動", "予防接種"], "ans": 0, "essential": false}, {"q": "母子保健の水準を示す指標はどれか。", "opts": ["周産期死亡率", "年齢調整死亡率", "出生率", "年少人口指数"], "ans": 0, "essential": false}, {"q": "学校保健について正しいのはどれか。", "opts": ["学校保健法における健康診断の対象に教職員が含まれる。", "小学校の定期健康診断で被患率が最も高いのは近視である。", "学校医は学校伝染病に罹患した児童生徒の出席を停止できる。", "学校保健法の対象は小学校、中学校および高等学校である。"], "ans": 0, "essential": false}, {"q": "食品衛生について正しいのはどれか。", "opts": ["食品衛生監視員が食品関係営業施設の監視や指導を行う。", "栄養指導の基準である栄養所要量は毎年改定される。", "検疫法により輸入食品の安全性が確保される。", "黄色ぶどう球菌による食中毒は食品の加熱処理で防止できる。"], "ans": 0, "essential": false}, {"q": "食品衛生について正しいのはどれか。", "opts": ["食品への有害物質混入による健康被害は食中毒に分類される。", "栄養指導の基準である栄養所要量は毎年改定される。", "食品衛生監視員が食品関係営業施設での衛生管理を担当する。", "黄色ぶどう球菌による食中毒は食品の加熱処理で防止できる。"], "ans": 0, "essential": false}, {"q": "誤っている組み合わせはどれか。", "opts": ["サイトメガロウィルス　&#8722;　亜急性硬化性全脳炎", "単純ヘルペスウィルス　&#8722;　角膜炎", "HHVー6　　　　　　　　&#8722;　突発性発疹", "EBウィルス　　　　　　&#8722;　伝染性単核球症"], "ans": 0, "essential": false}, {"q": "トキソイドワクチンが用いられるのはどれか。", "opts": ["ジフテリア", "麻疹", "流行性耳下腺炎", "ポリオ"], "ans": 0, "essential": false}, {"q": "トキソイドワクチンが用いられるのはどれか。", "opts": ["破傷風", "麻疹", "流行性耳下腺炎", "インフルエンザ"], "ans": 0, "essential": false}, {"q": "医療器具（金属）の消毒に適さないのはどれか。", "opts": ["ポビドンヨード", "エタノール", "グルコン酸クロルヘキシジン", "グルタルアルデヒド"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["防腐とは微生物の増殖を抑えて腐敗を防止することをいう", "紫外線の殺菌作用は強いので、各種医療機器の消毒に用いられる", "高圧蒸気滅菌法は110℃、2気圧、20分の条件を用いる", "殺菌とはすべての微生物を死滅させ、無菌状態にすることをいう"], "ans": 0, "essential": true}, {"q": "リハビリテーションについて誤っているのはどれか。", "opts": ["アフターケアである", "第三次予防である", "第三の医学とよばれる", "回復はできる限り可能な範囲までを目標としている"], "ans": 0, "essential": false}, {"q": "WHO憲章に述べられている健康について正しいのはどれか。", "opts": ["障害者も健常者も社会生活の中で幸福に共存できる状況である", "享受できる健康水準に対する権利は国の事情によって異なる", "病気でなく虚弱でない状態が健康である", "人々の健康のために国は関係する法律を制定しなければならない"], "ans": 0, "essential": false}, {"q": "WHO憲章に述べられている健康について正しいのはどれか。", "opts": ["人々の健康のために個人と国は協力しなければならない", "障害者と健常者は社会生活の中では区別による幸福な状況である", "享受できる健康水準に対する権利は国の事情によって異なる", "病気でなく虚弱でない状態が健康である"], "ans": 0, "essential": false}, {"q": "騒音性難聴で最初に障害される音域はどれか。", "opts": ["4000Hz付近", "1000Hz付近", "2000Hz付近", "8000Hz付近"], "ans": 0, "essential": false}, {"q": "住居環境について正しいのはどれか。", "opts": ["必要換気量は1人1時間あたり33m3である", "夏の家屋内気温は22〜23℃が適切である", "家屋内に二酸化炭素の濃度は1.0％が基準である", "採光で入射角は4〜5度あればよい"], "ans": 0, "essential": false}, {"q": "下水処理について誤っているのはどれか。", "opts": ["好気性処理で汚水中のリンが除去される", "活性汚泥中の好気性菌は有機物を分解浄化する", "合併処理浄化槽では嫌気性菌を利用する", "処理された水は水質検査後放流される"], "ans": 0, "essential": false}, {"q": "廃棄物処理について誤っているのはどれか。", "opts": ["感染性廃棄物を医療施設内で焼却処理した後は一般廃棄物として扱う", "特別管理産業廃棄物の委託処理に管理表（マニフェスト）を使用する", "医療施設ごとに廃棄物処理計画を策定する", "家庭で飼っていた動物の死体を一般廃棄物として扱う"], "ans": 0, "essential": false}, {"q": "標本調査と比べて悉皆調査の特徴はどれか。", "opts": ["対象選択が容易である", "経費が少なくて済む", "時間が節約できる", "計画立案が複雑である"], "ans": 0, "essential": false}, {"q": "母子保健について正しいのはどれか。", "opts": ["「健やか親子21」は母子保健の国民運動計画である", "思春期は精神的に安定した時期である", "生後4週未満の死亡を乳児死亡という", "母子保健に基本的サービスは都道府県が担当する"], "ans": 0, "essential": false}, {"q": "わが国の精神保健について正しいのはどれか。", "opts": ["通院医療費の公費負担制度がある", "精神病院入院患者で最も多いのは躁うつ病である", "精神の健康・不健康を決定する相対的尺度はない", "地域ケアよりも入院治療を重視する"], "ans": 0, "essential": false}, {"q": "原虫感染症でないのはどれか。", "opts": ["フィラリア症", "クリプトスポリジウム症", "トキソプラズマ症", "マラリア"], "ans": 0, "essential": false}, {"q": "垂直感染を起こすのはどれか。", "opts": ["サイトメガロウィルス", "麻疹ウィルス", "Ａ型肝炎ウィルス", "パラインフルエンザウィルス"], "ans": 0, "essential": false}, {"q": "垂直感染を起こすのはどれか。", "opts": ["風疹ウィルス", "ムンプスウィルス", "Ａ型肝炎ウィルス", "パラインフルエンザウィルス"], "ans": 0, "essential": false}, {"q": "消毒薬について誤っている組み合わせはどれか。", "opts": ["アルデヒド系　　　　&#8722;　アルキルポリアミノエチルグリシン", "フェノール系　　　　&#8722;　クレゾール石けん液", "第4級アンモニア系　&#8722;　塩化ベンザルコニウム", "ビグアナイド系　　 &#8722;　グルコン酸クロルヘキシジン"], "ans": 0, "essential": false}, {"q": "すべての微生物を死滅させて除去するのはどれか。", "opts": ["滅菌", "消毒", "防腐", "殺菌"], "ans": 0, "essential": true}, {"q": "誤っているのはどれか。", "opts": ["バリアフリーはノーマライゼーションの理念に反する。", "健康寿命はクオリティ・オブ・ライフ（QOL）の観点からの指標である。", "リハビリテーションは予防医学における第3次予防にあたる。", "健康の定義にはWHO憲章の前文がよく引用される。"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["二酸化窒素は水に溶けやすい。", "二酸化炭素の大気中の濃度は約0.03％である。", "一酸化炭素のヘモグロビンへの結合力は酸素より強い。", "オゾンは光化学オキシダントの一種である。"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["PCBは有機塩素系農薬である。", "フロンガスはオゾン層破壊の原因物質である。", "DDTは食物連鎖によって生物濃縮される。", "ダイオキシン類は内分泌かく乱物質である。"], "ans": 0, "essential": false}, {"q": "公害に関する組合せで誤っているのはどれか。", "opts": ["慢性鉛中毒　　　　　−　宮崎県土呂久地区", "慢性メチル水銀中毒　−　新潟県阿賀野川流域", "慢性カドミウム中毒　−　富山県神通川流域", "慢性ヒ素中毒　　　　−　島根県笹ケ谷地区"], "ans": 0, "essential": false}, {"q": "分析疫学について正しいのはどれか。", "opts": ["患者対照研究では当該疾病の有無別に過去の曝露要因を調べる。", "要因対照研究では調査の対象、期間、費用が少なくて済む。", "患者対照研究では要因対照研究に比べて仮説の証明が容易である。", "患者対照研究では要因対照研究に比べてバイアスの入る危険性が低い。"], "ans": 0, "essential": false}, {"q": "分析疫学について正しいのはどれか。", "opts": ["要因対照研究では要因曝露の有無別に疾病発生状況を調べる。", "患者対照研究では調査費用や調査期間が多くなる。", "患者対照研究では要因対照研究に比べて仮説の証明が容易である。", "患者対照研究では要因対照研究に比べてバイアスの入る危険性が低い。"], "ans": 0, "essential": false}, {"q": "人ロピラミッドのつぼ型をピラミッド型と比較したとき正しいのはどれか。", "opts": ["50歳以上死亡割合が大きい。", "年少人口の割合が大きい。", "出生率が高い。", "平均寿命が短い。"], "ans": 0, "essential": false}, {"q": "関連しない組合せはどれか。", "opts": ["アスベスト　　　−　　強皮症", "VDT作業　　　　−　目の疲労症状", "局所振動　　　　−　白ろう病", "重量物取扱作業　−　腰痛症"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["仮面うつ病とは操病の症状を呈するうつ病である。", "統合失調症の約1/4は完全に治癒する。", "精神的要因の関与の特に大きい身体疾患を心身症という。", "認知症では獲得された認知機能が損なわれている。"], "ans": 0, "essential": false}, {"q": "蚊によって媒介される感染症はどれか。", "opts": ["デング熱", "エボラ出血熱", "クリミア・コンゴ出血熱", "ラッサ熱"], "ans": 0, "essential": false}, {"q": "トキソイドワクチンが使われるのはどれか。", "opts": ["破傷風", "結核", "日本脳炎", "Ｂ型肝炎"], "ans": 0, "essential": false}, {"q": "適切でない組合せはどれか。", "opts": ["煮沸法　　　　　−　芽胞", "紫外線消毒　　　−　無菌室", "高圧蒸気滅菌法　−　血液に汚染された試験管", "焼却法　　　　　−　病原微生物に汚染されたガーゼ"], "ans": 0, "essential": false}, {"q": "皮膚の消毒に用いられないのはどれか。", "opts": ["次亜塩素酸ナトリウム", "グルコン酸クロルヘキシジン", "ポビドンヨード", "塩化ベンザルコニウム"], "ans": 0, "essential": false}, {"q": "滅菌できないのはどれか。", "opts": ["100℃で15分間の煮沸", "121℃で20分間の高圧蒸気", "170℃で120分間の乾熱空気", "焼　却"], "ans": 0, "essential": true}, {"q": "WHOの健康の概念で誤っているのはどれか。", "opts": ["障害者はそのハンディキャップゆえに生涯健康は望めない。", "最高の健康水準を享受することは万人の基本的権利である。", "健康は身体的にも精神的にも社会的にも調和のとれた良好な状態をいう。", "すべての人々の健康は平和と安全を得る上で不可欠である。"], "ans": 0, "essential": false}, {"q": "空気中の有害物質で誤っているのはどれか。", "opts": ["浮遊粒子状物質は主に消化管から吸収される。", "一酸化炭素は血液の酸素運搬能を低下させる。", "二酸化窒素は光化学オキシダントの原因物質である。", "二酸化いおうの長期曝露によって喘息が起こる。"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["川崎病　　　　　&#8722;　二酸化いおう", "宮崎土呂久鉱害　&#8722;　ヒ　素", "イタイイタイ病　&#8722;　カドミウム", "水俣病　　　　　&#8722;　メチル水銀"], "ans": 0, "essential": false}, {"q": "プライマリ・ヘルス・ケアで誤っているのはどれか。", "opts": ["高度先進医療を提供する。", "住民のニーズを尊重する。", "住民が主体的に参加する。", "地域の社会資源を有効活用する。"], "ans": 0, "essential": false}, {"q": "人口動態統計で算出されないのはどれか。", "opts": ["人口ピラミッド", "平均余命", "乳児死亡率", "合計特殊出生率"], "ans": 0, "essential": false}, {"q": "学校保健で正しいのはどれか。", "opts": ["学校歯科医は学校保健安全計画の立案に参加する。", "保健主事は学校保健の総括責任者である。", "学校医は学校伝染病に罹っている児童生徒の出席を停止させることができる。", "学校における環境衛生検査の実施は学校医の職務である。"], "ans": 0, "essential": false}, {"q": "職業病で誤っているのはどれか。", "opts": ["トルエンの吸入で胸膜中皮腫が起こる。", "「負傷に起因する疾病」が業務上疾病として最も多い。", "手持ち振動工具の使用で白ろう病が起こる。", "VDT（visual display terminal）作業で頸肩腕障害が起こる。"], "ans": 0, "essential": false}, {"q": "最近10年間の死亡統計で誤っているのはどれか。", "opts": ["全悪性新生物の粗死亡率は減少傾向にある。", "悪性新生物、心疾患および脳血管疾患による死亡数の合計は全死亡数の約6割を占める。", "脳血管疾患の年齢調整死亡率は男女共に減少傾向にある。", "心疾患の年齢調整死亡率は男女共に減少傾向にある。"], "ans": 0, "essential": false}, {"q": "毒素型食中毒の原因になるのはどれか。", "opts": ["黄色ブドウ球菌", "サルモネラ属菌", "カンピロバクター", "腸炎ビブリオ"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["うつ病　　　　　　&#8722;　罪責妄想", "アルコール依存症　&#8722;　考想伝播", "認知症　　　　　　&#8722;　精神遅滞", "統合失調症　　　　&#8722;　離脱症状"], "ans": 0, "essential": false}, {"q": "人畜共通感染症の組合せで誤っているのはどれか。", "opts": ["包虫症（エキノコックス症）　&#8722;　ニワトリ", "日本脳炎　　　　　　　　　　&#8722;　ブ　タ", "トキソプラズマ症　　　　　　&#8722;　ネ　コ", "狂犬病　　　　　　　　　　　&#8722;　イ　ヌ"], "ans": 0, "essential": false}, {"q": "消毒薬と適応との組合せで誤っているのはどれか。", "opts": ["クレゾール石けん液　　&#8722;　B型肝炎ウイルス", "次亜塩素酸ナトリウム　&#8722;　排泄物に汚染された物", "ポビドンヨード　　　　&#8722;　皮　膚", "グルコン酸クロルヘキシジン　&#8722;　手についた一般細菌"], "ans": 0, "essential": false}, {"q": "WHOの健康の概念で正しいのはどれか。", "opts": ["歩行障害があるが可能な範囲の社会参加を心掛けている。", "疾病にかかっていないということだけで十分である。", "精神障害があるので外出しないようにしている。", "運動によって身体を鍛えるのは競技に勝つためである。"], "ans": 0, "essential": false}, {"q": "ノーマライゼーションで誤っているのはどれか。", "opts": ["障害者の隔離収容施設を拡大増設する。", "競技用義足を開発する。", "障害者用トイレを設置する。", "階段にスロープを併設する。"], "ans": 0, "essential": false}, {"q": "疫学で誤っているのはどれか。", "opts": ["患者&#8722;対照研究から要因暴露による寄与危険度が得られる。", "病気の人だけでなく病気でない人も対象にしている。", "標本調査では偏りを除くため無作為に抽出する。", "発生率は対象集団で一定期間中に発生する疾病の件数の率である。"], "ans": 0, "essential": false}, {"q": "学校保健で正しいのはどれか。", "opts": ["学校医は学校保健安全計画の立案に参加する。", "学校保健の対象に教職員は含まれない。", "保健教育は学校保健安全法（旧学校保健法）に基づいて行われる。", "保健主事は非常勤の学校保健担当者である。"], "ans": 0, "essential": false}, {"q": "医師の職務で誤っているのはどれか。", "opts": ["学校医　&#8722;　学校保健の総括責任者", "産業医　&#8722;　産業保健の医学的事項の担当者", "専門医　&#8722;　専門的医療の提供者", "家庭医　&#8722;　プライマリーケアの実践者"], "ans": 0, "essential": false}, {"q": "労働者の健康障害で誤っている組合せはどれか。", "opts": ["暑熱作業　　&#8722;　白ろう病", "船倉内作業　&#8722;　酸欠症", "潜函作業　　&#8722;　減圧症", "騒音職場　　&#8722;　難聴"], "ans": 0, "essential": false}, {"q": "病原体が寄生虫でないのはどれか。", "opts": ["ツツガムシ病", "回虫症", "アニサキス症", "エキノコックス症"], "ans": 0, "essential": false}, {"q": "感染経路対策でないのはどれか。", "opts": ["予防接種", "学級閉鎖", "マスクの使用", "上水道の塩素消毒"], "ans": 0, "essential": false}, {"q": "疾患と感染経路との組合せで誤っているのはどれか。", "opts": ["Ａ型肝炎　　　　　　　　　　　&#8722;　血液感染", "インフルエンザ　　　　　　　　&#8722;　飛沫感染", "後天性免疫不全症候群（AIDS）　&#8722;　垂直感染", "皮膚真菌症　　　　　　　　　　&#8722;　接触感染"], "ans": 0, "essential": false}, {"q": "消毒薬と適応との組合せで誤っているのはどれか。", "opts": ["消毒用エタノール　&#8722;　芽胞", "グルタラール　　　&#8722;　真菌", "クレゾール石けん　&#8722;　結核菌", "ポビドンヨード　　&#8722;　B型肝炎ウィルス"], "ans": 0, "essential": false}, {"q": "総合的な温熱尺度で気流の測定を組み込んでいるのはどれか。", "opts": ["感覚温度", "至適温度", "湿球黒球温度指数", "不快指数"], "ans": 0, "essential": false}, {"q": "総合的な温熱尺度で気流の測定を組み込んでいるのはどれか。", "opts": ["修正感覚温度", "至適温度", "湿球黒球温度指数", "不快指数"], "ans": 0, "essential": false}, {"q": "値が大きいほど水質が清浄である指数はどれか。", "opts": ["DO", "BOD", "COD", "大腸菌群数"], "ans": 0, "essential": false}, {"q": "WHOの健康の概念で正しいのはどれか。", "opts": ["身体的にも社会的にも調和のとれた良好な状態をいう。", "病気がないまたは病弱でないということである。", "健康の向上において公衆の積極的な関与は重要ではない。", "到達しうる最高の健康水準を享受することは選ばれた者のみの権利である。"], "ans": 0, "essential": false}, {"q": "2008年、我が国における死因別死亡率の年次推移で第４位は何か。図", "opts": ["肺炎", "心疾患", "脳血管疾患", "悪性新生物"], "ans": 0, "essential": false}, {"q": "母子保健で誤っているのはどれか。", "opts": ["人工死産とは胎児の母体内死亡が確実な時の人工的処置による死産である。", "胎児の分娩は平均的には最終月経初日から起算して280日目である。", "我が国において未熟児・低体重児は2,500g未満と定義されている。", "乳児期までの母子間の相互作用は児の発育・発達に大きく影響する。"], "ans": 0, "essential": false}, {"q": "業務上疾病者数で最も多いのはどれか。", "opts": ["負傷に起因する疾病", "物理的因子による疾病", "作業態様に起因する疾病", "じん肺およびじん肺合併症"], "ans": 0, "essential": false}, {"q": "生活習慣病で誤っているのはどれか。", "opts": ["虚血性心疾患の抑制因子として低比重リポ蛋白（LDL）血症が指摘されている。", "脳血管障害のリスク要因として高血圧が指摘されている。", "大腸癌は食生活との関連が指摘されている。", "2型糖尿病は運動習慣との関連が指摘されている。"], "ans": 0, "essential": false}, {"q": "介護保険法で定められていないのはどれか。", "opts": ["老人医療費の支給", "介護認定審査会の設置", "介護老人保健施設の管理", "介護予防サービスの給付"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["我が国の食料の輸入割合はエネルギーベースで50％以下である。", "2005年に「日本人の栄養所要量」は「日本人の食事摂取基準」と改められた。", "健康増進法において健康の増進に努めることは国民の責務となっている。", "食育とは健全な食生活を実践できるようにする教育である。"], "ans": 0, "essential": false}, {"q": "感染症成立の3要因でないのはどれか。", "opts": ["潜伏期", "感染源", "感染経路", "感受性宿主"], "ans": 0, "essential": false}, {"q": "消毒法で正しいのはどれか。", "opts": ["防腐とは病原微生物を直接殺さないでその繁殖を抑えて腐敗を防ぐことをいう。", "殺菌とは人体に有害な病原微生物を死滅させ感染症の伝播を防止するための措置をいう。", "滅菌とは生体に有害な病原微生物だけを殺滅または減少させることをいう。", "消毒とはすべての微生物を死滅させて除去するこという。"], "ans": 0, "essential": false}, {"q": "許容濃度の設定で最も重要な科学的根拠はどれか。採点除外", "opts": ["半数有効量", "閾値", "極量", "致死量"], "ans": 0, "essential": false}, {"q": "酸性雨の主成分となる空気の異常成分はどれか。", "opts": ["いおう酸化物", "アルゴン", "浮遊粒子状物質（SPM）", "一酸化炭素"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["上水処理中に発生したトリハロメタンは発がん物質である。", "上水道の基準は環境基本法による。", "上水にはカドミウムを検出してはならない。", "上水末端においては塩素が残留してはならない。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["上水には大腸菌を検出してはならない。", "上水道の基準は環境基本法による。", "上水末端においては塩素が残留してはならない。", "上水中に発生した硝酸態(性)窒素は発がん物質である。"], "ans": 0, "essential": false}, {"q": "予防接種で皮膚の消毒に通常用いられるのはどれか。〔必〕", "opts": ["エタノール", "石けん", "グルタラール", "両性界面活性剤"], "ans": 0, "essential": false}, {"q": "WHOの健康の定義は「健康は（　）にも（　）にも（　）にも調和がとれた良好な状態をいい、単に病気がないとか病弱でないということではない。」である。（　）にあてはまらないのはどれか。〔必〕", "opts": ["宗教的（spiritual）", "身体的（physical）", "精神的（mental）", "社会的（social）"], "ans": 0, "essential": false}, {"q": "母子保健法で誤っているのはどれか。", "opts": ["小学校入学後も対象となる。", "母性と乳幼児の健康の保持増進を図ることを目的とする。", "妊娠の届出をした者に母子健康手帳が交付される。", "未熟児には養育に必要な医療（養育医療）が給付される。"], "ans": 0, "essential": false}, {"q": "学校保健で正しいのはどれか。", "opts": ["定期健康診断は毎年実施する。", "厚生労働省が所管する。", "常勤の担当者として学校医がいる。", "後天性免疫不全症候群（AIDS）は学校感染症の第一種に指定されている。"], "ans": 0, "essential": false}, {"q": "「がんを防ぐための12カ条（国立がんセンター監修，2005）」で正しいのはどれか。", "opts": ["適度にスポーツをする。", "日光によくあたる。", "脂肪を十分に摂取する。", "繊維質の摂取を控えめにする。"], "ans": 0, "essential": false}, {"q": "介護保険で正しいのはどれか。", "opts": ["要介護の判定は介護認定審査会で行う。", "介護サービスを受けるのに自己負担はない。", "家事援助は対象外である。", "二号被保険者は65歳以上である。"], "ans": 0, "essential": false}, {"q": "毒素型細菌性食中毒を起こすのはどれか。", "opts": ["ウェルシュ菌", "病原大腸菌", "カンピロバクター", "セレウス菌（下痢型）"], "ans": 0, "essential": false}, {"q": "毒素型細菌性食中毒を起こすのはどれか。", "opts": ["ボツリヌス菌", "腸炎ビブリオ", "病原大腸菌", "カンピロバクター"], "ans": 0, "essential": false}, {"q": "潜伏期間の最も短いのはどれか。", "opts": ["腸炎ビブリオ食中毒", "マイコプラズマ肺炎", "結　核", "後天性免疫不全症候群（AIDS）"], "ans": 0, "essential": false}, {"q": "予防接種で誤っているのはどれか。", "opts": ["インフォームド・コンセント（説明と同意）は不要である。", "受けるように努めなければならない。", "集団予防と個人予防とが目的である。", "弱毒生ワクチンは抗体産生能を保持している。"], "ans": 0, "essential": false}, {"q": "手指の消毒で誤っているのはどれか。", "opts": ["流水は温水よりも冷水のほうがよい。", "石鹸と流水を用いて30秒くらいの手洗いをする。", "酒精（アルコール）綿を用いてもよい。", "速乾性擦式消毒薬を用いてもよい。"], "ans": 0, "essential": false}, {"q": "院内感染対策として優先度が低いのはどれか。", "opts": ["スピロヘータ", "疥癬（かいせん）虫", "結核菌", "メチシリン耐性黄色ブドウ球菌（MRSA）"], "ans": 0, "essential": false}, {"q": "屋内気候の基準でないのはどれか。", "opts": ["不快指数", "温　度", "湿　度", "気　流"], "ans": 0, "essential": false}, {"q": "上水道で誤っているのはどれか。", "opts": ["硝酸態窒素は各種の病原菌による汚染の指標である。", "水道法に基づき水質基準が定められている。", "浄水処理には沈殿、ろ過、消毒の工程がある。", "塩素と原水中の有機物質からトリハロメタンが発生する。"], "ans": 0, "essential": false}, {"q": "地球環境の保全と保護に関する国際的な取組みでないのはどれか。", "opts": ["ヘルシンキ宣言", "ラムサール条約", "リオデジャネイロ宣言", "ワシントン条約"], "ans": 0, "essential": false}, {"q": "基本的人権のうち、生存権にかかわる日本国憲法第25条に規定された以下の条文の（　）にあてはまるのはどれか。「すべて国民は、（　　　）な最低限度の生活を営む権利を有する。」〔必〕", "opts": ["健康で文化的", "基本的", "無差別平等", "身体的、精神的、社会的"], "ans": 0, "essential": false}, {"q": "地域保健活動を実施する上で、最初に行うのはどれか。", "opts": ["地域のニーズの把握", "コストベネフィットの評価", "コストエフェクティブネスの評価", "活動の優先順位の決定"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["薬の予防内服　　　　ー　二次予防", "結核の集団検診　　　ー　二次予防", "リハビリテーション　ー　三次予防", "ポリオの予防接種　　ー　一次予防"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["生後4週未満の死亡を早期新生児死亡という。", "生後1年未満の死亡を乳児死亡という。", "死産は人工死産と自然死産とに分けられる。", "わが国の妊産婦死亡率はこの60年間で著しく改善した。"], "ans": 0, "essential": false}, {"q": "学校保健で正しいのはどれか。", "opts": ["学校薬剤師は学校環境の衛生検査を行う。", "校長は学校保健活動の計画を策定する。", "教職員は定期健康診断の対象外である。", "学校医は学校伝染病に罹っている者の出席を停止する。"], "ans": 0, "essential": false}, {"q": "職業病に関する要因と疾患との組合せで誤っているのはどれか。", "opts": ["カドミウム　　　ー　白血病", "手持ち振動工具　ー　白ろう病", "鉱物性粉じん　　ー　じん肺", "ＶＤＴ作業　　　ー　頸肩腕障害"], "ans": 0, "essential": false}, {"q": "介護保険制度で正しいのはどれか。", "opts": ["社会保険制度の一つである。", "一号被保険者は40歳以上の者である。", "要介護認定は都道府県が行う。", "被保険者は無料ですベてのサービスを利用できる。"], "ans": 0, "essential": false}, {"q": "経胎盤感染により胎児に白内障、先天性心疾患、難聴などを起こすのはどれか。", "opts": ["風 疹", "麻 疹", "Ｂ型肝炎", "梅 毒"], "ans": 0, "essential": false}, {"q": "感染源対策はどれか。", "opts": ["患者の隔離", "手洗い", "予防接種", "コンドーム使用"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["消毒は人体に有害な病原微生物を選択的に減少または死滅させる。", "防腐は微生物を死滅させて腐敗を防ぐ。", "殺菌はすべての微生物を死滅させて除去する。", "滅菌は生体に有害な病原微生物だけを殺滅または減少させる。"], "ans": 0, "essential": false}, {"q": "喫煙による屋内の空気汚染に関連する物質でないのはどれか。", "opts": ["光化学オキシダント", "一酸化炭素", "窒素酸化物", "浮遊粒子状物質"], "ans": 0, "essential": false}, {"q": "医療計画で正しいのはどれか。", "opts": ["基準病床数を算定する。", "市区町村が策定する。", "地域保健法に定められている。", "診療所で提供される医療のレベルを三次医療と呼ぶ。"], "ans": 0, "essential": false}, {"q": "エビデンスレベルの最も高い疫学研究方法はどれか。", "opts": ["無作為化比較対照試験", "横断研究", "症例対照研究", "コホート研究"], "ans": 0, "essential": false}, {"q": "統計調査と指標との組合せで正しいのはどれか。", "opts": ["人口静態統計　　　&#8722;　常住人口", "患者調査　　　　　&#8722;　有訴者率", "国民生活基礎調査　&#8722;　受療率", "人口動態統計　　　&#8722;　老年人口割合"], "ans": 0, "essential": false}, {"q": "肝癌の危険因子で誤っているのはどれか。", "opts": ["コーヒー摂取", "喫　煙", "飲　酒", "肥　満"], "ans": 0, "essential": false}, {"q": "毒素型の食中毒を起こす原因菌はどれか。", "opts": ["ボツリヌス菌", "病原大腸菌", "サルモネラ菌", "カンピロバクター"], "ans": 0, "essential": false}, {"q": "精神科疾患で正しいのはどれか。", "opts": ["認知症はいったん発達・獲得した知的機能が損なわれたり低下した状態をいう。", "統合失調症は器質性疾患がもととなって発症する。", "心身症は発症や経過に心理社会因子が密接に関与する精神疾患である。", "PTSD（心的外傷後ストレス障害）は日常のストレスが起因となって発症する。"], "ans": 0, "essential": false}, {"q": "保健所の業務でないのはどれか。", "opts": ["生活保護", "人口動態統計", "栄養の改善", "難病対策"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["マラリア　　　　　&#8722;　原　虫", "マイコプラズマ　　&#8722;　真　菌", "ニューモシスチス　&#8722;　細　菌", "レジオネラ　　　　&#8722;　ウイルス"], "ans": 0, "essential": false}, {"q": "免疫で正しいのはどれか。", "opts": ["個体に病原体への感受性がない状態を抵抗力があるという。", "免疫を引き起こす微生物の一部分や毒素は凝集素と呼ばれる。", "予防接種により成立する免疫を人工受動免疫という。", "母乳を介し母親の免疫抗体を受け取ることにより成立する免疫を自然能動免疫という。"], "ans": 0, "essential": false}, {"q": "温熱因子（温熱の４要素）に含まれないのはどれか。", "opts": ["気　圧", "気　流", "湿　度", "輻射熱"], "ans": 0, "essential": false}, {"q": "環境基本法で規定された公害に該当しないのはどれか。", "opts": ["原子力災害", "悪　臭", "地盤沈下", "土壌汚染"], "ans": 0, "essential": false}, {"q": "B型肝炎ウイルスに関する院内感染予防で誤っているのはどれか。", "opts": ["手指の汚染にはグルコン酸クロルヘキシジンを用いる。", "血液を扱う場合は使い捨てのゴム手袋を使用する。", "内視鏡はグルタラール溶液に浸漬する。", "耐熱性の器具の場合は高圧蒸気滅菌を行う。"], "ans": 0, "essential": false}, {"q": "B型肝炎ウイルスに関する院内感染予防で誤っているのはどれか。", "opts": ["内視鏡は次亜塩素酸ナトリウム溶液に浸漬する。", "血液を扱う場合は使い捨てのゴム手袋を使用する。", "手指の汚染には70vol％イソプロパノールを用いる。", "耐熱性の器具の場合は高圧蒸気滅菌を行う。"], "ans": 0, "essential": false}, {"q": "インフォームド・コンセントで正しいのはどれか。〔必〕", "opts": ["ヘルシンキ宣言に記載されている用語である。", "わが国では「根拠に基づく医療」と訳されている。", "パターナリズムに基づく医療である。", "患者本人より家族の意思決定が優先される。"], "ans": 0, "essential": false}, {"q": "二次予防はどれか。", "opts": ["肺がん検診", "禁煙教育", "予防接種", "リハビリテーション"], "ans": 0, "essential": false}, {"q": "母子保健の指標で正しいのはどれか。", "opts": ["妊娠満12週以後の死児の出産を死産という。", "生後半年以内の死亡を乳児死亡という。", "妊娠20週以後の死産と早期新生児死亡を合わせたものを周産期死亡という。", "母親が妊娠中あるいは出産後８週未満に死亡した場合を妊産婦死亡という。"], "ans": 0, "essential": false}, {"q": "学校保健安全法における風疹の出席停止期間の基準はどれか。", "opts": ["発疹が消失するまで", "解熱した後３日を経過するまで", "すべての発疹が痂皮化するまで", "耳下腺の腫脹が消失するまで"], "ans": 0, "essential": false}, {"q": "局所振動障害を起こす作業はどれか。", "opts": ["チェーンソーを用いる作業", "高温作業", "VDT作業", "潜函作業"], "ans": 0, "essential": false}, {"q": "精神保健で誤っているのはどれか。", "opts": ["緊急措置入院は保護者の同意を必要とする。", "入院受療率は悪性新生物より精神障害が高い。", "半数以上の労働者が職場生活において強い不安やストレスを感じている。", "デイケア、リワークなどが三次予防として行われる。"], "ans": 0, "essential": false}, {"q": "WHOの主要な業務として適切でないのはどれか。", "opts": ["労働条件の向上のための国際的な政策や計画の策定", "母子の健康と福祉の増進", "疾病、死因に関する国際用語表の作成および改正", "伝染病、風土病などの挫滅事業の奨励および促進"], "ans": 0, "essential": false}, {"q": "細菌感染による疾患はどれか。", "opts": ["流行性脳脊髄膜炎", "Ｃ型肝炎", "鳥インフルエンザ", "後天性免疫不全症候群"], "ans": 0, "essential": false}, {"q": "感染症における感受性宿主対策はどれか。", "opts": ["予防接種", "手洗い", "学級閉鎖", "マスクの使用"], "ans": 0, "essential": false}, {"q": "滅菌法のうち化学的方法に分類されるのはどれか。", "opts": ["過酸化水素ガスプラズマ滅菌", "乾熱滅菌", "γ線滅菌", "高圧蒸気滅菌"], "ans": 0, "essential": false}, {"q": "事務所の屋内空気の衛生環境基準で誤っているのはどれか。", "opts": ["気　流　　　−　0.5ｍ／秒以上", "気　積　　　−　10ｍ３／人以上", "湿　度　　　−　40〜70％", "浮遊粉じん　−　0.15ｍｇ／ｍ３以下"], "ans": 0, "essential": false}, {"q": "公害に関する組合せで誤っているのはどれか。", "opts": ["鉛　　　　　　−　イタイイタイ病", "ヒ　素　　　　−　宮崎土呂久鉱害", "メチル水銀　　−　新潟水俣病", "二酸化いおう　−　四日市喘息"], "ans": 0, "essential": false}, {"q": "図は1981〜2011年の循環器系、呼吸器系、消化器系、筋骨格系の各疾患の外来受療率（人口10万対）を示す。消化器系疾患はどれか。図", "opts": ["ａ", "ｂ", "ｃ", "ｄ"], "ans": 0, "essential": false}, {"q": "吐しゃ物による汚染の消毒に用いられるのはどれか。〔必〕", "opts": ["次亜塩素酸ナトリウム", "ポビドンヨード", "クロルヘキシジン", "消毒用アルコール"], "ans": 0, "essential": false}, {"q": "ＷＨＯの健康の概念で誤っているのはどれか。", "opts": ["健全な精神は健全な肉体に宿る。", "最高の健康水準を享受することは万人の基本的権利である。", "人間集団が健康であることは平和と安寧を得る上で不可欠である。", "健康は身体的にも精神的にも社会的にも調和のとれた良好な状態をいう。"], "ans": 0, "essential": false}, {"q": "プライマリ・ヘルス・ケアとして適切でないのはどれか。", "opts": ["専門的医療として高度先進医療を提供する。", "普通にみられる傷病の治療を行う。", "包括的に地域住民の健康管理を行う。", "疾病予防や慢性病患者の生活管理を行う。"], "ans": 0, "essential": false}, {"q": "近年の業務上疾病発生状況において疾病者数が最も多いのはどれか。", "opts": ["災害性腰痛", "物理的因子による疾病", "作業態様に起因する疾病", "じん肺およびじん肺合併症"], "ans": 0, "essential": false}, {"q": "図のａ、ｂ、ｃ、ｄはわが国の全死亡者に対する悪性新生物、心疾患、脳血管疾患、肺炎による死亡者の占める推移を示す。脳血管疾患はどれか。図", "opts": ["ｃ", "ａ", "ｂ", "ｄ"], "ans": 0, "essential": false}, {"q": "微量で生体内の代謝や生理機能を調整するのはどれか。", "opts": ["ビタミン", "糖　質", "食物繊維", "蛋白質"], "ans": 0, "essential": false}, {"q": "国民医療費で誤っているのはどれか。", "opts": ["国民所得に対する割合は5％を下回る。", "公費と医療保険、後期高齢者医療給付、患者負担で構成される。", "傷病別医療費構成割合では循環器疾患が最も多い。", "65歳以上の一人あたりの国民医療費は65歳未満の4倍を超える。"], "ans": 0, "essential": false}, {"q": "感染症成立の3要因でないのはどれか。", "opts": ["環　境", "感染源", "感染経路", "感受性宿主"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["予防接種　　　　　　　　- 人工能動免疫", "自然感染　　　　　　　　- 自然受動免疫", "母体からの免疫抗体移行　- 自然能動免疫", "免疫グロブリン投与　　　- 人工能動免疫"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["免疫グロブリン投与　　　- 人工受動免疫", "予防接種　　　　　　　　- 人工受動免疫", "自然感染　　　　　　　　- 自然受動免疫", "母体からの免疫抗体移行　- 自然能動免疫"], "ans": 0, "essential": false}, {"q": "院内感染対策として優先度が低いのはどれか。", "opts": ["破傷風", "ウイルス性肝炎", "後天性免疫不全症候群（AIDS）", "メチシリン耐性黄色ブドウ球菌（MRSA）感染症"], "ans": 0, "essential": false}, {"q": "算出のため黒球温の測定が必要なのはどれか。", "opts": ["修正感覚温度", "至適温度", "実効温度", "不快指数"], "ans": 0, "essential": false}, {"q": "算出のため黒球温の測定が必要なのはどれか。", "opts": ["熱中症指数（WBGT）", "有効温度", "実効温度", "不快指数"], "ans": 0, "essential": false}, {"q": "値が大きい方が水質汚濁の程度が低い指数はどれか。", "opts": ["溶存酸素（DO）", "浮遊物質（SS）", "化学的酸素要求量（COD）", "生物化学的酸素要求量（BOD）"], "ans": 0, "essential": false}, {"q": "４大公害訴訟に含まれないのはどれか。", "opts": ["川崎病", "熊本水俣病", "四日市喘息", "イタイイタイ病"], "ans": 0, "essential": false}, {"q": "生活の質を意味する言葉はどれか。〔必〕", "opts": ["ＱＯＬ", "ＢＯＤ", "ＩＣＤ", "ＷＨＯ"], "ans": 0, "essential": false}, {"q": "医療計画で誤っているのはどれか。", "opts": ["地域保健法により策定が定められている。", "医療圏を設定する。", "必要病床数を算定する。", "５疾病５事業について記載する。"], "ans": 0, "essential": false}, {"q": "二次予防に相当する行動はどれか。", "opts": ["市が実施する胃がん検診を受診する。", "ラジオ体操に毎日参加する。", "脳梗塞発症後に言語療法を受ける。", "インフルエンザワクチンを接種する。"], "ans": 0, "essential": false}, {"q": "わが国の人口動態統計で正しいのはどれか。", "opts": ["婚姻についてのデータが得られる。", "調査票は調査員が各世帯を訪問し配布・回収する。", "５年に一度実施される。", "得られたデータから人口ピラミッドを作成する。"], "ans": 0, "essential": false}, {"q": "わが国の人口動態統計で正しいのはどれか。", "opts": ["全数調査である。", "５年に一度実施される。", "総務省が集計・公表を行う。", "得られたデータから人口ピラミッドを作成する。"], "ans": 0, "essential": false}, {"q": "母子保健法で規定されているのはどれか。", "opts": ["母子健康手帳の交付", "小児癌の登録", "麻しんの定期予防接種", "小児慢性特定疾患対策"], "ans": 0, "essential": false}, {"q": "小学校の学校保健統計調査で最も高い被患率を示すのはどれか。", "opts": ["う　歯", "肥満傾向", "心電図異常", "胸郭・脊柱異常"], "ans": 0, "essential": false}, {"q": "近年のわが国の雇用統計にみる完全失業率の概数として正しいのはどれか。", "opts": ["３〜６％", "10〜15％", "20〜25％", "０〜１％"], "ans": 0, "essential": false}, {"q": "わが国の疾病で正しいのはどれか。", "opts": ["高血圧は脳血管疾患の主要なリスクである。", "心疾患が死因の第一位である。", "胃癌による死亡率が増加している。", "糖尿病と虚血性心疾患の発症は関連がない。"], "ans": 0, "essential": false}, {"q": "老人会で配られたおにぎりを食べた高齢者から食後２〜４時間で悪心・嘔吐、腹痛、下痢を訴える者が多発した。おにぎりを作った調理人は手に切り傷があり、少し化膿しているものの、素手でおにぎりを握ったという。正しいのはどれか。", "opts": ["症状は病原体が産生する毒素による。", "抗菌薬の投与が有効である。", "食品を加熱することにより予防できる。", "他者に感染させない措置が必要である。"], "ans": 0, "essential": false}, {"q": "垂直感染するのはどれか。", "opts": ["Ｂ型肝炎", "麻しん", "インフルエンザ", "ノロウイルス感染症"], "ans": 0, "essential": false}, {"q": "施術における感染症予防で誤っているのはどれか。", "opts": ["皮膚の消毒に次亜塩素酸ナトリウムを用いる。", "施術所内を消毒する。", "機械的清拭法により手を洗う。", "スタンダード・プリコーションにより対処する。"], "ans": 0, "essential": false}, {"q": "医療施設から出る体液で汚染された廃棄物が該当するのはどれか。", "opts": ["特別管理廃棄物", "一般廃棄物", "産業廃棄物", "放射性廃棄物"], "ans": 0, "essential": false}, {"q": "公害と原因物質の組合せで正しいのはどれか。", "opts": ["新潟水俣病 　　- メチル水銀", "イタイイタイ病 - 鉛", "四日市喘息 　　- 硫化水素", "光化学スモッグ - 一酸化炭素"], "ans": 0, "essential": false}, {"q": "ノーマライゼーションの考え方に含まれないのはどれか。［必］", "opts": ["施設への入所", "社会的自立の促進", "安全な暮らしの確保", "バリアフリー化の促進"], "ans": 0, "essential": false}, {"q": "症例対照研究と比較した場合のコホート研究の長所はどれか。", "opts": ["疾病の発生頻度が観察できる。", "調査費用が少ない。", "短時間で実施できる。", "稀な疾病に応用できる。"], "ans": 0, "essential": false}, {"q": "近年の我が国の母子保健の状況で正しいのはどれか。", "opts": ["周産期死亡率は一貫して低下している。", "人工死産率は増加傾向が続いている。", "乳児死亡の原因は感染症によるものが多い。", "幼児死亡の原因で最も多いのは心疾患である。"], "ans": 0, "essential": false}, {"q": "学校保健安全法に定められていないのはどれか。", "opts": ["3歳児健康診査", "就学時健康診断", "学校職員の健康診断", "幼稚園児の定期健康診断"], "ans": 0, "essential": false}, {"q": "近年の我が国の女性の部位別にみた悪性新生物の年齢調整死亡率（人口10万対）の推移で、昭和30年代と比較して減少傾向が著しい部位はどれか。", "opts": ["胃", "気管、気管支および肺", "乳　房", "大　腸"], "ans": 0, "essential": false}, {"q": "後期高齢者で正しいのはどれか。", "opts": ["平成27年の一人当たりの医療費は約90万円である。", "80歳以上と定義される。", "平成28年の我が国の総人口の約27％を占める。", "現役並み所得者の医療費の一部負担（自己負担）の割合は1割である。"], "ans": 0, "essential": false}, {"q": "毒素型食中毒の原因となるのはどれか。", "opts": ["黄色ブドウ球菌", "コレラ菌", "ノロウィルス", "腸管出血性大腸菌"], "ans": 0, "essential": false}, {"q": "「精神保健及び精神障害者福祉に関する法律」が定める患者自身の意思による入院はどれか。", "opts": ["任意入院", "応急入院", "措置入院", "医療保護入院"], "ans": 0, "essential": false}, {"q": "保健所の業務で誤っているのはどれか。", "opts": ["事業所の作業環境測定", "HIV抗体検査", "精神保健福祉相談", "難病患者の医療扶助"], "ans": 0, "essential": false}, {"q": "スタンダード・プリコーションで正しいのはどれか。", "opts": ["すべての患者に適用する非特異的な予防策である。", "米国疾病管理予防センターが推奨する病院感染対策の第2段階である。", "手袋を着用すれば手洗いは必要ない。", "未知の感染症には対応できない。"], "ans": 0, "essential": false}, {"q": "屋内の一酸化炭素の排出源で重要なのはどれか。", "opts": ["喫　煙", "ヒトの呼気", "電気コンロ", "エアコンディショナー"], "ans": 0, "essential": false}, {"q": "水道法に基づく水質基準で検出されてはならないのはどれか。", "opts": ["大腸菌", "ヒ　素", "カドミウム", "総トリハロメタン"], "ans": 0, "essential": false}, {"q": "国際疾病分類（ICD）で正しいのはどれか。", "opts": ["我が国の死亡統計の死因分類に用いられている。", "国際連合が制定している。", "基本コードは3桁の数字で表される。", "現在は第9回修正版が使用されている。"], "ans": 0, "essential": false}, {"q": "健康の定義が定められたのはどれか。〔必〕", "opts": ["WHO憲章", "アルマ・アタ宣言", "オタワ憲章", "ヘルシンキ宣言"], "ans": 0, "essential": false}, {"q": "環境要因で正しい組合せはどれか。", "opts": ["文化的要因　−　識字率", "化学的要因　−　工場の騒音", "生物的要因　−　職場の人間関係", "物理的要因　−　空気中の一酸化炭素濃度"], "ans": 0, "essential": false}, {"q": "地域保健活動の進め方で正しいのはどれか。", "opts": ["PDCAのサイクルを意識して進める。", "費用は考慮しない。", "産業保健の対象者とは重複しない。", "法律に基づき対象者を強制的に参加させる。"], "ans": 0, "essential": false}, {"q": "平成28年の学校保健統計調査で児童の被患率がう歯に次いで高いのはどれか。", "opts": ["裸眼視力1.0未満", "喘　息", "肥満傾向", "胸郭・脊柱異常"], "ans": 0, "essential": false}, {"q": "労働災害で正しいのはどれか。", "opts": ["精神障害による認定件数は増加している。", "死亡災害は増加している。", "休業4日未満は補償されない。", "疲労と労働災害の発生は関係がない。"], "ans": 0, "essential": false}, {"q": "新規に人工透析を導入する疾患で最も多いのはどれか。", "opts": ["糖尿病", "肥満症", "高血圧症", "脂質異常症"], "ans": 0, "essential": false}, {"q": "介護保険の要支援2で利用できるサービスはどれか。", "opts": ["介護予防サービス", "居宅サービス", "施設サービス", "地域密着型サービス"], "ans": 0, "essential": false}, {"q": "平成28年の食中毒統計において、発生件数の多い原因はどれか。", "opts": ["ノロウィルス", "ボツリヌス菌", "サルモネラ菌", "病原性大腸菌"], "ans": 0, "essential": false}, {"q": "平成28年の食中毒統計において、発生件数の多い原因はどれか。", "opts": ["カンピロバクター", "サルモネラ菌", "ボツリヌス菌", "黄色ブドウ球菌"], "ans": 0, "essential": false}, {"q": "平成26年の患者調査における我が国の精神障害者の統計で正しいのはどれか。", "opts": ["外来受療率で最も高いのは気分障害である。", "総患者数は約200万人である。", "外来患者数は20年前に比べ減少傾向にある。", "入院受療率で最も高いのはアルツハイマー（Altzheimer）病を含めた認知症である。"], "ans": 0, "essential": false}, {"q": "我が国の医療保険制度で誤っているのはどれか。", "opts": ["医療給付は原則、現金給付の形をとる。", "医療保険の制度は国民皆保険である。", "保険料に財源を求める社会保険方式である。", "健康保険組合、共済組合などを保険者と呼ぶ。"], "ans": 0, "essential": false}, {"q": "感染経路と感染症の組合せで正しいのはどれか。", "opts": ["接触感染　−　梅　毒", "空気感染　−　インフルエンザ", "産道感染　−　先天性風疹症候群", "飛沫感染　−　麻　疹"], "ans": 0, "essential": false}, {"q": "金属器具に使用できない消毒薬はどれか。", "opts": ["次亜塩素酸ナトリウム", "グルタラール", "消毒用エタノール", "クロルヘキシジン"], "ans": 0, "essential": false}, {"q": "大気汚染物質として環境基準が定められているのはどれか。", "opts": ["浮遊粒子状物質", "酸　素", "窒　素", "二酸化炭素"], "ans": 0, "essential": false}, {"q": "喫煙と肺癌発生の疫学的因果関係の検討で正しい組合せはどれか。", "opts": ["関連の時間性−−−−−−−長期間の喫煙歴が肺癌の発生に先行する。", "関連の強固性−−−−−−−たばこの煙には様々な発がん物質が含まれる。", "関連の一致性−−−−−−−肺癌発生率は喫煙者が非喫煙者に比べ高い。", "関連の整合性−−−−−−−喫煙と肺癌発生の関連は、様々な国の研究で認められる。"], "ans": 0, "essential": false}, {"q": "近年の我が国の死因で最も多いのはどれか。", "opts": ["悪性新生物", "心疾患", "脳血管疾患", "老　衰"], "ans": 0, "essential": false}, {"q": "介護予防対策で有用性が低いのはどれか。", "opts": ["スタンダード・プリコーションの実施", "がん対策", "生活習慣病の予防", "ロコモティブシンドロームの予防"], "ans": 0, "essential": false}, {"q": "食中毒で正しいのはどれか。", "opts": ["キノコは食中毒の原因となる。", "近年の我が国では黄色ブドウ球菌による件数が最も多い。", "ボツリヌス菌は感染型の食中毒を起こす。", "食品を低温で保存すれば細菌は死滅する。"], "ans": 0, "essential": false}, {"q": "精神保健で正しいのはどれか。", "opts": ["自閉症スペクトラムではコミュニケーションの障害がみられる。", "保健所は精神保健福祉センターの指導援助を行う。", "アルツハイマー型認知症は一般に急激に症状が進行する。", "自傷他害のおそれがあり、患者本人の同意がない場合は任意入院が行われる。"], "ans": 0, "essential": false}, {"q": "国民医療費で正しいのはどれか。", "opts": ["国民医療費の財源には公費が含まれる。", "健康診断の費用が含まれる。", "医科診療医療費のうち大部分は入院医療費が占める。", "人口一人当たりの国民医療費が最も高額な年齢階級は45〜64歳である。"], "ans": 0, "essential": false}, {"q": "インフルエンザウィルスで誤っているのはどれか。", "opts": ["空気感染する。", "気道感染症を引き起こす。", "抗原性が容易に変化する。", "パンデミックの原因となる。"], "ans": 0, "essential": false}, {"q": "消毒方法で誤っているのはどれか。", "opts": ["皮膚の消毒にフタラールを用いる。", "爪先は手洗いのミスが生じやすい。", "床の消毒に次亜塩素酸ナトリウムを用いる。", "手指では機械的清拭法と化学的清拭法がある。"], "ans": 0, "essential": false}, {"q": "二酸化炭素の建築物環境衛生管理基準はどれか。", "opts": ["0.1 ％以下", "検出されてはならない", "0.001％以下", "10 ％以下"], "ans": 0, "essential": false}, {"q": "健康増進法との関連性が低いのはどれか。", "opts": ["長寿医療制度", "健康日本 21", "国民健康・栄養調査", "受動喫煙対策"], "ans": 0, "essential": false}, {"q": "廃棄物処理法に基づく廃棄物の取り扱いで誤っているのはどれか。", "opts": ["医療機関において体液に汚染されたガーゼは一般ごみと共に廃棄してよい。", "産業廃棄物の処理の責任は事業者にある。", "家庭で飼っていた動物の死体は一般廃棄物として扱う。", "特別管理産業廃棄物の委託処理に管理票（マニフェスト）を使用する。"], "ans": 0, "essential": false}, {"q": "集団検診を行うための条件で正しいのはどれか。", "opts": ["対象疾患に有効な治療法が存在すること", "スクリーニングの効果がないこと", "検診前の対象疾患の死亡率が低いこと", "最新の検査方法であること"], "ans": 0, "essential": false}, {"q": "疫学の組合せで正しいのはどれか。", "opts": ["無作為化 −−−−− 交絡の制御", "無作為抽出 −−−− 悉皆調査", "記述疫学 −−−−− 症例対照研究", "有病率 −−−−− 一定期間の病気のかかりやすさ"], "ans": 0, "essential": false}, {"q": "疫学の組合せで正しいのはどれか。", "opts": ["無作為抽出 −−−− 選択バイアスの制御", "介入研究 −−−−− 生態学的研究（地域相関研究）", "記述疫学 −−−−− 症例対照研究", "有病率 −−−−− 一定期間の病気のかかりやすさ"], "ans": 0, "essential": false}, {"q": "近年の我が国における傷病分類別の外来受療率が最も高いのはどれか。", "opts": ["消化器系", "筋骨格系", "循環器系", "精神障害"], "ans": 0, "essential": false}, {"q": "母子健康手帳で正しいのはどれか。", "opts": ["予防接種の記録を行う。", "健康保険証となる。", "出生届により交付される。", "大きさは統一されている。"], "ans": 0, "essential": false}, {"q": "虚血性心疾患の四大リスク要因で誤っているのはどれか。", "opts": ["高尿酸血症", "肥　満", "高血圧症", "脂質異常症"], "ans": 0, "essential": false}, {"q": "介護保険制度で正しいのはどれか。", "opts": ["介護保険料は40歳から徴収される。", "保険者は都道府県である。", "要介護の認定はケアマネージャーが行う。", "要支援1，2では介護給付を受けることができる。"], "ans": 0, "essential": false}, {"q": "「事業場における労働者の心の健康づくりのための指針」に提唱されている4つのケアに含まれないのはどれか。", "opts": ["家族や友人によるケア", "セルフケア", "ラインによるケア", "事業場内産業保健スタッフによるケア"], "ans": 0, "essential": false}, {"q": "被用者保険で正しいのはどれか。", "opts": ["高額療養費制度が設けられている。", "保険者は市町村である。", "医療給付の患者負担は原則1割である。", "業務上傷病に対し傷病手当金が支払われる。"], "ans": 0, "essential": false}, {"q": "集団検診を行うための条件で正しいのはどれか。", "opts": ["早期発見の効果があること", "検診前の対象疾患の死亡率が低いこと", "コストベネフィットを最優先すること", "最新の検査方法であること"], "ans": 0, "essential": false}, {"q": "蚊が媒介する感染症でないのはどれか。", "opts": ["アニサキス", "マラリア", "日本脳炎", "フィラリア"], "ans": 0, "essential": false}, {"q": "消毒剤と殺菌できる病原体の組合せで誤っているのはどれか。", "opts": ["クロルヘキシジン−−−−− 結核菌", "消毒用エタノール −−−−−−− ＭＲＳＡ", "70％イソプロパノール −−−− 緑膿菌", "次亜塩素酸ナトリウム −−−−ノロウイルス"], "ans": 0, "essential": false}, {"q": "熱中症で正しいのはどれか。", "opts": ["湿度が高い時に起こりやすい。", "幅射熱は影響しない。", "意識障害は起こさない。", "高齢者に起こることはまれである。"], "ans": 0, "essential": false}, {"q": "水質汚濁の指標に含まれないのはどれか。", "opts": ["硬　度", "浮遊物質", "溶存酸素", "水素イオン濃度"], "ans": 0, "essential": false}, {"q": "WHO憲章に述べられている健康で正しいのはどれか。", "opts": ["最高の健康水準を享受することは万人の基本的権利である。", "身体だけでなく精神的にも完全な状態である。", "健康の向上において公衆の積極的な関与は重要ではない。", "享受できる健康水準に対する権利は国の事情によって異なる。"], "ans": 0, "essential": false}, {"q": "プライマリヘルスケアにあてはまらないのはどれか。", "opts": ["先進医療の提供", "疾病の予防", "地域住民の健康管理", "専門病院との連携機能の保持"], "ans": 0, "essential": false}, {"q": "疫学研究方法でエビデンスのレベルが最も高いのはどれか。", "opts": ["介入研究", "症例報告", "横断研究", "症例対照研究"], "ans": 0, "essential": false}, {"q": "総患者数が最も多いのはどれか。", "opts": ["高血圧性疾患", "悪性新生物", "糖尿病", "脳血管疾患"], "ans": 0, "essential": false}, {"q": "介護認定審査会で正しいのはどれか。", "opts": ["二次判定を行う。", "介護支援専門員の意見書を提出する。", "都道府県に設置される。", "要支援の判定は行わない。"], "ans": 0, "essential": false}, {"q": "衛生行政と所管する官庁の組合せで誤っているのはどれか。", "opts": ["労働衛生行政 −−−−−− 経済産業省", "一般衛生行政 −−−−−− 厚生労働省", "学校保健行政 −−−−−− 文部科学省", "環境衛生行政 −−−−−− 環境省"], "ans": 0, "essential": false}, {"q": "世界保健機関(WHO)の主な活動内容はどれか。", "opts": ["保健統計の収集", "地球温暖化対策", "低所得国での食糧の配給", "途上国への経済支援"], "ans": 0, "essential": false}, {"q": "世界保健機関(WHO)の主な活動内容はどれか。", "opts": ["薬品のモニタリング", "地球温暖化対策", "途上国への経済支援", "子どもの生活支援"], "ans": 0, "essential": false}, {"q": "不活化ワクチンはどれか。", "opts": ["インフルエンザワクチン", "水痘ワクチン", "風疹ワクチン", "ＢＣＧワクチン"], "ans": 0, "essential": false}, {"q": "金属器具に使用できない消毒薬はどれか。", "opts": ["次亜塩素酸ナトリウム", "クロルヘキシジン", "グルタラール", "消毒用エタノール"], "ans": 0, "essential": false}, {"q": "手指の消毒で正しいのはどれか。", "opts": ["速乾性擦式消毒薬は 30 秒以上かけて手にすり込む。", "最初にブラシで擦る。", "流水による手洗いでは温水より冷水の方がよい。", "術前の手洗いは指先から各指、手掌の順で洗う。"], "ans": 0, "essential": false}, {"q": "住居の採光と換気で正しいのはどれか。", "opts": ["室内の照度分布の目安に均斉度を用いる。", "昼光率は日中と夜間の照度の比率である。", "室内空気の汚染の尺度に一酸化炭素の濃度を用いる。", "室内での燃料使用においてホルムアルデヒドの発生に注意する。"], "ans": 0, "essential": false}, {"q": "上水で正しいのはどれか。", "opts": ["上水には大腸菌を検出してはならない。", "上水の基準は環境基本法による。", "上水末端においては塩素が残留してはならない。", "浄水処理の方法には活性汚泥法が用いられる。"], "ans": 0, "essential": false}, {"q": "上水で正しいのはどれか。", "opts": ["上水処理中に発生したトリハロメタンは発がん物質である。", "上水には一般細菌を検出してはならない。", "上水の基準は環境基本法による。", "上水末端においては塩素が残留してはならない。"], "ans": 0, "essential": false}, {"q": "一次予防活動はどれか。", "opts": ["予防接種", "がん検診", "治療過程での保健指導", "脳卒中リハビリテーション"], "ans": 0, "essential": false}, {"q": "一次予防活動はどれか。", "opts": ["ストレスチェック制度", "救急医療", "がん検診", "脳卒中リハビリテーション"], "ans": 0, "essential": false}, {"q": "分析疫学でまれな疾患に用いられるのはどれか。", "opts": ["症例対照研究", "症例報告", "コホート研究", "無作為化比較対照試験"], "ans": 0, "essential": false}, {"q": "ロコモティブシンドロームの直接原因となるのはどれか。", "opts": ["骨粗鬆症", "高血圧", "糖尿病", "脂質異常症"], "ans": 0, "essential": false}, {"q": "国民の健康づくりのための食生活指針において目標とされる1日の野菜摂取量はどれか。", "opts": ["350g以上", "450g以上", "250g以上", "150g以上"], "ans": 0, "essential": false}, {"q": "気分障害に分類されるのはどれか。", "opts": ["うつ病", "過食症", "認知症", "統合失調症"], "ans": 0, "essential": false}, {"q": "保健所で正しいのはどれか。", "opts": ["医事および薬事に関する事項を取り扱う。", "医療法で規定されている。", "地域住民に対して健康診査を行う。", "各都道府県に1か所設置されている。"], "ans": 0, "essential": false}, {"q": "寄生虫はどれか。", "opts": ["アニサキス", "カンジダ", "クラミジア", "リケッチア"], "ans": 0, "essential": false}, {"q": "予防接種で誤っているのはどれか。", "opts": ["不活化ワクチンは生きた病原性微生物を弱毒化している。", "インフォームド・コンセントが行われる。", "Ａ類疾病は集団予防目的に比重が置かれている。", "痘瘡(天然痘)は予防接種によって根絶された。"], "ans": 0, "essential": false}, {"q": "消毒用エタノールで誤っているのはどれか。", "opts": ["排泄物による汚染物の消毒に用いる。", "結核菌に有効である。", "金属器具の消毒に用いる。", "予防接種部位の消毒に用いる。"], "ans": 0, "essential": false}, {"q": "スタンダードプリコーションにおいて、感染性微生物を含んでいるものとして処理するのはどれか。", "opts": ["患者の膿が付着したリネン", "病室のテレビ", "未使用の注射針", "医療者の汗を拭いたタオル"], "ans": 0, "essential": false}, {"q": "ＷＢＧＴ値を用いて発症を予防するのはどれか。", "opts": ["熱中症", "潜函病", "騒音性難聴", "頸肩腕症候群"], "ans": 0, "essential": false}, {"q": "感染性廃棄物で正しいのはどれか。", "opts": ["マニフェスト伝票形式によって処理をする。", "滅菌後の血液に汚染されたガーゼが該当する。", "地方自治体で処理する。", "一般廃棄物として処理する。"], "ans": 0, "essential": false}, {"q": "感染性廃棄物で正しいのはどれか。", "opts": ["病院で血液に汚染されたガーゼが該当する。", "マニフェスト伝票形式による処理は不要である。", "地方自治体で処理する。", "一般廃棄物として処理する。"], "ans": 0, "essential": false}, {"q": "がんと危険因子の組合せで正しいのはどれか。", "opts": ["胃　癌────ヘリコバクターピロリ菌", "大腸癌────肝炎ウイルス", "前立腺癌───受動喫煙", "乳　癌────ヒトパピローマウイルス"], "ans": 0, "essential": false}, {"q": "精神障害で最も多いのはどれか。", "opts": ["気分障害", "アルコール使用(飲酒)による精神障害", "血管性認知症", "統合失調症"], "ans": 0, "essential": false}, {"q": "国際労働機関はどれか。", "opts": ["ＩＬＯ", "ＮＧＯ", "ＯＤＡ", "ＷＨＯ"], "ans": 0, "essential": false}, {"q": "ウイルスが病原体であるのはどれか。", "opts": ["帯状疱疹", "足白癬", "トキソプラズマ症", "マイコプラズマ肺炎"], "ans": 0, "essential": false}, {"q": "感染症法の類型と感染症の組合せで正しいのはどれか。", "opts": ["4類 ────エムポックス (サル痘)", "1類 ────急性灰白髄炎", "2類 ────細菌性赤痢", "3類 ────エボラ出血熱"], "ans": 0, "essential": false}, {"q": "手術器具の消毒法はどれか。", "opts": ["高圧蒸気滅菌法", "火炎滅菌法", "紫外線消毒", "低温消毒"], "ans": 0, "essential": false}, {"q": "騒音性難聴で最初に聞こえにくくなる音域はどれか。", "opts": ["4,000 Hz付近", "1,000 Hz付近", "2,000 Hz付近", "8,000 Hz付近"], "ans": 0, "essential": false}, {"q": "受動喫煙の防止について規定しているのはどれか。", "opts": ["健康増進法", "環境基本法", "地域保健法", "ダイオキシン類対策特別措置法"], "ans": 0, "essential": false}, {"q": "水質で正しいのはどれか。", "opts": ["水道水の水質基準に硬度の項目がある。", "ＣＯＤの環境基準達成率は100％である。", "水道水に一般細菌は検出されてはいけない。", "水道水に遊離残留塩素は検出されてはいけない。"], "ans": 0, "essential": false}, {"q": "三次予防はどれか。", "opts": ["社会復帰", "健康増進", "早期治療", "予防接種"], "ans": 0, "essential": false}, {"q": "地域社会の環境衛生、保健医療活動および医療の水準を最もよく反映する健康指標はどれか。", "opts": ["乳児死亡率", "受療率", "合計特殊出生率", "年齢調整死亡率"], "ans": 0, "essential": false}, {"q": "学校保健で正しいのはどれか。", "opts": ["学校教職員は学校健康診断の対象である。", "養護教諭が学校保健の総括責任者である。", "学校保健行政を主管するのは厚生労働省である。", "学校医は学校感染症に罹患した児童生徒の出席を停止できる。"], "ans": 0, "essential": false}, {"q": "WHO憲章の前文において、「健康とは、(　　)的にも(　　)的にも（　　）的にも完全に良好な状態をいう」とある。（　　)にあてはまらないのはどれか。", "opts": ["環　境", "社　会", "身　体", "精　神"], "ans": 0, "essential": false}, {"q": "プライマリヘルスケアが提唱されたのはどれか。", "opts": ["アルマ・アタ宣言", "オタワ憲章", "モントリオール議定書", "リオデジャネイロ宣言"], "ans": 0, "essential": false}, {"q": "コホート研究の説明で誤っているのはどれか。", "opts": ["調査期間が短い。", "バイアスが少ない。", "仮説証明が容易である。", "要因の有無別に疾病発生状況を調べる。"], "ans": 0, "essential": false}, {"q": "母子保健法で規定されているのはどれか。", "opts": ["妊産婦健康診査", "人工妊娠中絶", "健やか親子21(第二次)", "被虐待児発見時の通告義務"], "ans": 0, "essential": false}, {"q": "学校健診で小・中・高等学校に進むにつれて増加傾向にあるのはどれか。", "opts": ["裸眼視力 1.0未満", "う　歯", "耳疾患", "喘　息"], "ans": 0, "essential": false}, {"q": "糖尿病で正しいのはどれか。", "opts": ["慢性腎不全は合併症の1つである。", "妊娠中は発症しない。", "我が国の大部分は1型糖尿病である。", "軽症糖尿病の治療は薬物療法が主体である。"], "ans": 0, "essential": false}, {"q": "食中毒の届出が規定されているのはどれか。", "opts": ["食品衛生法", "栄養士法", "食育基本法", "食品安全基本法"], "ans": 0, "essential": false}, {"q": "社会福祉法規による活動はどれか。", "opts": ["生活保護の扶助", "公的年金の給付", "労働災害の認定", "予防接種の実施"], "ans": 0, "essential": false}, {"q": "再興感染症はどれか。", "opts": ["結　核", "エボラ出血熱", "新型コロナウイルス感染症", "クロイツフェルト・ヤコブ (Creutzfeldt-Jakob) 病"], "ans": 0, "essential": false}, {"q": "機械的清拭法による手指の消毒で最初に行うのはどれか。", "opts": ["流水による手洗い", "速乾性擦式消毒薬による擦り込み", "酒精綿による拭き取り", "ブラシによる手洗い"], "ans": 0, "essential": false}, {"q": "WBGTの測定に必要でないのはどれか。", "opts": ["感覚温度", "乾球温度", "黒球温度", "湿球温度"], "ans": 0, "essential": false}, {"q": "閉鎖性水域での富栄養化をもたらすのはどれか。", "opts": ["窒　素", "水　素", "塩　素", "酸　素"], "ans": 0, "essential": false}, {"q": "閉鎖性水域での富栄養化をもたらすのはどれか。", "opts": ["リ　ン", "塩　素", "酸　素", "硫　黄"], "ans": 0, "essential": false} ,{"q": "ブレスローらの7つの健康習慣で正しいのはどれか。", "opts": ["定期的にかなり激しい運動をする。","間食を毎日する。","1日の塩分摂取量を6g未満にする。","1日の野菜摂取量を350g以上にする。"], "ans": 0, "essential": false},{"q": "医療計画の記載事項はどれか。", "opts": ["基準病床数の算定 ","受動喫煙防止対策の推進 ","後期高齢者医療制度の実施 ","市区町村保健センターの設置 "], "ans": 0, "essential": false},{"q": "基準人口を人口モデルとして算出される人口統計指標はどれか。", "opts": ["年齢調整死亡率 ","平均寿命 ","有訴者率 ","総再生産率 "], "ans": 0, "essential": false},{"q": "児童虐待を疑ったときの通告先はどれか。", "opts": ["児童相談所 ","教育委員会 ","地域包括支援センター ","女性相談支援センター "], "ans": 0, "essential": false},{"q": "産業保健で正しいのはどれか。", "opts": ["産業保健の3管理のひとつに作業環境管理がある。","産業保健行政の第一線機関は保健所である。","産業医は事業場における特殊健康診断を実施する義務がある。","労働者の安全と健康の確保は労働基準法に規定されている。"], "ans": 0, "essential": false},{"q": "肥満によって発がんリスクが上がるのはどれか。", "opts": ["大腸がん","肺がん","胃がん","食道がん"], "ans": 0, "essential": false},{"q": "介護保険法の第一号被保険者となるのはどれか。", "opts": ["65 歳以上","70 歳以上","60 歳以上","40 歳以上"], "ans": 0, "essential": false},{"q": "感染症対策を担う国際機関はどれか。", "opts": ["WHO","ILO","UNHCR","WWF"], "ans": 0, "essential": false},{"q": "原虫はどれか。", "opts": ["マラリア","カンジダ","リケッチア","クラミジア"], "ans": 0, "essential": false},{"q": "芽胞を有する細菌に効果のある消毒薬はどれか。", "opts": ["過酢酸","消毒用エタノール","ポビドンヨード","クロルヘキシジン"], "ans": 0, "essential": false},{"q": "季節病でないのはどれか。", "opts": ["肺結核","気管支炎","細菌性食中毒","脳血管疾患"], "ans": 0, "essential": false},{"q": "廃棄物処理の3Rに含まれないのはどれか。", "opts": ["再販売 (Resale) ","減量 (Reduce) ","再利用(Reuse) ","リサイクル (Recycle) "], "ans": 0, "essential": false}];
+
+let questions = [], current = 0, selected = null, results = [], optMap = [], shuffleOpts = true;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const numVal = parseInt(document.getElementById('selectNum').value);
+  const isRandom = document.getElementById('selectOrder').value === '1';
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  let pool = [...ALL_DATA];
+  if (isRandom) pool = shuffle(pool);
+  questions = numVal === 0 ? pool : pool.slice(0, numVal);
+  current = 0; results = [];
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current];
+  const total = questions.length;
+  document.getElementById('progressBar').style.width = (current / total * 100) + '%';
+  document.getElementById('headerSub').textContent = `${current + 1} / ${total} 問`;
+  document.getElementById('qNum').textContent = `問${current + 1}`;
+  document.getElementById('qText').textContent = q.q;
+  const badge = document.getElementById('qBadge');
+  badge.style.display = q.essential ? 'inline-block' : 'none';
+
+  let indices = [0, 1, 2, 3];
+  if (shuffleOpts) indices = shuffle(indices);
+  optMap = indices;
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  const labels = ['ア', 'イ', 'ウ', 'エ'];
+  indices.forEach((origIdx, dispIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[dispIdx]}</span><span class="opt-text">${q.opts[origIdx]}</span>`;
+    btn.onclick = () => selectOption(dispIdx, origIdx, q.ans);
+    grid.appendChild(btn);
+  });
+
+  selected = null;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('btnNext').disabled = true;
+  document.getElementById('btnNext').textContent = current < questions.length - 1 ? '次の問題 →' : '結果を見る';
+}
+
+function selectOption(dispIdx, origIdx, ans) {
+  if (selected !== null) return;
+  selected = origIdx;
+  const btns = document.querySelectorAll('.opt-btn');
+  const isCorrect = origIdx === ans;
+  btns.forEach((btn, i) => {
+    btn.onclick = null;
+    if (optMap[i] === ans) btn.classList.add('correct');
+    if (i === dispIdx && !isCorrect) btn.classList.add('wrong');
+    if (i === dispIdx && isCorrect) btn.classList.add('correct');
+  });
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'ng');
+  fb.innerHTML = isCorrect ? '✅ 正解！' : `❌ 不正解　正解：${questions[current].opts[ans]}`;
+  results.push({ q: questions[current], chosen: origIdx, correct: isCorrect });
+  recordAnswer(questions[current], isCorrect);
+  document.getElementById('btnNext').disabled = false;
+  if (navigator.vibrate) navigator.vibrate(isCorrect ? 30 : [50, 30, 50]);
+}
+
+function nextQuestion() {
+  if (selected === null) return;
+  current++;
+  if (current >= questions.length) { showResult(); } else { showQuestion(); }
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  document.getElementById('progressBar').style.width = '100%';
+  const total = results.length;
+  const correct = results.filter(r => r.correct).length;
+  const score = Math.round(correct / total * 100);
+  saveSession(total, correct, score);
+  setTimeout(refreshWeakBtn, 100);
+  document.getElementById('resultScore').innerHTML = `${score}<span>点</span>`;
+  document.getElementById('resultDetail').textContent = `${total}問中 ${correct}問正解`;
+  document.getElementById('headerSub').textContent = '結果';
+  let emoji = '😢', msg = 'もう少し頑張りましょう！';
+  if (score >= 60) { emoji = '🙂'; msg = '合格ライン到達！'; }
+  if (score >= 80) { emoji = '😊'; msg = 'よくできました！'; }
+  if (score === 100) { emoji = '🎉'; msg = 'Perfect!! おめでとう！'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultMsg').textContent = msg;
+  setTimeout(() => { document.getElementById('scoreBar').style.width = score + '%'; }, 100);
+  const wrongCount = results.filter(r => !r.correct).length;
+  const btnRetry = document.getElementById('btnRetry');
+  btnRetry.style.display = wrongCount > 0 ? 'block' : 'none';
+  btnRetry.textContent = `間違えた${wrongCount}問をやり直す`;
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (r.correct ? 'correct-item' : 'wrong-item');
+    div.innerHTML = `
+      <div class="review-q">問${i+1}：${r.q.q}</div>
+      <div class="review-ans">
+        ${r.correct
+          ? `<span class="label-correct">✅ 正解：${r.q.opts[r.q.ans]}</span>`
+          : `<span class="label-wrong">❌ あなた：${r.q.opts[r.chosen]}</span>　正解：<span class="label-correct">${r.q.opts[r.q.ans]}</span>`
+        }
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function retryWrong() {
+  const wrongItems = results.filter(r => !r.correct).map(r => r.q);
+  if (wrongItems.length === 0) return;
+  questions = wrongItems; current = 0; results = [];
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function backToStart() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('headerSub').textContent = '第14回〜第33回 国家試験問題';
+}
+
+
+
+// ===== 苦手問題・成績履歴機能 =====
+var SKEY = (document.title || '').replace(/（第\d+回〜第\d+回）/, '').trim();
+var sessionStart = null;
+var weakData = {};
+var historyData = [];
+
+function loadData() {
+  try {
+    var w = localStorage.getItem('wk_' + SKEY);
+    var h = localStorage.getItem('hs_' + SKEY);
+    weakData    = w ? JSON.parse(w) : {};
+    historyData = h ? JSON.parse(h) : [];
+  } catch(e) { weakData = {}; historyData = []; }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('wk_' + SKEY, JSON.stringify(weakData));
+    localStorage.setItem('hs_' + SKEY, JSON.stringify(historyData));
+  } catch(e) {}
+}
+
+function getWeakList() {
+  return ALL_DATA.filter(function(q, i) {
+    var d = weakData[String(i)];
+    if (!d) return false;
+    var t = d.c + d.w;
+    return t >= 2 && (d.c / t) < 0.5;
+  });
+}
+
+function refreshWeakBtn() {
+  var btn = document.getElementById('btnWeak');
+  if (!btn) return;
+  var wl = getWeakList();
+  if (wl.length === 0) {
+    btn.textContent = '⚡ 苦手問題なし（まず通常クイズを解いてください）';
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+  } else {
+    btn.textContent = '⚡ 苦手問題だけ出題する（' + wl.length + '問）';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+}
+
+function doStartQuiz() {
+  sessionStart = Date.now();
+  startQuiz();
+}
+
+function doStartWeak() {
+  var wl = getWeakList();
+  if (wl.length === 0) { alert('苦手問題がありません。まず通常クイズを解いてください。'); return; }
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  questions = wl;
+  current = 0; results = [];
+  sessionStart = Date.now();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function recordAnswer(qObj, isCorrect) {
+  var i = String(ALL_DATA.indexOf(qObj));
+  if (i === '-1') return;
+  if (!weakData[i]) weakData[i] = { c: 0, w: 0 };
+  if (isCorrect) weakData[i].c++; else weakData[i].w++;
+  saveData();
+}
+
+function saveSession(total, correct, score) {
+  var mins = sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart) / 60000)) : 0;
+  var now = new Date();
+  var d = now.getFullYear() + '/' +
+    String(now.getMonth()+1).padStart(2,'0') + '/' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  historyData.unshift({ date: d, score: score, total: total, correct: correct, mins: mins });
+  if (historyData.length > 50) historyData.length = 50;
+  saveData();
+  sessionStart = null;
+}
+
+function openHistory() {
+  loadData();
+  var n  = historyData.length;
+  var tq = historyData.reduce(function(a,b){ return a+b.total; }, 0);
+  var as = n ? Math.round(historyData.reduce(function(a,b){ return a+b.score; }, 0) / n) : 0;
+  var tt = historyData.reduce(function(a,b){ return a+(b.mins||0); }, 0);
+  var wl = getWeakList();
+  document.getElementById('hSessions').textContent   = n;
+  document.getElementById('hQuestions').textContent  = tq;
+  document.getElementById('hAvgScore').textContent   = as + '%';
+  document.getElementById('hTime').textContent       = tt + '分';
+  document.getElementById('hWeakCount').textContent  = wl.length + '問';
+  var list = document.getElementById('hSessionList');
+  list.innerHTML = n === 0
+    ? '<div style="color:#718096;font-size:13px;text-align:center;padding:20px">まだ履歴がありません</div>'
+    : historyData.map(function(h){
+        return '<div class="hist-row"><div>' +
+          '<div style="font-weight:600">' + h.correct + '/' + h.total + '問正解　' + (h.mins||0) + '分</div>' +
+          '<div class="hist-date">' + h.date + '</div></div>' +
+          '<div class="hist-score">' + h.score + '点</div></div>';
+      }).join('');
+  document.getElementById('historyPanel').classList.add('show');
+}
+
+// ===== イベント登録（iOS Safari対応）=====
+window.addEventListener('load', function() {
+  loadData();
+  refreshWeakBtn();
+
+  function tap(id, fn) {
+    var el = typeof id === 'string' ? document.getElementById(id) : id;
+    if (!el) return;
+    el.addEventListener('click', fn);
+    el.addEventListener('touchend', function(e){ e.preventDefault(); fn(); });
+  }
+
+  tap('btnStart',    doStartQuiz);
+  tap('btnWeak',     doStartWeak);
+  tap('btnNext',     nextQuestion);
+  tap('btnRetry',    function(){ sessionStart = Date.now(); retryWrong(); });
+  tap('btnRestart', backToStart);
+  tap('historyBtn',  openHistory);
+  tap('historyClose', function(){ document.getElementById('historyPanel').classList.remove('show'); });
+  tap('btnClear', function(){
+    if (confirm('履歴と苦手データをすべてリセットしますか？')) {
+      weakData = {}; historyData = [];
+      saveData(); openHistory(); refreshWeakBtn();
+    }
+  });
+  var panel = document.getElementById('historyPanel');
+  if (panel) panel.addEventListener('click', function(e){ if(e.target===panel) panel.classList.remove('show'); });
+});
+</script>
+
+<button class="history-btn" id="historyBtn">📊</button>
+<div class="history-panel" id="historyPanel">
+  <div class="history-inner">
+    <div class="history-header">
+      <h2>📊 成績・履歴</h2>
+      <button class="history-close" id="historyClose">✕</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="hSessions">0</div><div class="stat-label">総セッション数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hQuestions">0</div><div class="stat-label">総解答問題数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hAvgScore">0%</div><div class="stat-label">平均正答率</div></div>
+      <div class="stat-card"><div class="stat-val" id="hTime">0分</div><div class="stat-label">総学習時間</div></div>
+    </div>
+    <div class="weak-stat">
+      <div class="weak-count" id="hWeakCount">0問</div>
+      <div style="font-size:13px;color:#e65100;margin-top:4px;">苦手問題数（正答率50%未満・2回以上解いた問題）</div>
+    </div>
+    <div class="hist-section-title">📅 セッション履歴（最新50件）</div>
+    <div id="hSessionList"></div>
+    <button class="btn-clear" id="btnClear">🗑 履歴・苦手データをリセット</button>
+  </div>
+</div>
+</body>
+</html>
