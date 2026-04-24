@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>解剖学クイズ（第14回〜第33回）</title>
+<style>
+  :root {
+    --primary: #1a6fa8;
+    --primary-light: #e8f4fd;
+    --accent: #e74c3c;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --text: #1a202c;
+    --text-sub: #718096;
+    --border: #e2e8f0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 14px;
+    --option-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; color: var(--text); }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 14px 16px 10px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .progress-bar-wrap { height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin-top: 10px; }
+  .progress-bar { height: 100%; background: #ffd700; border-radius: 2px; transition: width 0.4s ease; }
+
+  /* ===== START SCREEN ===== */
+  #startScreen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 80px); padding: 24px;
+  }
+  .start-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 32px 24px; width: 100%; max-width: 420px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .start-icon { font-size: 56px; margin-bottom: 16px; }
+  .start-card h2 { font-size: 22px; color: var(--primary); margin-bottom: 8px; }
+  .start-card p { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px 14px; background: var(--bg); border-radius: 10px; }
+  .setting-label { font-size: 14px; font-weight: 600; }
+  .setting-row select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--border); background: white; color: var(--text); appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+  .btn-start {
+    width: 100%; padding: 16px; font-size: 18px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; letter-spacing: 1px; margin-top: 8px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 14px rgba(26,111,168,0.4);
+  }
+  .btn-start:active { transform: scale(0.97); }
+
+  /* ===== QUIZ SCREEN ===== */
+  #quizScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .q-num { background: var(--primary); color: white; font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .q-badge-hissu { background: #ff9500; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .q-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .q-text { font-size: 17px; line-height: 1.65; font-weight: 600; }
+  .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .opt-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; cursor: pointer;
+    font-size: 15px; line-height: 1.4; text-align: left;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    min-height: var(--option-h);
+    box-shadow: var(--shadow);
+    -webkit-user-select: none; user-select: none;
+  }
+  .opt-btn:active { transform: scale(0.98); }
+  .opt-btn.selected { border-color: var(--primary); background: var(--primary-light); }
+  .opt-btn.correct { border-color: var(--correct); background: #eafaf1; }
+  .opt-btn.wrong { border-color: var(--wrong); background: #fdecea; }
+  .opt-label {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%; background: var(--border); font-weight: 700; font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .opt-btn.selected .opt-label { background: var(--primary); color: white; }
+  .opt-btn.correct .opt-label { background: var(--correct); color: white; }
+  .opt-btn.wrong .opt-label { background: var(--wrong); color: white; }
+  .opt-text { flex: 1; }
+
+  /* feedback */
+  .feedback { display: none; padding: 14px 16px; border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 15px; align-items: center; gap: 10px; }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: #eafaf1; color: var(--correct); border: 1.5px solid var(--correct); }
+  .feedback.ng { background: #fdecea; color: var(--wrong); border: 1.5px solid var(--wrong); }
+
+  /* action buttons */
+  .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .btn-next {
+    flex: 1; padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; transition: transform 0.1s;
+    box-shadow: 0 4px 14px rgba(26,111,168,0.35);
+  }
+  .btn-next:active { transform: scale(0.97); }
+  .btn-next:disabled { background: var(--border); color: var(--text-sub); box-shadow: none; }
+
+  /* ===== RESULT SCREEN ===== */
+  #resultScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .result-hero {
+    background: var(--card); border-radius: var(--radius); padding: 32px 24px;
+    text-align: center; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 12px; }
+  .result-score { font-size: 56px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .result-score span { font-size: 24px; font-weight: 400; }
+  .result-msg { font-size: 17px; font-weight: 600; color: var(--text); margin: 10px 0; }
+  .result-detail { font-size: 14px; color: var(--text-sub); margin-bottom: 4px; }
+  .score-bar-wrap { background: var(--bg); border-radius: 8px; height: 12px; margin: 14px 0; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--primary), #4fa3e0); transition: width 0.8s ease; }
+  .btn-retry, .btn-restart {
+    width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px;
+    transition: transform 0.1s;
+  }
+  .btn-retry { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(26,111,168,0.35); }
+  .btn-restart { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-retry:active, .btn-restart:active { transform: scale(0.97); }
+  .review-section { margin-top: 8px; }
+  .review-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
+  .review-item { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid var(--border); }
+  .review-item.wrong-item { border-left-color: var(--wrong); }
+  .review-item.correct-item { border-left-color: var(--correct); }
+  .review-q { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .review-ans { font-size: 13px; color: var(--text-sub); }
+  .review-ans .label-correct { color: var(--correct); font-weight: 700; }
+  .review-ans .label-wrong { color: var(--wrong); font-weight: 700; }
+
+  .btn-weak {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
+    background: #fff3e0; color: #e65100; border: 2px solid #ffb74d;
+    border-radius: 12px; cursor: pointer; margin-top: 10px;
+    -webkit-user-select: none; user-select: none; display: block; text-align: center;
+  }
+  .btn-weak:active { transform: scale(0.97); }
+  .history-btn {
+    position: fixed; bottom: 24px; right: 20px; z-index: 200;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--primary); color: white; border: none;
+    font-size: 22px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .history-panel {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.55); overflow-y: auto;
+  }
+  .history-panel.show { display: block; }
+  .history-inner {
+    background: white; border-radius: 16px 16px 0 0;
+    padding: 24px 16px 60px; margin-top: 60px;
+    min-height: calc(100vh - 60px);
+  }
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .history-header h2 { font-size: 18px; font-weight: 700; }
+  .history-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f0f0f0; border: none; font-size: 18px; cursor: pointer;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: #f8f9fa; border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+  .stat-label { font-size: 11px; color: #718096; margin-top: 2px; }
+  .weak-stat { background: #fff3e0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .weak-count { font-size: 24px; font-weight: 800; color: #e65100; }
+  .hist-section-title { font-size: 13px; font-weight: 700; color: #718096; margin: 16px 0 10px; }
+  .hist-row {
+    background: #f8f9fa; border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 8px; font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .hist-score { font-weight: 800; font-size: 18px; color: var(--primary); }
+  .hist-date { color: #718096; font-size: 12px; }
+  .btn-clear {
+    width: 100%; padding: 12px; font-size: 13px;
+    background: white; color: #e74c3c; border: 1.5px solid #e74c3c;
+    border-radius: 10px; cursor: pointer; margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🧬 解剖学クイズ</h1>
+  <div class="header-sub" id="headerSub">第14回〜第33回 国家試験問題</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+</div>
+
+<!-- START SCREEN -->
+<div id="startScreen">
+  <div class="start-card">
+    <div class="start-icon">📚</div>
+    <h2>解剖学クイズ</h2>
+    <p>国家試験（第14回〜第33回）から<br>出題された解剖学問題を学習しましょう。<br>全<strong>662問</strong>収録</p>
+    <div class="setting-row">
+      <span class="setting-label">出題数</span>
+      <select id="selectNum">
+        <option value="10">10問</option>
+        <option value="20">20問</option>
+        <option value="30" selected>30問</option>
+        <option value="50">50問</option>
+        <option value="100">100問</option>
+        <option value="0">全問（662問）</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">出題順</span>
+      <select id="selectOrder">
+        <option value="1" selected>ランダム</option>
+        <option value="0">番号順</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">選択肢順</span>
+      <select id="selectShuffle">
+        <option value="1" selected>ランダム</option>
+        <option value="0">固定</option>
+      </select>
+    </div>
+    <button class="btn-start" id="btnStart">スタート ▶</button>
+    <button class="btn-weak" id="btnWeak">⚡ 苦手問題だけ出題する</button>
+  </div>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div id="quizScreen">
+  <div class="q-meta">
+    <span class="q-num" id="qNum">問1</span>
+    <span class="q-badge-hissu" id="qBadge" style="display:none">必修</span>
+  </div>
+  <div class="q-card">
+    <p class="q-text" id="qText"></p>
+  </div>
+  <div class="options-grid" id="optionsGrid"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="action-row">
+    <button class="btn-next" id="btnNext" disabled>次の問題 →</button>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="resultScreen">
+  <div class="result-hero">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-score" id="resultScore">0<span>点</span></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="score-bar-wrap"><div class="score-bar" id="scoreBar" style="width:0%"></div></div>
+  </div>
+  <button class="btn-retry" id="btnRetry">間違えた問題をやり直す</button>
+  <button class="btn-restart" id="btnRestart">トップへ戻る</button>
+  <div class="review-section">
+    <div class="review-title">📝 解答一覧</div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<script>
+const ALL_DATA = [{"q": "神経筋接合部（運動終板）が存在するのはどれか。", "opts": ["骨格筋", "心筋", "平滑筋", "筋膜"], "ans": 0, "essential": true}, {"q": "関節を作る組み合わせはどれか。", "opts": ["上腕骨　−　橈骨", "後頭骨　−　軸椎", "鎖骨　　−　上腕骨", "仙骨　　−　恥骨"], "ans": 0, "essential": true}, {"q": "僧帽弁はどれか。", "opts": ["左房室弁", "右房室弁", "肺動脈弁", "大動脈弁"], "ans": 0, "essential": true}, {"q": "運動神経細胞が分布するのはどれか。", "opts": ["脊髄前角", "脊髄後角", "脊髄神経節", "交感神経節"], "ans": 0, "essential": true}, {"q": "血液中の白血球で最も数が多いのはどれか。", "opts": ["好中球", "好酸球", "リンパ球", "単球"], "ans": 0, "essential": false}, {"q": "腱の主成分はどれか。", "opts": ["膠原線維", "線維軟骨", "弾性軟骨", "弾性線維"], "ans": 0, "essential": false}, {"q": "長骨で長軸方向に走行するのはどれか。", "opts": ["ハバース管", "フォルクマン管", "栄養管", "シャーピー線維"], "ans": 0, "essential": false}, {"q": "結合組織性骨化（膜性骨化）するのはどれか。", "opts": ["鎖骨", "上腕骨", "肩甲骨", "胸骨"], "ans": 0, "essential": false}, {"q": "下顎骨の運動を行うのはどれか。", "opts": ["側頭筋", "前頭筋", "後頭筋", "胸鎖乳突筋"], "ans": 0, "essential": false}, {"q": "横隔膜について誤っているのはどれか。", "opts": ["肋間神経に支配されている。", "腰椎、肋骨および胸骨から起こる。", "呼吸の際に吸気筋として働く。", "下行大動脈、下大静脈および食道が貫いている。"], "ans": 0, "essential": false}, {"q": "上腕骨で尺骨神経溝が存在する部位はどれか。", "opts": ["内側上顆の後面", "三角筋粗面付近", "肘頭窩の外側縁", "外側上顆の前面"], "ans": 0, "essential": false}, {"q": "肩関節の回旋筋腱板の形成に関与するのはどれか。", "opts": ["肩甲下筋", "大胸筋", "小胸筋", "大円筋"], "ans": 0, "essential": false}, {"q": "小坐骨孔を通過するのはどれか。", "opts": ["内閉鎖筋", "大腿方形筋", "坐骨神経", "小殿筋"], "ans": 0, "essential": false}, {"q": "小坐骨孔を通過するのはどれか。", "opts": ["陰部神経", "大腿方形筋", "坐骨神経", "鼠径靱帯"], "ans": 0, "essential": false}, {"q": "膝関節の関節包と固く付いているのはどれか。", "opts": ["内側側副靱帯", "膝蓋靱帯", "外側側副靱帯", "前十字靱帯"], "ans": 0, "essential": false}, {"q": "腱索と連結するのはどれか。", "opts": ["三尖弁", "大動脈弁", "肺動脈弁", "静脈弁"], "ans": 0, "essential": false}, {"q": "大動脈から最も遠位で出るのはどれか。", "opts": ["左鎖骨下動脈", "左冠状動脈", "左総頸動脈", "腕頭動脈"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["胸管は右静脈角に注ぐ。", "リンパ管には弁が多い。", "腋窩リンパ節は乳房のリンパを受け入れる。", "鼠径リンパ節は下半身のリンパを受け入れる。"], "ans": 0, "essential": false}, {"q": "回腸にみられないのはどれか。", "opts": ["オッディの括約筋", "リーベルキューン腺", "パイエル板", "アウエルバッハの神経叢"], "ans": 0, "essential": false}, {"q": "肝門を通らないものはどれか。", "opts": ["肝静脈", "肝管", "固有肝動脈", "門脈"], "ans": 0, "essential": false}, {"q": "間膜があるのはどれか。", "opts": ["肝臓", "食道", "膵臓", "上行結腸"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["右気管支は左気管支よりも垂直に近い。", "気管は食道の後を通る。", "気管軟骨は気管の全周を取り囲む。", "右気管支は左気管支よりも細い。"], "ans": 0, "essential": false}, {"q": "尿道が貫通または開口しないのはどれか。", "opts": ["陰茎海綿体", "前立腺", "尿生殖隔膜", "腟前庭"], "ans": 0, "essential": false}, {"q": "鼠径管を通らないのはどれか。", "opts": ["卵管", "精管", "精巣動脈", "子宮円索"], "ans": 0, "essential": false}, {"q": "カルシトニンを分泌するのはどれか。", "opts": ["甲状腺", "下垂体", "松果体", "上皮小体"], "ans": 0, "essential": false}, {"q": "脳の表面から観察できないのはどれか。", "opts": ["海馬", "視交叉", "錐体", "オリーブ"], "ans": 0, "essential": false}, {"q": "中脳に神経核が存在するのはどれか。", "opts": ["動眼神経", "顔面神経", "舌下神経", "迷走神経"], "ans": 0, "essential": false}, {"q": "腕神経叢の枝が支配するのはどれか。", "opts": ["大円筋", "胸鎖乳突筋", "外肋間筋", "横隔膜"], "ans": 0, "essential": false}, {"q": "大腿神経が支配するのはどれか。", "opts": ["恥骨筋", "外閉鎖筋", "長内転筋", "薄筋"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["中耳は喉頭と連絡している。", "鼓膜は外耳と中耳の間にある。", "中耳には３つの耳小骨がある。", "内耳は側頭骨の錐体の中にある。"], "ans": 0, "essential": false}, {"q": "コルチ器があるのはどれか。", "opts": ["内耳", "皮膚", "眼球", "鼻腔"], "ans": 0, "essential": false}, {"q": "味蕾が存在しないのはどれか。", "opts": ["糸状乳頭", "茸状乳頭", "葉状乳頭", "有郭乳頭"], "ans": 0, "essential": false}, {"q": "体表から触知できないのはどれか。", "opts": ["方形回内筋", "橈側手根屈筋", "尺側手根屈筋", "円回内筋"], "ans": 0, "essential": false}, {"q": "神経と通過部位との組合せで正しいのはどれか。", "opts": ["脛骨神経・・・・・内果の後方", "大腿神経・・・・・膝窩部", "浅腓骨神経・・・・伸筋支帯の深部", "深腓骨神経・・・・外果の後方"], "ans": 0, "essential": false}, {"q": "大汗腺（アポクリン腺）が多く分布するのはどれか。", "opts": ["腋窩", "鼻翼", "手掌", "手背"], "ans": 0, "essential": false}, {"q": "脊柱と関節をつくるのはどれか。", "opts": ["寛骨", "肩甲骨", "鎖骨", "大腿骨"], "ans": 0, "essential": true}, {"q": "筋とその起始との組み合わせで誤っているのはどれか。", "opts": ["上腕三頭筋長頭―――――関節上結節", "上腕二頭筋短頭―――――烏口突起", "橈側手根屈筋――――――上腕骨内側上顆", "尺側手根伸筋――――――上腕骨外側上顆"], "ans": 0, "essential": true}, {"q": "酸素濃度が高い血液が流れるのはどれか。", "opts": ["肺静脈", "肺動脈", "上大静脈", "下大静脈"], "ans": 0, "essential": true}, {"q": "皮質が存在する部位はどれか。", "opts": ["小脳", "脊髄", "延髄", "橋"], "ans": 0, "essential": true}, {"q": "膀胱の上皮はどれか。", "opts": ["移行上皮", "多列上皮", "単層立方上皮", "重層扁平上皮"], "ans": 0, "essential": false}, {"q": "外胚葉から分化するのはどれか。", "opts": ["毛", "胃", "膵臓", "精巣"], "ans": 0, "essential": false}, {"q": "関節とその分類との組み合わせで誤っているのはどれか。", "opts": ["母指の手根中手関節　−　楕円関節", "距腿関節　　　　　　−　蝶番関節", "股関節　　　　　　　−　球関節", "上橈尺関節　　　　　−　車軸関節"], "ans": 0, "essential": false}, {"q": "誤っている組み合わせはどれか。", "opts": ["前頭骨　−　卵円孔", "蝶形骨　−　視神経管", "側頭骨　−　内耳孔", "後頭骨　−　舌下神経管"], "ans": 0, "essential": false}, {"q": "鼻腔を構成しない骨はどれか。", "opts": ["頬骨", "篩骨", "蝶形骨", "上顎骨"], "ans": 0, "essential": false}, {"q": "肩甲骨に付着しない筋はどれか。", "opts": ["大胸筋", "小胸筋", "三角筋", "上腕二頭筋"], "ans": 0, "essential": false}, {"q": "中足骨と関節をつくるのはどれか。", "opts": ["立方骨", "距骨", "踵骨", "舟状骨"], "ans": 0, "essential": false}, {"q": "大腿屈筋群に属するのはどれか。", "opts": ["大腿二頭筋", "縫工筋", "薄筋", "内側広筋"], "ans": 0, "essential": false}, {"q": "腹腔動脈の枝はどれか。", "opts": ["総肝動脈", "腎動脈", "上腸間膜動脈", "内腸骨動脈"], "ans": 0, "essential": false}, {"q": "大脳動脈輪を構成しないのはどれか。", "opts": ["上小脳動脈", "前大脳動脈", "中大脳動脈", "後交通動脈"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["胸管は左静脈角に注ぐ", "奇静脈は下大動脈へ注ぐ", "冠状静脈洞は左心房へ注ぐ", "肝静脈は門脈へ注ぐ"], "ans": 0, "essential": false}, {"q": "歯根膜と接しているのはどれか。", "opts": ["セメント質", "歯髄", "象牙質", "エナメル質"], "ans": 0, "essential": false}, {"q": "塩酸を分泌する胃の細胞はどれか。", "opts": ["傍細胞（壁細胞）", "表層粘膜細胞", "主細胞", "副細胞"], "ans": 0, "essential": false}, {"q": "上顎洞の開口部はどれか。", "opts": ["中鼻道", "上鼻道", "下鼻道", "総鼻道"], "ans": 0, "essential": false}, {"q": "甲状軟骨があるのはどこか。", "opts": ["喉頭", "中咽頭", "下咽頭", "気管"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["腎小体とそれに続く尿細管をネフロンという", "腎臓は腹膜に包まれ間膜を有する", "腎臓は表層の髄質と深部の皮質からなる。", "腎乳頭は腎盂（腎盤）に包まれる"], "ans": 0, "essential": false}, {"q": "泌尿器について誤っているのはどれか。", "opts": ["膀胱三角の粘膜にはヒダがある", "膀胱三角は左右の尿管口と内尿道口でつくられる。", "膀胱括約筋は内尿道口周囲の平滑筋である", "尿道括約筋は尿道隔膜部周囲の横紋筋である"], "ans": 0, "essential": false}, {"q": "精子を産生するのはどれか。", "opts": ["曲精細管", "直精細管", "精管", "精嚢"], "ans": 0, "essential": false}, {"q": "男性ホルモンを分泌するのはどれか。", "opts": ["ライディッヒ細胞（間質細胞）", "セルトリ細胞", "精祖細胞", "精子細胞"], "ans": 0, "essential": false}, {"q": "ステロイドホルモンを分泌するのはどれか。", "opts": ["副腎皮質", "下垂体", "甲状腺", "ランゲルハンス島"], "ans": 0, "essential": false}, {"q": "大脳皮質運動性言語野（ブローカ中枢）があるのはどこか。", "opts": ["前頭葉", "頭頂葉", "側頭葉", "後頭葉"], "ans": 0, "essential": false}, {"q": "錐体交叉があるのはどこか。", "opts": ["延髄", "間脳", "中脳", "橋"], "ans": 0, "essential": false}, {"q": "舌神経を分枝するのはどれか。", "opts": ["下顎神経", "上顎神経", "舌咽神経", "舌下神経"], "ans": 0, "essential": false}, {"q": "副交感神経線維を含まないのはどれか。", "opts": ["三叉神経", "動眼神経", "顔面神経", "迷走神経"], "ans": 0, "essential": false}, {"q": "頸神経叢の枝はどれか。", "opts": ["鎖骨上神経", "肩甲上神経", "肩甲下神経", "鎖骨下筋神経"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["正中神経は手根管を通過する", "尺骨神経は上腕骨内側上顆の前を通る", "総腓骨神経は下腿骨間膜を貫通する", "脛骨神経は外果の下を通る"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["皮下組織は疎性結合組織からなる", "表皮は単層立方上皮からなる", "毛包には大汗線が開口する", "立毛筋は横紋筋である"], "ans": 0, "essential": false}, {"q": "感覚神経がシナプスを介さないで脳に至るのはどれか。", "opts": ["嗅覚器", "視覚器", "味覚器", "聴覚器"], "ans": 0, "essential": false}, {"q": "体表から触知できるのはどれか。", "opts": ["眼窩下孔", "内耳孔", "大後頭孔", "下顎孔"], "ans": 0, "essential": false}, {"q": "末梢神経を触知できるのはどれか。", "opts": ["腓骨頸", "坐骨結節", "大腿骨小転子", "大腿骨内側上顆"], "ans": 0, "essential": false}, {"q": "蝶番関節はどれか。", "opts": ["腕尺関節", "肩関節", "上撓尺関節", "母指の手根中手関節"], "ans": 0, "essential": true}, {"q": "正しい組合せはどれか。", "opts": ["腰椎　−−−　乳頭突起", "頚椎　−−−　肋骨突起", "胸椎　−−−　副突起", "仙骨　−−−　下関節突起"], "ans": 0, "essential": true}, {"q": "大腿骨に付着部をもつのはどれか。", "opts": ["大腿二頭筋", "薄筋", "半膜様筋", "半腱様筋"], "ans": 0, "essential": true}, {"q": "腰神経叢の枝でないのはどれか。", "opts": ["上殿神経", "腸骨下腹神経", "閉鎖神経", "大腿神経"], "ans": 0, "essential": true}, {"q": "細胞内消化を行うのはどれか。", "opts": ["ライソソーム", "リボソーム", "ミトコンドリア", "ゴルジ装置"], "ans": 0, "essential": false}, {"q": "腹直筋はどれに分類されるか。", "opts": ["多腹筋", "紡錘状筋", "羽状筋", "多頭筋"], "ans": 0, "essential": false}, {"q": "副鼻腔を有するのはどれか。", "opts": ["蝶形骨", "側頭骨", "鼻骨", "下顎骨"], "ans": 0, "essential": false}, {"q": "側頭筋が停止するのはどれか。", "opts": ["筋突起", "下顎窩", "側頭窩", "関節突起"], "ans": 0, "essential": false}, {"q": "腕尺関節に関与しないのはどれか。", "opts": ["上腕骨小頭", "鈎突窩", "肘頭窩", "上腕骨滑車"], "ans": 0, "essential": false}, {"q": "上腕骨を外旋させるのはどれか。", "opts": ["棘下筋", "棘上筋", "肩甲下筋", "大円筋"], "ans": 0, "essential": false}, {"q": "距骨と関節しないのはどれか。", "opts": ["立方骨", "踵骨", "腓骨", "舟状骨"], "ans": 0, "essential": false}, {"q": "肺静脈からの血液が最初に通過するのはどれか。", "opts": ["僧帽弁", "三尖弁", "大動脈弁", "肺動脈弁"], "ans": 0, "essential": false}, {"q": "大動脈から直接起こるのはどれか。", "opts": ["腎動脈", "脾動脈", "総肝動脈", "内腸骨動脈"], "ans": 0, "essential": false}, {"q": "外頸動脈の枝でないのはどれか。", "opts": ["眼動脈", "顎動脈", "舌動脈", "浅側頭動脈"], "ans": 0, "essential": false}, {"q": "大脳動脈輪を構成しないのはどれか。", "opts": ["上小脳動脈", "前大脳動脈", "中大脳動脈", "後大脳動脈"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["前脛骨動脈は伸筋支帯の下を通って足背動脈になる。", "上腕深動脈は肘窩より遠位で橈骨動脈になる。", "大腿深動脈は内転筋管を通って膝窩動脈になる。", "内腸骨動脈は鼠径靱帯の下を通って大腿動脈になる。"], "ans": 0, "essential": false}, {"q": "門脈に流入するのはどれか。", "opts": ["脾静脈", "腎静脈", "腰静脈", "肝静脈"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["盲腸には2本の結腸ヒモがある。", "回腸と盲腸との間には弁がある。", "虫垂は盲腸から突出する。", "横行結腸には大網が付着する。"], "ans": 0, "essential": false}, {"q": "十二指腸に開くのはどれか。", "opts": ["総胆管", "肝管", "総肝管", "胆嚢管"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["右気管支は左気管支よりも太く傾斜度が小さい。", "右気管支は左気管支よりも太く傾斜度が大きい。", "右気管支は左気管支よりも細く傾斜度が小さい。", "右気管支は左気管支よりも細く傾斜度が大きい。"], "ans": 1, "essential": false}, {"q": "尿管が存在するのはどれか。", "opts": ["腎盤（腎孟）と膀胱の間", "腎小体と腎乳頭の間", "腎乳頭と腎盤（腎孟）の間", "膀胱と尿生殖隔膜の間"], "ans": 0, "essential": false}, {"q": "陰茎海綿体を包むのはどれか。", "opts": ["白膜", "肉様膜", "腹膜", "脈絡膜"], "ans": 0, "essential": false}, {"q": "前から後ろへ、正しい順序に並んでいるのはどれか。", "opts": ["膀胱　−　子宮　−　直腸", "膀胱　−　直腸　−　子宮", "子宮　−　膀胱　−　直腸", "子宮　−　直腸　−　膀胱"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["副腎皮質　−　糖質コルチコイド", "下垂体　　−　メラトニン", "甲状腺　　−　エストロゲン", "膵島（ランゲルハンス島）　−　成長ホルモン"], "ans": 0, "essential": false}, {"q": "脳幹を構成しないのはどれか。", "opts": ["小脳", "中脳", "橋", "延髄"], "ans": 0, "essential": false}, {"q": "脳脊髄液が産生されるのはどれか。", "opts": ["側脳室", "クモ膜下腔", "クモ膜顆粒", "硬膜静脈洞"], "ans": 0, "essential": false}, {"q": "副交感神経線維を含むのはどれか。", "opts": ["動眼神経", "嗅神経", "三叉神経", "舌下神経"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["舌下神経　−　舌の運動", "三叉神経　−　舌根の痛覚", "顔面神経　−　舌尖の痛覚", "舌咽神経　−　舌尖の味覚"], "ans": 0, "essential": false}, {"q": "橈骨神経支配でないのはどれか。", "opts": ["長掌筋", "上腕三頭筋", "腕橈骨筋", "回外筋"], "ans": 0, "essential": false}, {"q": "足の指背に分布しないのはどれか。", "opts": ["伏在神経", "腓腹神経", "浅腓骨神経", "深腓骨神経"], "ans": 0, "essential": false}, {"q": "皮膚腺でないのはどれか。", "opts": ["涙腺", "エクリン汗腺", "アポクリン汗腺", "脂腺"], "ans": 0, "essential": false}, {"q": "色彩に感受性が高いのはどれか。", "opts": ["錐状体", "杆状体", "毛様体", "虹彩"], "ans": 0, "essential": false}, {"q": "体表から触知できるのはどれか。", "opts": ["坐骨結節", "前仙骨孔", "仙骨底", "岬角"], "ans": 0, "essential": false}, {"q": "手の表面で腱を触知できない筋はどれか。", "opts": ["長母指屈筋", "長母指伸筋", "長掌筋", "長母指外転筋"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["内側翼突筋　&#8722;　下顎骨後方移動", "咬　筋　　　&#8722;　下顎骨挙上", "側頭筋　　　&#8722;　下顎骨挙上", "外側翼突筋　&#8722;　下顎骨前方移動"], "ans": 0, "essential": true}, {"q": "正しいのはどれか。", "opts": ["上腕二頭筋長頭の腱は結節間溝を通る。", "頸神経ワナは斜角筋隙を通る。", "閉鎖神経は鼡径管を通る。", "浅指屈筋腱は深指屈筋腱の二分したところを通る。"], "ans": 0, "essential": true}, {"q": "腹大動脈から直接分岐しないのはどれか。", "opts": ["総肝動脈", "腹腔動脈", "上腸間膜動脈", "下腸間膜動脈"], "ans": 0, "essential": true}, {"q": "姿勢や平衡を調節、統御する主たる中枢神経領域はどれか。", "opts": ["小　脳", "脊　髄", "延　髄", "中　脳"], "ans": 0, "essential": true}, {"q": "細胞活動のエネルギー産生の場はどれか。", "opts": ["ミトコンドリア", "中心小体", "リボソーム", "ゴルジ装置"], "ans": 0, "essential": false}, {"q": "靭帯に最も多く含まれる線維はどれか。", "opts": ["膠原線維", "弾性線維", "筋原線維", "細網線維"], "ans": 0, "essential": false}, {"q": "関節腔内にあるのはどれか。", "opts": ["半月板", "黄色靭帯", "手根管", "髄　核"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["前仙骨孔は4対ある。", "頚椎は後彎を示す。", "頚椎は8個ある。", "横突孔は仙椎にある。"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["小円筋　　　&#8722;　上腕の内旋", "上腕二頭筋　&#8722;　前腕の回外", "腕橈骨筋　　&#8722;　肘関節の屈曲", "長掌筋　　　&#8722;　手根の屈曲"], "ans": 0, "essential": false}, {"q": "寛骨臼切痕で結合するのはどれか。", "opts": ["坐骨と恥骨", "仙骨と腸骨", "腸骨と坐骨", "腸骨と恥骨"], "ans": 0, "essential": false}, {"q": "大腿骨大転子に停止しないのはどれか。", "opts": ["大殿筋", "中殿筋", "小殿筋", "梨状筋"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["左冠状動脈の前室間枝（前下行枝）は心室中隔に分布する。", "肺動脈は左右2本ずつある。", "大動脈弁には腱索が付く。", "冠状静脈洞は左心房に開口する。"], "ans": 0, "essential": false}, {"q": "内頚動脈の枝はどれか。", "opts": ["眼動脈", "舌動脈", "顔面動脈", "顎動脈"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["胸腺は加齢に伴い脂肪組織になる。", "集合リンパ小節（パイエル板）は結腸にある。", "脾臓にはハッサル小体がある。", "脾臓のリンパ小節を赤脾髄という。"], "ans": 0, "essential": false}, {"q": "胎児期の血液循環に関係しないのはどれか。", "opts": ["室間孔", "卵円窩", "動脈管", "肝円索"], "ans": 0, "essential": false}, {"q": "結腸で正しいのはどれか。", "opts": ["結腸曲は左が右よりも高い。", "輪状ヒダがある。", "小網の付着部位がある。", "内腸骨動脈の枝が分布する。"], "ans": 0, "essential": false}, {"q": "膵頭部が接するのはどれか。", "opts": ["十二指腸", "脾　臓", "空　腸", "回　腸"], "ans": 0, "essential": false}, {"q": "副鼻腔の開口部で正しい組合せはどれか。", "opts": ["前頭洞　　&#8722;　中鼻道", "上顎洞　　&#8722;　上鼻道", "蝶形骨洞　&#8722;　中鼻道", "篩骨洞　　&#8722;　下鼻道"], "ans": 0, "essential": false}, {"q": "声帯ヒダはどこに張るか。", "opts": ["甲状軟骨と披裂軟骨", "喉頭蓋軟骨と甲状軟骨", "披裂軟骨と輪状軟骨", "輪状軟骨と気管軟骨"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["左腎は右腎よりも低い位置にある。", "腎臓は腹膜後器官である。", "腎臓は脂肪組織に包まれている。", "腎動静脈は腎門を出入りする。"], "ans": 0, "essential": false}, {"q": "男性の尿道で正しいのはどれか。", "opts": ["前立腺部を貫く。", "内尿道口は隔膜部にある。", "陰茎海綿体を貫く。", "外尿道括約筋は平滑筋である。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["卵巣は卵巣提索と固有卵巣索とで支持される。", "卵巣の表面は白膜で覆われる。", "黄体が退縮すると赤体になる。", "黄体ホルモン（プロゲステロン）は卵胞膜から分泌される。"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["子宮は前傾後屈する。", "子宮外側面には広間膜がみられる。", "子宮前面は膀胱に接する。", "子宮動脈は内腸骨動脈の枝である。"], "ans": 0, "essential": false}, {"q": "カルシトニンを分泌するのはどれか。", "opts": ["甲状腺傍ろ胞（小胞）細胞", "下垂体前葉分泌細胞", "松果体細胞", "膵島B（β）細胞"], "ans": 0, "essential": false}, {"q": "下垂体前葉ホルモンが直接作用するのはどれか。", "opts": ["甲状腺", "膵　臓", "松果体", "副腎髄質"], "ans": 0, "essential": false}, {"q": "成人の脊髄で正しいのはどれか。", "opts": ["前角に運動神経細胞が存在する。", "脊柱管とほぼ同じ長さである。", "全長にわたり太さは一定である。", "白質は中心部に存在する。"], "ans": 0, "essential": false}, {"q": "温痛覚の伝導路はどれか。", "opts": ["脊髄視床路", "錐体路", "脊髄小脳路", "長後索路"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["舌咽神経　&#8722;　声帯筋", "滑車神経　&#8722;　上斜筋", "三叉神経　&#8722;　咀嚼筋", "外転神経　&#8722;　外側直筋"], "ans": 0, "essential": false}, {"q": "腕神経叢が支配するのはどれか。", "opts": ["肩甲挙筋", "僧帽筋", "胸鎖乳突筋", "横隔膜"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["交感神経の節前ニューロンは脊髄後角に存在する。", "顔面神経は副交感神経線維を含む。", "仙骨神経は副交感神経線維を含む。", "大内臓神経は交感神経の節前線維である。"], "ans": 0, "essential": false}, {"q": "痛みの受容器はどれか。", "opts": ["自由神経終末", "ニッスル小体", "パチニ小体", "筋紡錘"], "ans": 0, "essential": false}, {"q": "視覚の伝導路で誤っているのはどれか。", "opts": ["網膜の両耳側からの線維は視交叉で交叉する。", "上丘は網膜の情報を受ける。", "視索は外側膝状体に至る。", "視放線は後頭葉に至る。"], "ans": 0, "essential": false}, {"q": "広義の会陰を形成しないのはどれか。", "opts": ["上前腸骨棘", "恥骨結合", "坐骨結節", "尾　骨"], "ans": 0, "essential": false}, {"q": "前腕で体表から触れないのはどれか。", "opts": ["深指屈筋腱", "尺側手根屈筋腱", "橈側手根屈筋腱", "長掌筋腱"], "ans": 0, "essential": false}, {"q": "顎関節を構成する骨はどれか。", "opts": ["側頭骨", "上顎骨", "頬　骨", "蝶形骨"], "ans": 0, "essential": true}, {"q": "横突孔を有するのはどれか。", "opts": ["頸椎", "胸椎", "腰椎", "仙椎"], "ans": 0, "essential": true}, {"q": "門脈に続く静脈はどれか。", "opts": ["脾静脈", "子宮静脈", "腎静脈", "副腎静脈"], "ans": 0, "essential": true}, {"q": "脊髄で交感神経の神経細胞が存在するのはどれか。", "opts": ["側角", "前角", "後角", "前索"], "ans": 0, "essential": true}, {"q": "弾性軟骨はどれか。", "opts": ["耳介軟骨", "肋軟骨", "気管軟骨", "関節円板"], "ans": 0, "essential": false}, {"q": "外胚葉から発生するのはどれか。", "opts": ["脊髄", "肝臓", "心臓", "精巣"], "ans": 0, "essential": false}, {"q": "四頭筋が停止する部位はどれか。", "opts": ["脛骨粗面", "肘頭", "橈骨粗面", "腓骨頭"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["下腿三頭筋　&#8722;　鵞足", "長掌筋　　　&#8722;　手掌腱膜", "腹直筋　　　&#8722;　腱画", "大内転筋　　&#8722;　内転筋管"], "ans": 0, "essential": false}, {"q": "肋間神経が支配する筋はどれか。", "opts": ["外腹斜筋", "広背筋", "小胸筋", "前鋸筋"], "ans": 0, "essential": false}, {"q": "タバチエール（嗅ぎタバコ入れ）を構成しないのはどれか。", "opts": ["母指対立筋", "短母指伸筋", "長母指外転筋", "長母指伸筋"], "ans": 0, "essential": false}, {"q": "ショパール関節を構成しないのはどれか。", "opts": ["楔状骨", "踵骨", "距骨", "舟状骨"], "ans": 0, "essential": false}, {"q": "右心房に存在するのはどれか。", "opts": ["冠状静脈洞口", "プルキンエ線維", "腱索", "乳頭筋"], "ans": 0, "essential": false}, {"q": "外頸動脈の終枝はどれか。", "opts": ["顎動脈", "顔面動脈", "上甲状腺動脈", "舌動脈"], "ans": 0, "essential": false}, {"q": "腹大動脈から直接分枝するのはどれか。", "opts": ["下腸間膜動脈", "固有肝動脈", "回結腸動脈", "左結腸動脈"], "ans": 0, "essential": false}, {"q": "リンパ液が流れないのはどれか。", "opts": ["奇静脈", "胸管", "乳ビ槽", "左静脈角"], "ans": 0, "essential": false}, {"q": "重層扁平上皮が存在するのはどれか。", "opts": ["食道", "胃", "小腸", "結腸"], "ans": 0, "essential": false}, {"q": "大十二指腸乳頭にあるのはどれか。", "opts": ["オッディ括約筋", "バウヒン弁", "集合リンパ節", "グリソン鞘"], "ans": 0, "essential": false}, {"q": "左右一対あるのはどれか。", "opts": ["披裂軟骨", "喉頭蓋軟骨", "甲状軟骨", "輪状軟骨"], "ans": 0, "essential": false}, {"q": "呼吸器系で正しいのはどれか。", "opts": ["吸入された異物は右気管支に入りやすい。", "気管は単層円柱上皮である。", "肺胸膜でガス交換が行われる。", "胸膜腔は気管支で外界と通じる。"], "ans": 0, "essential": false}, {"q": "腎臓で誤っているのはどれか。", "opts": ["遠位尿細管はボーマン嚢の尿管極から始まる。", "糸球体は毛細血管で形成される。", "ボーマン嚢は糸球体を包んでいる。", "緻密斑は遠位尿細管に形成される。"], "ans": 0, "essential": false}, {"q": "尿管で誤っているのはどれか。", "opts": ["内腸骨動脈と交叉する。", "腹膜後器官である。", "膀胱底を貫く。", "3か所の生理的狭窄部がある。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["精巣上体管は精管に連続する。", "精管の全長は約20cmである。", "精管膨大部は陰嚢内にある。", "射精管は尿道海綿体内にある。"], "ans": 0, "essential": false}, {"q": "月経直前に形成されているのはどれか。", "opts": ["白体", "一次卵胞", "成熟卵胞", "黄体"], "ans": 0, "essential": false}, {"q": "小胞（ろ胞）を形成するのはどれか。", "opts": ["甲状腺", "下垂体前葉", "副腎皮質", "膵島（ランゲルハンス島）"], "ans": 0, "essential": false}, {"q": "メラトニンを分泌するのはどれか。", "opts": ["松果体", "甲状腺", "上皮小体（副甲状腺）", "副腎皮質"], "ans": 0, "essential": false}, {"q": "髄膜で外から内に向けての順で正しいのはどれか。", "opts": ["硬膜　&#8722;　クモ膜　&#8722;　軟膜", "軟膜　&#8722;　クモ膜　&#8722;　硬膜", "軟膜　&#8722;　硬膜　　&#8722;　クモ膜", "硬膜　&#8722;　軟膜　　&#8722;　クモ膜"], "ans": 0, "essential": false}, {"q": "大脳辺縁系に属する領域はどれか。", "opts": ["海馬", "尾状核", "レンズ核", "黒質"], "ans": 0, "essential": false}, {"q": "鳥距溝のある部位はどれか。", "opts": ["後頭葉", "前頭葉", "側頭葉", "頭頂葉"], "ans": 0, "essential": false}, {"q": "延髄にある脳神経核はどれか。", "opts": ["迷走神経核", "動眼神経核", "滑車神経核", "外転神経核"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["顔面神経　&#8722;　卵円孔", "視神経　　&#8722;　視神経管", "動眼神経　&#8722;　上眼窩裂", "上顎神経　&#8722;　正円孔"], "ans": 0, "essential": false}, {"q": "運動神経が分布するのはどれか。", "opts": ["筋紡錘", "マイスネル小体", "パチニ小体", "腱紡錘"], "ans": 0, "essential": false}, {"q": "内耳にあるのはどれか。", "opts": ["蝸牛", "鼓膜", "鼓室", "耳管"], "ans": 0, "essential": false}, {"q": "体表から触知できるのはどれか。", "opts": ["剣状突起", "翼状突起", "鈎状突起", "歯突起"], "ans": 0, "essential": false}, {"q": "顔面動脈の拍動を触知できるのはどれか。", "opts": ["下顎体部", "側頭部", "眼窩上部", "オトガイ部"], "ans": 0, "essential": false}, {"q": "大腿三角を構成しないのはどれか。〔必〕", "opts": ["薄　筋", "鼡径靱帯", "縫工筋", "長内転筋"], "ans": 0, "essential": false}, {"q": "大脳髄質に存在するのはどれか。〔必〕", "opts": ["内 包", "黒 質", "中心管", "第4脳室"], "ans": 0, "essential": false}, {"q": "皮静脈はどれか。〔必〕", "opts": ["大伏在静脈", "内頸静脈", "腋窩静脈", "大腿静脈"], "ans": 0, "essential": false}, {"q": "副交感神経の節前線維が出るのはどれか。〔必〕", "opts": ["仙 髄", "頸 髄", "胸 髄", "腰 髄"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["重層扁平上皮　&#8722;　胃粘膜", "多裂線毛上皮　&#8722;　気管支粘膜", "線毛上皮　　　&#8722;　卵管粘膜", "移行上皮　　　&#8722;　膀胱粘膜"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["平滑筋は横紋を呈する。", "筋原線維にミオシンが含まれる。", "骨格筋は随意筋である。", "心筋細胞は分枝する。"], "ans": 0, "essential": false}, {"q": "骨の太さの成長に関与するのはどれか。", "opts": ["骨　膜", "骨端軟骨", "関節軟骨", "海綿骨"], "ans": 0, "essential": false}, {"q": "筋が骨の窩部に接していないのはどれか。", "opts": ["前脛骨筋", "側頭筋", "肩甲下筋", "腸骨筋"], "ans": 0, "essential": false}, {"q": "顔面神経に支配される筋はどれか。", "opts": ["広頚筋", "内側翼突筋", "側頭筋", "咬　筋"], "ans": 0, "essential": false}, {"q": "橈骨神経に支配される筋はどれか。", "opts": ["腕橈骨筋", "烏口腕筋", "橈側手根屈筋", "上腕二頭筋長頭"], "ans": 0, "essential": false}, {"q": "骨盤の分界線を構成するのはどれか。", "opts": ["岬　角", "大坐骨孔", "閉鎖孔", "坐骨結節"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["冠状動脈は機能的終動脈である。", "中動脈同士の交通を側副血行路という。", "吻合枝を有する動脈を終動脈という。", "硬膜静脈洞は伴行動脈である。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["心房中隔には卵円窩がある。", "肺動脈の基部には冠状動脈の入り口がある。", "大動脈弁には腱索が付く。", "右心耳の先端部は心尖と呼ばれる。"], "ans": 0, "essential": false}, {"q": "腹大動脈の枝はどれか。", "opts": ["精巣動脈", "中直腸動脈", "子宮動脈", "上膀胱動脈"], "ans": 0, "essential": false}, {"q": "静脈血の流入経路の組合せで正しいのはどれか。", "opts": ["食道静脈　&#8722;　奇静脈", "卵巣静脈　&#8722;　内腸骨静脈", "腎静脈　　&#8722;　門脈", "脾静脈　　&#8722;　下大静脈"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["両側下肢のリンパは乳び槽に注ぐ。", "両側上肢のリンパは右リンパ本幹に注ぐ。", "乳び槽のリンパは右リンパ本幹に注ぐ。", "胸管のリンパは右の静脈角に注ぐ。"], "ans": 0, "essential": false}, {"q": "消化管で誤っているのはどれか。", "opts": ["オッディ括約筋は胃の幽門部にある。", "有郭乳頭は舌分界溝の前にある。", "胆汁は大十二指腸乳頭から出る。", "パイエル板は回腸にある。"], "ans": 0, "essential": false}, {"q": "肝臓の上面に接するのはどれか。", "opts": ["横隔膜", "胃", "膵 臓", "胆 嚢"], "ans": 0, "essential": false}, {"q": "反回神経に支配される筋はどれか。", "opts": ["後輪状披裂筋", "上咽頭収縮筋", "中咽頭収縮筋", "胸骨甲状筋"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["肺は右が3葉で左が2葉である。", "肺の栄養血管は肺動脈である。", "左気管支は垂直に近い走行をする。", "胸部で気管は食道の後方に位置する。"], "ans": 0, "essential": false}, {"q": "成人における正しい組合せはどれか。", "opts": ["尿管の長さ　　　　&#8722;　約30cm", "腎臓の長径　　　　&#8722;　約5cm", "腎小体の直径　　　&#8722;　約2mm", "男性の尿道の長さ　&#8722;　約8cm"], "ans": 0, "essential": false}, {"q": "血液が流れているのはどれか。", "opts": ["糸球体", "ボーマン嚢", "ヘンレのワナ", "腎　杯"], "ans": 0, "essential": false}, {"q": "男女の泌尿・生殖器の対比で誤っているのはどれか。", "opts": ["子宮に相当するのが精嚢である。", "大陰唇に相当するのが陰嚢である。", "陰核に相当するのが陰茎である。", "大前庭腺に相当するのが尿道球腺である。"], "ans": 0, "essential": false}, {"q": "通常の受精部位はどれか。", "opts": ["卵管膨大部", "卵管采", "卵管峡部", "子宮腔"], "ans": 0, "essential": false}, {"q": "下垂体後葉で正しいのはどれか。", "opts": ["神経内分泌系である。", "皮質と髄質とからなる。", "カテコールアミンを分泌する。", "腺細胞からなる。"], "ans": 0, "essential": false}, {"q": "副腎で電解質コルチコイドを分泌するのはどれか。", "opts": ["皮質球状帯", "皮質束状帯", "皮質網状帯", "髄　質"], "ans": 0, "essential": false}, {"q": "神経終末に含まれるのはどれか。", "opts": ["シナプス小胞", "髄　鞘", "粗面小胞体", "ゴルジ装置"], "ans": 0, "essential": false}, {"q": "髄膜で誤っているのはどれか。", "opts": ["小脳と橋との間には小脳テントがある。", "左右の大脳半球の間には大脳鎌がある。", "大脳鎌の上縁には硬膜静脈洞がある。", "小脳テントの開口部はテント切痕と呼ばれる。"], "ans": 0, "essential": false}, {"q": "椎間孔にあるのはどれか。", "opts": ["脊髄神経節", "脊 髄", "馬 尾", "交感神経幹"], "ans": 0, "essential": false}, {"q": "脳神経に含まれる運動性線維で正しいのはどれか。", "opts": ["動眼神経は上眼&#152037;挙筋を支配する。", "顔面神経は舌の運動に働く。", "右迷走神経は大動脈弓で反回する。", "副神経は頸神経ワナを経由する。"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["黄斑の中央部には視神経乳頭がある。", "水晶体が混濁した状態を白内障という。", "眼房水の循環障害で眼内圧が亢進する。", "網膜で最初に光を受け取るのは視細胞である。"], "ans": 0, "essential": false}, {"q": "平衡斑が存在するのはどれか。", "opts": ["前 庭", "蝸牛管", "鼓室階", "半規管"], "ans": 0, "essential": false}, {"q": "腋窩の前壁を構成するのはどれか。", "opts": ["大胸筋", "三角筋", "棘上筋", "広背筋"], "ans": 0, "essential": false}, {"q": "ローゼル・ネラトン線で正しいのはどれか。", "opts": ["大転子の触知部位", "腰椎穿刺を行う部位", "坐骨神経の圧痛点", "尺骨神経の触知部位"], "ans": 0, "essential": false}, {"q": "細胞小器官でないのはどれか。〔必〕", "opts": ["ヘモグロビン", "ゴルジ装置", "粗面小胞体", "リソソーム"], "ans": 0, "essential": false}, {"q": "骨に存在しないのはどれか。〔必〕", "opts": ["ディッセ腔", "シャーピー線維", "ハバース層板", "フォルクマン管"], "ans": 0, "essential": false}, {"q": "関節円板があるのはどれか。〔必〕", "opts": ["顎関節", "肩関節", "股関節", "膝関節"], "ans": 0, "essential": false}, {"q": "脊髄で運動神経細胞が存在するのはどれか。〔必〕", "opts": ["前 角", "側 角", "側 索", "後 索"], "ans": 0, "essential": false}, {"q": "有糸分裂で誤っているのはどれか。", "opts": ["紡錘糸は細胞膜に付着する。", "核小体は消失する。", "中心小体は両極に移動する。", "染色体は赤道面に配列する。"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["環椎横靱帯　−　歯突起", "黄色靭帯　−　横突起", "仙棘靱帯　−　岬角", "三角靱帯　−　椎弓"], "ans": 0, "essential": false}, {"q": "2か所で関節を形成する組合せはどれか。", "opts": ["橈　骨　−　尺骨", "鎖　骨　−　肩甲骨", "左寛骨　−　右寛骨", "大腿骨　−　脛骨"], "ans": 0, "essential": false}, {"q": "下前腸骨棘に付着する筋はどれか。", "opts": ["大腿直筋", "大腿筋膜張筋", "縫工筋", "腸骨筋"], "ans": 0, "essential": false}, {"q": "一関節筋はどれか。", "opts": ["大内転筋", "上腕二頭筋", "縫工筋", "腓腹筋"], "ans": 0, "essential": false}, {"q": "外側縦足弓を構成するのはどれか。", "opts": ["立方骨", "距　骨", "舟状骨", "楔状骨"], "ans": 0, "essential": false}, {"q": "心臓で正しいのはどれか。", "opts": ["心外膜は心筋を覆う。", "心外膜は線維性心膜である。", "心内膜は冠状動脈を覆う。", "心内膜は心膜腔を構成する。"], "ans": 0, "essential": false}, {"q": "心血管系で正しいのはどれか。", "opts": ["動脈管索は大動脈と肺動脈との間にある。", "冠状動脈は大動脈弓から起こる。", "ヒス束からの興奮は房室結節へ伝わる。", "卵円窩は心室中隔にある。"], "ans": 0, "essential": false}, {"q": "卵巣動脈を分枝するのはどれか。", "opts": ["腹大動脈", "総腸骨動脈", "内腸骨動脈", "内陰部動脈"], "ans": 0, "essential": false}, {"q": "外腸骨動脈の枝はどれか。", "opts": ["下腹壁動脈", "閉鎖動脈", "内陰部動脈", "下殿動脈"], "ans": 0, "essential": false}, {"q": "奇静脈が注ぐのはどれか。", "opts": ["上大静脈", "腋窩静脈", "鎖骨下静脈", "腕頭静脈"], "ans": 0, "essential": false}, {"q": "外分泌腺と開口部位との組合せで正しいのはどれか。", "opts": ["顎下腺　−　舌下小丘", "耳下腺　−　口腔底", "舌下腺　−　舌盲孔", "口唇腺　−　固有口腔"], "ans": 0, "essential": false}, {"q": "横隔膜の食道裂孔を通るのはどれか。", "opts": ["迷走神経", "奇静脈", "胸　管", "交感神経幹"], "ans": 0, "essential": false}, {"q": "最も上位（頭側）にあるのはどれか。", "opts": ["喉頭蓋軟骨", "甲状軟骨", "輪状軟骨", "披裂軟骨"], "ans": 0, "essential": false}, {"q": "肺で正しいのはどれか。", "opts": ["肺底は横隔膜に接する。", "左肺には斜裂と水平裂がある。", "肺尖は鎖骨と同じ高さにある。", "肺門は胸膜に覆われている。"], "ans": 0, "essential": false}, {"q": "腎臓を包まないのはどれか。", "opts": ["肉様膜", "線維被膜", "脂肪被膜", "ゲロータ筋膜"], "ans": 0, "essential": false}, {"q": "腎臓で誤っているのはどれか。", "opts": ["長軸の延長線は下方で交わる。", "左腎は右腎より高位である。", "腎門には尿管がある。", "集合管の尿は乳頭孔から出る。"], "ans": 0, "essential": false}, {"q": "受精卵が着床する時期はどれか。", "opts": ["受精後約6日目", "受精直後", "受精後約24時間", "受精後約14日目"], "ans": 0, "essential": false}, {"q": "子宮で正しいのはどれか。", "opts": ["子宮内膜の表層は機能層である。", "子宮は前傾後屈である。", "子宮広間膜は子宮頸から恥骨後面に至る。", "子宮筋層は横紋筋である。"], "ans": 0, "essential": false}, {"q": "ホルモンで誤っているのはどれか。", "opts": ["消化酵素を含む。", "生体調節機構をもつ。", "標的器官をもつ。", "血液中に分泌される。"], "ans": 0, "essential": false}, {"q": "機能上、支配関係にある組合せはどれか。", "opts": ["下垂体前葉　−　副腎皮質", "下垂体後葉　−　松果体", "甲状腺　　　−　上皮小体", "松果体　　　−　膵　島"], "ans": 0, "essential": false}, {"q": "脳室で正しいのはどれか。", "opts": ["側脳室前角は前頭葉に位置する。", "室間孔は第三脳室と第四脳室を連絡する。", "第三脳室の側壁は中脳である。", "第四脳室底の上半部は延髄である。"], "ans": 0, "essential": false}, {"q": "上眼窩裂を通過するのはどれか。", "opts": ["眼神経", "視神経", "上顎神経", "下顎神経"], "ans": 0, "essential": false}, {"q": "左右の神経線維が交叉するのはどれか。", "opts": ["視神経", "動眼神経", "顔面神経", "舌咽神経"], "ans": 0, "essential": false}, {"q": "神経と筋との組合せで正しいのはどれか。", "opts": ["腕神経叢　−　前鋸筋", "胸神経　　−　横隔膜", "腰神経叢　−　大殿筋", "仙骨神経叢　−　精巣挙筋"], "ans": 0, "essential": false}, {"q": "感覚神経節はどれか。", "opts": ["膝神経節", "耳神経節", "顎下神経節", "毛様体神経節"], "ans": 0, "essential": false}, {"q": "真皮乳頭に分布するのはどれか。", "opts": ["マイスネル小体", "メルケル触覚円板", "パチニ小体", "自由神経終末"], "ans": 0, "essential": false}, {"q": "聴覚路に含まれるのはどれか。", "opts": ["下丘と内側膝状体", "上丘と内側膝状体", "下丘と外側膝状体", "上丘と外側膝状体"], "ans": 0, "essential": false}, {"q": "大腿三角内の内側から外側への正しい配列はどれか。", "opts": ["大腿静脈 → 大腿動脈 → 大腿神経", "大腿神経 → 大腿動脈 → 大腿静脈", "大腿動脈 → 大腿静脈 → 大腿神経", "大腿神経 → 大腿静脈 → 大腿動脈"], "ans": 0, "essential": false}, {"q": "神経とその圧痛点との組合せで誤っているのはどれか。", "opts": ["正中神経　−　外側二頭筋溝", "三叉神経　−　眼窩下孔", "尺骨神経　−　上腕骨内側上顆後面", "大後頭神経　−　外後頭隆起の外側"], "ans": 0, "essential": false}, {"q": "内膜と外膜の二重の膜に包まれているのはどれか。〔必〕", "opts": ["ミトコンドリア", "核小体", "ゴルジ装置", "リボゾーム"], "ans": 0, "essential": false}, {"q": "胸大動脈の分枝はどれか。〔必〕", "opts": ["肋間動脈", "左鎖骨下動脈", "肺動脈", "下横隔動脈"], "ans": 0, "essential": false}, {"q": "椎間円板がないのはどれか。〔必〕", "opts": ["第1頸椎と第2頸椎との間", "第7頸椎と第1胸椎との間", "第12胸椎と第1腰椎との間", "第5腰椎と仙骨との間"], "ans": 0, "essential": false}, {"q": "脊髄神経とその走行部位との組合せで正しいのはどれか。〔必〕", "opts": ["腕神経叢　――　斜角筋隙", "橈骨神経　――　手根管", "正中神経　――　肘部管", "大腿神経　――　梨状筋下孔"], "ans": 0, "essential": false}, {"q": "脳脊髄液がくも膜下腔に流出する部位はどれか。", "opts": ["第四脳室", "側脳室", "室間孔", "第三脳室"], "ans": 0, "essential": false}, {"q": "中胚葉から分化するのはどれか。", "opts": ["腎 臓", "表 皮", "膵 臓", "脊 髄"], "ans": 0, "essential": false}, {"q": "上肢帯の骨に起始し、上腕骨に停止する筋はどれか。", "opts": ["棘下筋", "大菱形筋", "小胸筋", "僧帽筋"], "ans": 0, "essential": false}, {"q": "血管および神経の走行部位で正しいのはどれか。", "opts": ["尺骨神経は上腕骨内側上顆の後面を通る。", "筋皮神経は上腕骨外科頸に沿って走行する。", "上腕動脈は上腕骨の後面を通る。", "大腿動脈は大腿骨頸に沿って走行する。"], "ans": 0, "essential": false}, {"q": "股関節で誤っているのはどれか。", "opts": ["関節円板がある。", "臼状関節である。", "大腿骨頭靱帯がある。", "大腿骨頭には骨頭窩がある。"], "ans": 0, "essential": false}, {"q": "腸脛靱帯に停止する筋はどれか。", "opts": ["大殿筋", "中殿筋", "小殿筋", "腸腰筋"], "ans": 0, "essential": false}, {"q": "腱索をもつ弁はどれか。", "opts": ["三尖弁", "大動脈弁", "肺動脈弁", "半月弁"], "ans": 0, "essential": false}, {"q": "腱索をもつ弁はどれか。", "opts": ["僧帽弁", "半月弁", "大動脈弁", "肺動脈弁"], "ans": 0, "essential": false}, {"q": "外頸動脈の起始部からの最初の分枝はどれか。", "opts": ["上甲状腺動脈", "舌動脈", "顔面動脈", "甲状頸動脈"], "ans": 0, "essential": false}, {"q": "静脈で正しいのはどれか。", "opts": ["右肋間静脈は奇静脈へ流入する。", "精巣静脈は左右ともに下大静脈へ流入する。", "腕頭静脈は右のみに存在する。", "大伏在静脈は膝窩静脈へ流入する。"], "ans": 0, "essential": false}, {"q": "脾臓で誤っているのはどれか。", "opts": ["腹膜後器官である。", "腹腔の左上部にある。", "横隔膜と接する。", "脾動脈は脾門から入る。"], "ans": 0, "essential": false}, {"q": "消化管で正しいのはどれか。", "opts": ["十二指腸空腸曲にはトライツ靱帯がある。", "食道の筋層には横紋筋がない。", "胃体の下端部を胃底という。", "回腸にはオッディ括約筋がある。"], "ans": 0, "essential": false}, {"q": "小弯側にあるのはどれか。", "opts": ["右胃動脈", "短胃動脈", "右胃大網動脈", "左胃大網動脈"], "ans": 0, "essential": false}, {"q": "腸間膜を有するのはどれか。", "opts": ["Ｓ状結腸", "十二指腸", "上行結腸", "直腸"], "ans": 0, "essential": false}, {"q": "気管の分岐レベルはどれか。", "opts": ["第4〜5胸椎", "第6〜7頸椎", "第2〜3胸椎", "第6〜7胸椎"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["気管支動脈は肺の栄養血管である。", "肺動脈には動脈血が流れる。", "気管支静脈は上大静脈へ流入する。", "肺静脈は右心房へ流入する。"], "ans": 0, "essential": false}, {"q": "ゲロータ筋膜に包まれるのはどれか。", "opts": ["副 腎", "脾 臓", "膵 臓", "卵 巣"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["尿細管は毛細血管によって取り巻かれる。", "糸球体傍細胞は輸出細動脈の血管壁にある。", "緻密斑はレニンを分泌する。", "腎小体は糸球体と尿細管で構成される。"], "ans": 0, "essential": false}, {"q": "テストステロンを分泌するのはどれか。", "opts": ["ライディッヒ細胞", "ルテイン細胞", "パネート細胞", "セルトリ細胞"], "ans": 0, "essential": false}, {"q": "卵巣で正しいのはどれか。", "opts": ["黄体は排卵後に形成される。", "原始卵胞は全て成熟卵胞になる。", "排卵の際に卵子は卵管内に放出される。", "卵巣動脈は内腸骨動脈の枝である。"], "ans": 0, "essential": false}, {"q": "近接している内分泌器官の組合せで正しいのはどれか。", "opts": ["甲状腺　――　上皮小体", "下垂体　――　松果体", "副腎　―――　膵臓", "腎臓　―――　卵巣"], "ans": 0, "essential": false}, {"q": "膵島（ランゲルハンス島）の分布で正しいのはどれか。", "opts": ["膵臓の尾部に多い。", "膵臓の頭部に多い。", "膵臓の体部に多い。", "膵臓全体に一様に分布している。"], "ans": 0, "essential": false}, {"q": "脳の被膜でないのはどれか。", "opts": ["漿 膜", "硬 膜", "くも膜", "軟 膜"], "ans": 0, "essential": false}, {"q": "運動性失語症と関連するのはどれか。", "opts": ["ブローカ中枢", "ウェルニッケ中枢", "海　馬", "レンズ核"], "ans": 0, "essential": false}, {"q": "大脳脚があるのはどれか。", "opts": ["中　脳", "延　髄", "間　脳", "大脳髄質"], "ans": 0, "essential": false}, {"q": "頸動脈小体および頸動脈洞に関わる脳神経はどれか。", "opts": ["舌咽神経", "三叉神経", "顔面神経", "副神経"], "ans": 0, "essential": false}, {"q": "デルマトームで誤っているのはどれか。", "opts": ["前頭部はＣ2支配である。", "母指はＣ6支配である。", "臍のレベルはＴ10支配である。", "足の小指はＳ1支配である。"], "ans": 0, "essential": false}, {"q": "光が角膜から網膜に達するまでの経路で正しいのはどれか。", "opts": ["角膜　→　眼房　　→　水晶体　→　硝子体　→　網膜", "角膜　→　水晶体　→　硝子体　→　眼房　　→　網膜", "角膜　→　水晶体　→　眼房　　→　硝子体　→　網膜", "角膜　→　硝子体　→　眼房　　→　水晶体　→　網膜"], "ans": 0, "essential": false}, {"q": "嗅覚系で正しいのはどれか。", "opts": ["嗅神経は篩骨の篩板を通る。", "嗅細胞は脳内にある。", "嗅細胞の先端は自由神経終末である。", "嗅神経は嗅索内の神経細胞とシナプス接合をする。"], "ans": 0, "essential": false}, {"q": "体表から拍動を触れるのはどれか。", "opts": ["後脛骨動脈", "椎骨動脈", "舌動脈", "外腸骨動脈"], "ans": 0, "essential": false}, {"q": "皮膚線条の形成に関与しないのはどれか。", "opts": ["静脈瘤", "妊 娠", "肥 満", "成 長"], "ans": 0, "essential": false}, {"q": "上腕を外転する筋はどれか。〔必〕", "opts": ["三角筋", "小円筋", "大円筋", "烏口腕筋"], "ans": 0, "essential": false}, {"q": "骨格筋でないのはどれか。〔必〕", "opts": ["膀胱壁の筋", "横隔膜", "母指球筋", "虫様筋"], "ans": 0, "essential": false}, {"q": "動脈血を含むのはどれか。〔必〕", "opts": ["肺静脈", "下垂体門脈", "冠状静脈洞", "奇静脈"], "ans": 0, "essential": false}, {"q": "中枢神経の支持細胞はどれか。〔必〕", "opts": ["グリア細胞", "シュワン細胞", "セルトリ細胞", "ルテイン細胞"], "ans": 0, "essential": false}, {"q": "不随意筋はどれか。", "opts": ["心　筋", "眼輪筋", "広頸筋", "外肛門括約筋"], "ans": 0, "essential": false}, {"q": "DNAを構成する塩基はどれか。", "opts": ["アデニン", "アデノシン", "アクチン", "アミン"], "ans": 0, "essential": false}, {"q": "岬角があるのはどれか。", "opts": ["仙　骨", "腰　椎", "腸　骨", "坐　骨"], "ans": 0, "essential": false}, {"q": "総腱輪を起始としない筋はどれか。", "opts": ["下斜筋", "上直筋", "下直筋", "外側直筋"], "ans": 0, "essential": false}, {"q": "胸郭から起始し上肢帯の骨に停止する筋はどれか。", "opts": ["前鋸筋", "上後鋸筋", "肩甲挙筋", "外肋間筋"], "ans": 0, "essential": false}, {"q": "図中の矢印の部位（坐骨結節）を起始とする筋はどれか。図", "opts": ["半膜様筋", "大腿二頭筋短頭", "大腿直筋", "縫工筋"], "ans": 0, "essential": false}, {"q": "閉塞により梗塞をきたすのはどれか。", "opts": ["終動脈", "動脈叢", "動静脈吻合", "伴行静脈"], "ans": 0, "essential": false}, {"q": "洞房結節が存在するのはどれか。", "opts": ["右心房", "左心房", "右心室", "左心室"], "ans": 0, "essential": false}, {"q": "血管の走行部位で誤っているのはどれか。", "opts": ["上殿動脈は梨状筋下孔を通る。", "大腿動脈は大腿三角を通る。", "鎖骨下動脈は肋鎖間隙を通る。", "上腕深動脈は上腕骨橈骨神経溝を通る。"], "ans": 0, "essential": false}, {"q": "内腸骨動脈の枝はどれか。", "opts": ["子宮動脈", "精巣動脈", "下腹壁動脈", "上直腸動脈"], "ans": 0, "essential": false}, {"q": "オッディの括約筋が存在する部位はどれか。", "opts": ["十二指腸下行部", "幽門部", "回腸末端部", "肛門管"], "ans": 0, "essential": false}, {"q": "胆道系で正しいのはどれか。", "opts": ["胆汁は肝臓でつくられる。", "横隔膜下面には胆嚢窩がある。", "総胆管にはラセンヒダがある。", "総胆管は幽門括約筋部に開口する。"], "ans": 0, "essential": false}, {"q": "最も大きい副鼻腔はどれか。", "opts": ["上顎洞", "蝶形骨洞", "前頭洞", "篩骨洞"], "ans": 0, "essential": false}, {"q": "泌尿器で正しいのはどれか。", "opts": ["右腎は左腎に比べて低位にある。", "腎門において腎動脈は腎静脈より前にある。", "尿管は総腸骨動脈の後方を通る。", "女性の膀胱は子宮及および膣の後方に位置する。"], "ans": 0, "essential": false}, {"q": "腎組織はどれか。", "opts": ["ボーマン嚢", "パイエル板", "ハッサル小体", "グリソン鞘"], "ans": 0, "essential": false}, {"q": "精管の走行で正しいのはどれか。", "opts": ["精巣後縁→浅鼠径輪→鼠径管→深鼠径輪→精管膨大部", "精巣後縁→精管膨大部→深鼡径輪→鼡径管→浅鼡径輪", "精巣後縁→深鼡径輪→精管膨大部→鼡径管→浅鼡径輪", "精巣後縁→深鼡径輪→鼡径管→浅鼡径輪→精管膨大部"], "ans": 0, "essential": false}, {"q": "女性生殖器で正しいのはどれか。", "opts": ["子宮を包む腹膜は両側で子宮広間膜に続く。", "子宮は後傾後屈を示す。", "卵巣堤索は子宮と卵巣を結ぶ。", "卵管の内側端を卵管采という。"], "ans": 0, "essential": false}, {"q": "下垂体後葉ホルモンはどれか。", "opts": ["バゾプレッシン", "成長ホルモン", "プロラクチン", "黄体形成ホルモン"], "ans": 0, "essential": false}, {"q": "副腎で正しいのはどれか。", "opts": ["皮質は３層に分けられる。", "腎門部に位置する。", "断面は円形を呈する。", "髄質からステロイドホルモンが分泌される。"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["中　脳　&#8212;　黒　質", "間　脳　&#8212;　大脳脚", "橋　　&#8212;　錐体交叉", "延　髄　&#8212;　線条体"], "ans": 0, "essential": false}, {"q": "錐体路が通る部位はどれか。", "opts": ["大脳脚", "後　索", "上小脳脚", "視　床"], "ans": 0, "essential": false}, {"q": "動眼神経核が存在するのはどれか。", "opts": ["中　脳", "橋", "延　髄", "脊　髄"], "ans": 0, "essential": false}, {"q": "喉頭で正しいのはどれか。", "opts": ["声帯ヒダは反回神経に支配される。", "呼吸時は声門裂が閉じる。", "甲状軟骨は１対ある。", "嚥下時は喉頭口が開く。"], "ans": 0, "essential": false}, {"q": "下顎神経が支配するのはどれか。", "opts": ["咬　筋", "笑　筋", "広頸筋", "頬　筋"], "ans": 0, "essential": false}, {"q": "副交感神経線維を含むのはどれか。", "opts": ["顔面神経", "滑車神経", "外転神経", "内耳神経"], "ans": 0, "essential": false}, {"q": "脊髄神経とその数との組合せで正しいのはどれか。", "opts": ["頚神経　　&#8212;　８ 対", "胸神経　　&#8212;　13対", "腰神経　　&#8212;　４ 対", "仙骨神経　&#8212;　３ 対"], "ans": 0, "essential": false}, {"q": "表皮の最表層はどれか。", "opts": ["角質層", "有棘層", "顆粒層", "淡明層"], "ans": 0, "essential": false}, {"q": "聴覚の情報が伝達される経路で正しいのはどれか。", "opts": ["外耳道→鼓　膜→ツチ骨→キヌタ骨→アブミ骨→前庭階→鼓室階", "外耳道→鼓　膜→キヌタ骨→ツチ骨→アブミ骨→鼓室階→前庭階", "外耳道→ツチ骨→キヌタ骨→アブミ骨→鼓　膜→前庭階→鼓室階", "外耳道→キヌタ骨→ツチ骨→アブミ骨→鼓　膜→鼓室階→前庭階"], "ans": 0, "essential": false}, {"q": "ヤコビー線はどれか。", "opts": ["左右の腸骨稜の最高点を結んだ線", "第７頸椎棘突起先端を通る水平線", "左右の肩甲棘内側縁を結んだ線", "左右の肋骨弓の最低点を結んだ線"], "ans": 0, "essential": false}, {"q": "三叉神経の圧痛点はどれか。", "opts": ["眼窩上孔", "茎乳突孔", "内耳孔", "大口蓋孔"], "ans": 0, "essential": false}, {"q": "横突孔で正しいのはどれか。〔必〕", "opts": ["椎骨動脈が通る。", "環椎にはない。", "歯状靭帯がつく。", "黄色靭帯が覆う。"], "ans": 0, "essential": false}, {"q": "複関節はどれか。〔必〕", "opts": ["肘関節", "顎関節", "肩関節", "股関節"], "ans": 0, "essential": false}, {"q": "股関節を屈曲するのはどれか。〔必〕", "opts": ["腸腰筋", "大殿筋", "中殿筋", "梨状筋"], "ans": 0, "essential": false}, {"q": "屈筋支帯より表層を通るのはどれか。〔必〕", "opts": ["長掌筋", "方形回内筋", "浅指屈筋", "長母指屈筋"], "ans": 0, "essential": false}, {"q": "内胚葉から分化するのはどれか。", "opts": ["肝　臓", "眼　球", "大　脳", "骨格筋"], "ans": 0, "essential": false}, {"q": "大腿骨転子窩に停止するのはどれか。", "opts": ["内閉鎖筋", "半膜様筋", "腸骨筋", "恥骨筋"], "ans": 0, "essential": false}, {"q": "ラムダ縫合を形成するのはどれか。", "opts": ["頭頂骨と後頭骨", "前頭骨と頭頂骨", "側頭骨と後頭骨", "蝶形骨と前頭骨"], "ans": 0, "essential": false}, {"q": "烏口突起に停止するのはどれか。", "opts": ["小胸筋", "大胸筋", "鎖骨下筋", "前鋸筋"], "ans": 0, "essential": false}, {"q": "脳神経の支配を受けるのはどれか。", "opts": ["僧帽筋", "三角筋", "前鋸筋", "広背筋"], "ans": 0, "essential": false}, {"q": "図中の矢印の部位に停止するのはどれか。図", "opts": ["上腕三頭筋", "上腕二頭筋", "烏口腕筋", "上腕筋"], "ans": 0, "essential": false}, {"q": "骨と部位名との組合せで正しいのはどれか。", "opts": ["尺　骨　−−−　橈骨切痕", "腓　骨　−−−　腓骨関節面", "上腕骨　−−−　外側顆", "大腿骨　−−−　大結節"], "ans": 0, "essential": false}, {"q": "内転筋管を通るのはどれか。", "opts": ["伏在神経", "腓腹神経", "後大腿皮神経", "坐骨神経"], "ans": 0, "essential": false}, {"q": "閉鎖神経が支配するのはどれか。", "opts": ["薄　筋", "縫工筋", "内側広筋", "腸骨筋"], "ans": 0, "essential": false}, {"q": "前室間溝を走行するのはどれか。", "opts": ["左冠状動脈", "右冠状動脈", "冠状静脈洞", "左心室後静脈"], "ans": 0, "essential": false}, {"q": "最も尾側で腹大動脈から分枝するのはどれか。", "opts": ["下腸間膜動脈", "腹腔動脈", "腎動脈", "精巣動脈"], "ans": 0, "essential": false}, {"q": "血管の走行部位で正しいのはどれか。", "opts": ["内側大腿回旋動脈は大腿骨頭に沿う。", "腋窩動脈は上腕骨外科頚に沿う。", "尺骨動脈は手根管を通る。", "前脛骨動脈は足根管を通る。"], "ans": 0, "essential": false}, {"q": "静脈血が下大静脈に直接流入するのはどれか。", "opts": ["肝　臓", "胃", "膵　臓", "胆　嚢"], "ans": 0, "essential": false}, {"q": "横紋筋はどれか。", "opts": ["外肛門括約筋", "幽門括約筋", "オッディの括約筋", "十二指腸提筋"], "ans": 0, "essential": false}, {"q": "小網を構成するのはどれか。", "opts": ["肝胃間膜", "腸間膜", "肝鎌状間膜", "横行結腸間膜"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["右肺は左肺より大きい。", "右気管支は左気管支より長い。", "右気管支の分岐角度は左気管支より大きい。", "右反回神経は左反回神経より長い。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["肺の表面は胸膜に覆われる。", "肺は縦隔に含まれる。", "肺尖は横隔膜に接する。", "ガス交換は細気管支で行われる。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["尿管は腎門から出る。", "腎臓は骨盤内に位置する。", "乳頭孔は腎皮質にある。", "糸球体は腎髄質にある。"], "ans": 0, "essential": false}, {"q": "男性生殖器で正しいのはどれか。", "opts": ["精管は鼠径管内を走行する。", "精嚢は精子を貯蔵する。", "前立腺は透明な液を分泌する。", "セルトリ細胞は精上皮の一部である。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["卵子は卵管采から取り込まれる。", "子宮膀胱窩をダグラス窩という。", "子宮上端部を子宮頸部という。", "卵子は黄体内で成熟する。"], "ans": 0, "essential": false}, {"q": "インスリンを分泌するのはどれか。", "opts": ["膵　臓", "下垂体前葉", "甲状腺", "副腎皮質"], "ans": 0, "essential": false}, {"q": "下垂体ホルモンの支配下にないのはどれか。", "opts": ["上皮小体", "甲状腺", "副　腎", "精　巣"], "ans": 0, "essential": false}, {"q": "大脳皮質の機能局在で正しいのはどれか。", "opts": ["視覚野は後頭葉にある。", "運動野は頭頂葉にある。", "運動性言語野は側頭葉にある。", "聴覚野は前頭葉にある。"], "ans": 0, "essential": false}, {"q": "温度覚と痛覚の伝導路が中継される部位はどれか。", "opts": ["視　床", "黒　質", "小脳核", "大脳基底核"], "ans": 0, "essential": false}, {"q": "前腕の筋を支配しないのはどれか。", "opts": ["筋皮神経", "正中神経", "尺骨神経", "橈骨神経"], "ans": 0, "essential": false}, {"q": "副交感神経と関連するのはどれか。", "opts": ["翼口蓋神経節", "上頸神経節", "脊髄神経節", "腹腔神経節"], "ans": 0, "essential": false}, {"q": "眼球で正しいのはどれか。", "opts": ["毛様体は平滑筋を含む。", "虹彩は内膜である。", "脈絡膜は線維膜である。", "瞳孔括約筋は交感神経支配である。"], "ans": 0, "essential": false}, {"q": "味覚に関わるのはどれか。", "opts": ["鼓索神経", "下歯槽神経", "舌下神経", "鼓室神経"], "ans": 0, "essential": false}, {"q": "筋腹を体表から触れることができるのはどれか。", "opts": ["腕橈骨筋", "回外筋", "方形回内筋", "長母指屈筋"], "ans": 0, "essential": false}, {"q": "斜角筋隙を通過するのはどれか。", "opts": ["鎖骨下動脈", "腋窩動脈", "上腕動脈", "総頸動脈"], "ans": 0, "essential": false}, {"q": "図の矢印で示す方向の組合せで近位-遠位にあたるのはどれか。図〔必〕", "opts": ["(1)―――――(2)", "(3)―――――(4)", "(5)―――――(6)", "(7)―――――(8)"], "ans": 0, "essential": false}, {"q": "上肢帯を構成する骨の組合せはどれか。〔必〕", "opts": ["鎖　骨―――――肩甲骨", "尺　骨―――――橈　骨", "仙　骨―――――寛　骨", "脛　骨―――――腓　骨"], "ans": 0, "essential": false}, {"q": "大後頭孔を通るのはどれか。〔必〕", "opts": ["椎骨動脈", "内頚動脈", "外頚動脈", "鎖骨下動脈"], "ans": 0, "essential": false}, {"q": "交感神経系の神経細胞が存在するのはどれか。〔必〕", "opts": ["脊髄側角", "脊髄前角", "脊髄後角", "脊髄神経節"], "ans": 0, "essential": false}, {"q": "核を持たないのはどれか。", "opts": ["赤血球", "形質細胞", "リンパ球", "単　球"], "ans": 0, "essential": false}, {"q": "含気骨はどれか。", "opts": ["篩　骨", "頭頂骨", "後頭骨", "下顎骨"], "ans": 0, "essential": false}, {"q": "頚部の皮筋はどれか。", "opts": ["広頸筋", "胸鎖乳突筋", "胸骨甲状筋", "頚長筋"], "ans": 0, "essential": false}, {"q": "鼠径管の構成に関与するのはどれか。", "opts": ["腹横筋", "腸骨筋", "腹直筋", "恥骨筋"], "ans": 0, "essential": false}, {"q": "写真（別冊No.1）を別に示す。矢印で示す部位はどれか。図", "opts": ["坐骨棘", "岬　角", "恥骨結節", "下後腸骨棘"], "ans": 0, "essential": false}, {"q": "距腿関節を補強するのはどれか。", "opts": ["三角靱帯", "十字靱帯", "黄色靱帯", "前縦靱帯"], "ans": 0, "essential": false}, {"q": "心臓で正しいのはどれか。", "opts": ["乳頭筋は僧帽弁に付属する。", "ヒス束は乳頭筋を通る。", "腱索は肺動脈弁につく。", "洞房結節は卵円窩にある。"], "ans": 0, "essential": false}, {"q": "直上から冠状動脈が起始するのはどれか。", "opts": ["大動脈弁", "左房室弁", "右房室弁", "肺動脈弁"], "ans": 0, "essential": false}, {"q": "神経と伴走する動脈の組合せで正しいのはどれか。", "opts": ["橈骨神経−−−上腕深動脈", "腋窩神経−−−腋窩動脈", "大腿神経−−−大腿深動脈", "脛骨神経−−−前脛骨動脈"], "ans": 0, "essential": false}, {"q": "左静脈角に流入するのはどれか。", "opts": ["胸　管", "門　脈", "奇静脈", "大伏在静脈"], "ans": 0, "essential": false}, {"q": "胎児循環において肺動脈と大動脈を短絡するのはどれか。", "opts": ["動脈管", "臍静脈", "静脈管", "卵円孔"], "ans": 0, "essential": false}, {"q": "漿膜に覆われないのはどれか。", "opts": ["食　道", "胃", "空　腸", "結　腸"], "ans": 0, "essential": false}, {"q": "小腸にあるのはどれか。", "opts": ["リーベルキューン腺", "アポクリン腺", "カウパー腺", "バルトリン腺"], "ans": 0, "essential": false}, {"q": "右結腸曲が位置する部位はどれか。", "opts": ["上行結腸−−−横行結腸", "回　腸　−−−上行結腸", "横行結腸−−−下行結腸", "下行結腸−−−Ｓ状結腸"], "ans": 0, "essential": false}, {"q": "膵頭をC字状に取り囲むのはどれか。", "opts": ["十二指腸", "空　腸", "回　腸", "横行結腸"], "ans": 0, "essential": false}, {"q": "呼吸器系と消化器系の交叉部はどれか。", "opts": ["咽頭喉頭部", "咽頭鼻部", "咽頭口部", "喉　頭"], "ans": 0, "essential": false}, {"q": "関節唇を有するのはどれか。", "opts": ["肩関節", "肘関節", "膝関節", "胸鎖関節"], "ans": 0, "essential": false}, {"q": "肺胞の直径はどれか。", "opts": ["約0.2mm", "約10mm", "約5mm", "約0.01mm"], "ans": 0, "essential": false}, {"q": "原尿が形成されるのはどれか。", "opts": ["腎小体", "腎乳頭", "腎　杯", "尿細管"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["腎門には腎動脈、腎静脈、尿管がある。", "腎小体は近位尿細管、ヘンレのワナ、遠位尿細管からなる。", "尿管は前立腺を通る。", "膀胱の上面を膀胱三角という。"], "ans": 0, "essential": false}, {"q": "射精に先立ちアルカリ性の液体を分泌するのはどれか。", "opts": ["尿道球腺", "精　嚢", "前立腺", "大前庭腺"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["子宮円索は鼠径管を通る。", "子宮頚部は子宮広間膜に覆われる。", "黄体は子宮内膜で形成される。", "卵胞は卵管膨大部で成熟する。"], "ans": 0, "essential": false}, {"q": "外側膝状体が中継核となるのはどれか。", "opts": ["視　覚", "触　覚", "痛　覚", "聴　覚"], "ans": 0, "essential": false}, {"q": "錐体交叉があるのはどれか。", "opts": ["延髄下部", "中　脳", "橋", "延髄上部"], "ans": 0, "essential": false}, {"q": "聴覚を伝える神経はどれか。", "opts": ["蝸牛神経", "反回神経", "前庭神経", "大耳介神経"], "ans": 0, "essential": false}, {"q": "腹腔神経節でニューロンをかえるのはどれか。", "opts": ["交感神経", "脳神経", "脊髄神経", "副交感神経"], "ans": 0, "essential": false}, {"q": "耳管が連絡するのはどれか。", "opts": ["中　耳　−−−　咽　頭", "耳　介　−−−　鼓　膜", "内　耳　−−−　鼻　腔", "外　耳　−−−　中　耳"], "ans": 0, "essential": false}, {"q": "体表から拍動を触れるのはどれか。", "opts": ["後頭動脈", "顎動脈", "舌動脈", "腕頭動脈"], "ans": 0, "essential": false}, {"q": "上腕骨内側上顆後面で触れるのはどれか。", "opts": ["尺骨神経", "筋皮神経", "正中神経", "橈骨動脈"], "ans": 0, "essential": false}, {"q": "隆椎はどれか。〔必〕", "opts": ["第７頸椎", "第１頸椎", "第３頸椎", "第５頸椎"], "ans": 0, "essential": false}, {"q": "上腕骨と大腿骨とに共通する部位名はどれか。〔必〕", "opts": ["内側上顆", "内側顆", "内　果", "顆間窩"], "ans": 0, "essential": false}, {"q": "体表から拍動を触知できるのはどれか。〔必〕", "opts": ["鎖骨下動脈", "肋間動脈", "外腸骨動脈", "上行大動脈"], "ans": 0, "essential": false}, {"q": "血液が分類されるのはどれか。", "opts": ["支持組織", "筋組織", "神経組織", "上皮組織"], "ans": 0, "essential": false}, {"q": "小泉門が位置する縫合の交点はどれか。", "opts": ["矢状縫合とラムダ縫合", "前頭縫合と冠状縫合", "前頭縫合とラムダ縫合", "矢状縫合と冠状縫合"], "ans": 0, "essential": false}, {"q": "呼気に働くのはどれか。", "opts": ["下後鋸筋", "広背筋", "肩甲挙筋", "最長筋"], "ans": 0, "essential": false}, {"q": "腋窩神経支配はどれか。", "opts": ["三角筋", "烏口腕筋", "大円筋", "棘下筋"], "ans": 0, "essential": false}, {"q": "回旋筋腱板でないのはどれか。", "opts": ["大円筋", "棘上筋", "棘下筋", "肩甲下筋"], "ans": 0, "essential": false}, {"q": "二関節筋はどれか。", "opts": ["縫工筋", "ヒラメ筋", "内側広筋", "恥骨筋"], "ans": 0, "essential": false}, {"q": "筋と支配神経の組合せで正しいのはどれか。", "opts": ["長腓骨筋　−　浅腓骨神経", "前脛骨筋　−　脛骨神経", "腓腹筋　　−　浅腓骨神経", "後脛骨筋　−　深腓骨神経"], "ans": 0, "essential": false}, {"q": "レンズ核線状体動脈を分枝するのはどれか。", "opts": ["中大脳動脈", "前大脳動脈", "前交通動脈", "後大脳動脈"], "ans": 0, "essential": false}, {"q": "有対性（体の左右にある）なのはどれか。", "opts": ["腕頭静脈", "奇静脈", "門　脈", "上矢状静脈洞"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["外肛門括約筋は横紋筋からなる。", "舌筋は舌咽神経に支配される。", "胃の筋層は内輪、外縦の２層からなる。", "食道上部の筋層は平滑筋からなる。"], "ans": 0, "essential": false}, {"q": "トライツ靱帯が位置する椎体レベルはどれか。", "opts": ["第２腰椎", "第10胸椎", "第12胸椎", "第４腰椎"], "ans": 0, "essential": false}, {"q": "総胆管の開口部位は十二指腸のどれか。", "opts": ["下行部", "上　部", "水平部", "上行部"], "ans": 0, "essential": false}, {"q": "右主気管支の特徴はどれか。", "opts": ["左主気管支より短い。", "左主気管支より細い。", "左主気管支より枝が少ない。", "左主気管支より柔らかい。"], "ans": 0, "essential": false}, {"q": "縦隔後部にみられるのはどれか。", "opts": ["胸　管", "気　管", "大動脈弓", "心　臓"], "ans": 0, "essential": false}, {"q": "縦隔後部にみられるのはどれか。", "opts": ["胸　管", "気　管", "胸　腺", "心　臓"], "ans": 0, "essential": false}, {"q": "尿管の粘膜上皮はどれか。", "opts": ["移行上皮", "円柱上皮", "多列上皮", "扁平上皮"], "ans": 0, "essential": false}, {"q": "成人女性の尿道の長さはどれか。", "opts": ["約 3cm", "約 1cm", "約 9cm", "約 15cm"], "ans": 0, "essential": false}, {"q": "前立腺を貫くのはどれか。", "opts": ["尿　道", "尿　管", "尿道球腺", "尿道海綿体"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["子宮円索は鼠径管を通る。", "卵巣動脈は固有卵巣索の内部を通る。", "卵管の外側端は卵巣に密着している。", "内子宮口は膣に開口する。"], "ans": 0, "essential": false}, {"q": "プロゲステロンを分泌するのはどれか。", "opts": ["黄　体", "二次卵胞", "グラーフ細胞", "白　体"], "ans": 0, "essential": false}, {"q": "動眼神経核があるのはどれか。", "opts": ["中　脳", "視　床", "橋", "延　髄"], "ans": 0, "essential": false}, {"q": "室間孔がつなぐ部位はどれか。", "opts": ["側脳室と第三脳室", "左右の側脳室", "側脳室と第四脳室", "第三脳室と第四脳室"], "ans": 0, "essential": false}, {"q": "喉頭の運動に関与するのはどれか。", "opts": ["迷走神経", "顔面神経", "舌咽神経", "舌下神経"], "ans": 0, "essential": false}, {"q": "脊髄神経と上腕骨との位置関係で正しいのはどれか。", "opts": ["尺骨神経は内側上顆の後方を通る。", "腋窩神経は骨体の後面に沿って斜走する。", "正中神経は解剖頸に沿う。", "筋皮神経は外科頸に沿う。"], "ans": 0, "essential": false}, {"q": "副交感神経の節前線維が出るのはどれか。", "opts": ["脳幹と仙髄", "脳幹と胸髄", "胸髄と腰髄", "胸髄と仙髄"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["爪母基から新しい爪が生える。", "毛は真皮の一部が変化したものである。", "立毛筋は横紋筋である。", "毛包浅部に汗腺が開口する。"], "ans": 0, "essential": false}, {"q": "平衡覚を司るのはどれか。", "opts": ["前庭器", "前庭階", "蝸牛窓", "前庭窓"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["肺尖は鎖骨上窩の高さにある。", "胸骨角は第１肋骨の高さにある。", "横隔膜は呼気時に肋骨弓より下にある。", "肋骨弓は第７〜12肋軟骨からなる。"], "ans": 0, "essential": false}, {"q": "体表から拍動を触知できるのはどれか。〔必〕", "opts": ["鎖骨下動脈", "肋間動脈", "外腸骨動脈", "上行大動脈"], "ans": 0, "essential": false}, {"q": "ヒトの体細胞内の常染色体数はどれか。［必］", "opts": ["44", "42", "46", "48"], "ans": 0, "essential": false}, {"q": "乳頭突起があるのはどれか。［必］", "opts": ["腰　椎", "頸　椎", "胸　椎", "仙　椎"], "ans": 0, "essential": false}, {"q": "関節円板があるのはどれか。［必］", "opts": ["胸鎖関節", "肩関節", "股関節", "膝関節"], "ans": 0, "essential": false}, {"q": "黒質があるのはどれか。［必］", "opts": ["中　脳", "間　脳", "橋", "延　髄"], "ans": 0, "essential": false}, {"q": "母親の細胞で構成されるのはどれか。", "opts": ["基底脱落膜", "羊　膜", "絨毛膜", "卵黄嚢"], "ans": 0, "essential": false}, {"q": "中硬膜動脈が通過するのはどれか。", "opts": ["棘　孔", "正円孔", "卵円孔", "破裂孔"], "ans": 0, "essential": false}, {"q": "椎体をもたないのはどれか。", "opts": ["第１頸椎", "第２頸椎", "第５頸椎", "第７頸椎"], "ans": 0, "essential": false}, {"q": "手根骨遠位列で最も尺側に位置するのはどれか。", "opts": ["有鈎骨", "三角骨", "豆状骨", "有頭骨"], "ans": 0, "essential": false}, {"q": "上腕骨内側上顆から起始するのはどれか。", "opts": ["円回内筋", "回外筋", "深指屈筋", "方形回内筋"], "ans": 0, "essential": false}, {"q": "機能的終動脈が存在しないのはどれか。", "opts": ["肝　臓", "脳", "心　臓", "脾　臓"], "ans": 0, "essential": false}, {"q": "内頸動脈から分枝するのはどれか。", "opts": ["眼動脈", "顔面動脈", "顎動脈", "舌動脈"], "ans": 0, "essential": false}, {"q": "永久歯（智歯を含む）の総数はどれか。", "opts": ["32", "20", "24", "28"], "ans": 0, "essential": false}, {"q": "腹腔動脈の支配領域はどれか。", "opts": ["膵　頭", "回盲部", "右結腸曲", "下行結腸"], "ans": 0, "essential": false}, {"q": "腹膜後器官でないのはどれか。", "opts": ["脾　臓", "膵　臓", "腎　臓", "副　腎"], "ans": 0, "essential": false}, {"q": "上顎洞の鼻腔への開口部位はどれか。", "opts": ["中鼻道", "総鼻道", "上鼻道", "下鼻道"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["縦隔は左右の胸膜腔に挟まれた部位をいう。", "篩骨洞はトルコ鞍の直下に位置している。", "声門裂は左右の前庭ヒダの間をいう。", "左肺は上、中および下の３肺葉からからなる。"], "ans": 0, "essential": false}, {"q": "腎臓の区域数はどれか。", "opts": ["5", "3", "4", "6"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["右の腎臓は第12肋骨の前方に位置する。", "膀胱底は膀胱の下面である。", "尿管は総腸骨動脈の後方を走行する。", "女性尿道は腟口の後方に開口する。"], "ans": 0, "essential": false}, {"q": "ヒトの精巣下降時期はどれか。", "opts": ["胎齢7〜8か月", "胎齢3〜4か月", "生後1〜2か月", "生後5〜6か月"], "ans": 0, "essential": false}, {"q": "精液の成分を分泌しないのはどれか。", "opts": ["陰茎海綿体", "精　嚢", "尿道球腺", "前立腺"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["精巣静脈は精索内で精巣動脈の周囲を取り巻く。", "卵巣動脈は外腸骨動脈から分枝する。", "精巣動脈は腎動脈から分枝する。", "卵巣静脈は左右ともに腎静脈へ流入する。"], "ans": 0, "essential": false}, {"q": "門脈系をもつのはどれか。", "opts": ["下垂体", "甲状腺", "上皮小体", "腎糸球体"], "ans": 0, "essential": false}, {"q": "門脈系をもつのはどれか。", "opts": ["副　腎", "甲状腺", "上皮小体", "大脳基底核"], "ans": 0, "essential": false}, {"q": "副腎で正しいのはどれか。", "opts": ["髄質は外胚葉に由来する。", "腹腔内に位置する。", "副腎静脈は奇静脈へ流入する。", "髄質は副交感神経節に由来する。"], "ans": 0, "essential": false}, {"q": "プルキンエ細胞があるのはどれか。", "opts": ["小　脳", "大　脳", "中　脳", "脊　髄"], "ans": 0, "essential": false}, {"q": "後索核が関与する感覚はどれか。", "opts": ["深部感覚", "温　覚", "冷　覚", "痛　覚"], "ans": 0, "essential": false}, {"q": "運動線維のみからなる脳神経はどれか。", "opts": ["舌下神経", "動眼神経", "三叉神経", "顔面神経"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["上腕動脈に伴走し肘窩を通る神経は前腕屈筋群を支配する。", "上腕深動脈に伴走する神経は上腕屈筋群を支配する。", "上腕二頭筋の内側縁に沿う神経は前腕伸筋群を支配する。", "上腕骨外科頸に沿う神経は大円筋を支配する。"], "ans": 0, "essential": false}, {"q": "デルマトームの分布領域を示す神経はどれか。", "opts": ["感覚神経", "運動神経", "交感神経", "副交感神経"], "ans": 0, "essential": false}, {"q": "眼房水を産生するのはどれか。", "opts": ["毛様体", "虹　彩", "網　膜", "脈絡膜"], "ans": 0, "essential": false}, {"q": "中耳に存在するのはどれか。", "opts": ["耳　管", "耳道腺", "骨迷路", "平衡砂"], "ans": 0, "essential": false}, {"q": "生体計測で誤っているのはどれか。", "opts": ["大腿周径は大腿最大隆起部の周径である。", "上腕周径は上腕二頭筋筋腹最大隆起部の周径である。", "前腕周径は前腕最大膨隆部の周径である。", "下腿周径は下腿最大膨隆部の周径である。"], "ans": 0, "essential": false}, {"q": "恥骨結合の連結様式はどれか。〔必〕", "opts": ["軟骨結合", "釘　植", "縫　合", "靱帯結合"], "ans": 0, "essential": false}, {"q": "蝶番関節はどれか。〔必〕", "opts": ["腕尺関節", "橈骨手根関節", "腕橈関節", "上橈尺関節"], "ans": 0, "essential": false}, {"q": "関節と内部構造の組合せで正しいのはどれか。〔必〕", "opts": ["股関節　　−　関節内靭帯", "胸鎖関節　−　関節唇", "肩関節　　−　関節半月", "膝関節　　−　関節円板"], "ans": 0, "essential": false}, {"q": "股関節の外転に働く筋の支配神経はどれか。〔必〕", "opts": ["上殿神経", "下殿神経", "坐骨神経", "閉鎖神経"], "ans": 0, "essential": false}, {"q": "血球で正しいのはどれか。", "opts": ["血小板は巨核球からできる。", "Bリンパ球は胸腺で成熟する。", "好酸球は白血球中で最も数が多い。", "赤血球は円盤状の核を持つ。"], "ans": 0, "essential": false}, {"q": "付加骨はどれか。", "opts": ["鎖　骨", "上腕骨", "大腿骨", "腓　骨"], "ans": 0, "essential": false}, {"q": "脊柱と関節をつくるのはどれか。", "opts": ["寛　骨", "上腕骨", "鎖　骨", "大腿骨"], "ans": 0, "essential": false}, {"q": "顔面神経支配を受けるのはどれか。", "opts": ["口輪筋", "側頭筋", "外側翼突筋", "内側翼突筋"], "ans": 0, "essential": false}, {"q": "距骨で正しいのはどれか。", "opts": ["距骨頸は距骨頭の近位に位置する。", "外側縦足弓の頂点に位置する。", "立方骨と関節を構成する。", "下腿の筋が停止する。"], "ans": 0, "essential": false}, {"q": "前十字靭帯が防ぐ脛骨の転位の方向で正しいのはどれか。", "opts": ["前　方", "外　反", "内　反", "後　方"], "ans": 0, "essential": false}, {"q": "各孔を通る神経と支配する筋の組合せで正しいのはどれか。", "opts": ["閉鎖孔　　　−　長内転筋", "梨状筋上孔　−　大殿筋", "梨状筋下孔　−　中殿筋", "筋裂孔　　　−　双子筋"], "ans": 0, "essential": false}, {"q": "心臓で正しいのはどれか。", "opts": ["卵円窩は心房中隔にある。", "心尖は第2肋間隙に位置する。", "冠状動脈は大動脈弓から分枝する。", "大動脈弁には腱索が付着している。"], "ans": 0, "essential": false}, {"q": "動脈の走行で正しいのはどれか。", "opts": ["尺骨動脈と橈骨動脈は手掌において吻合する。", "左鎖骨下動脈は腕頭動脈から分枝する。", "大腿動脈は内腸骨動脈から続く。", "足背動脈は後脛骨動脈から続く。"], "ans": 0, "essential": false}, {"q": "トルコ鞍を取り囲んでいるのはどれか。", "opts": ["海綿静脈洞", "横静脈洞", "Ｓ状静脈洞", "直静脈洞"], "ans": 0, "essential": false}, {"q": "大腸で最も可動性が乏しい部位はどれか。", "opts": ["上行結腸", "虫　垂", "横行結腸", "Ｓ状結腸"], "ans": 0, "essential": false}, {"q": "結腸ヒモの本数はどれか。", "opts": ["３", "１", "２", "４"], "ans": 0, "essential": false}, {"q": "腹膜垂がみられるのはどれか。", "opts": ["横行結腸", "十二指腸", "回　腸", "直　腸"], "ans": 0, "essential": false}, {"q": "声帯ヒダ（声帯靭帯と声帯筋）が付着するのはどれか。", "opts": ["披裂軟骨", "気管軟骨", "輪状軟骨", "喉頭蓋軟骨"], "ans": 0, "essential": false}, {"q": "左肺で通常欠損している区域はどれか。", "opts": ["区域７", "区域３", "区域５", "区域９"], "ans": 0, "essential": false}, {"q": "横隔膜の食道裂孔を通過するのはどれか。", "opts": ["迷走神経", "胸　管", "横隔神経", "交感神経幹"], "ans": 0, "essential": false}, {"q": "腎臓で正しいのはどれか。", "opts": ["腎筋膜は腎臓、副腎を含む。", "腎小体は髄質にある。", "右腎静脈に右精巣静脈が流入する。", "腎洞から弓状動脈が放射状に入る。"], "ans": 0, "essential": false}, {"q": "膀胱三角で誤っているのはどれか。", "opts": ["射精管が開口する。", "尿道が開口する。", "内尿道口がある。", "粘膜表面は平滑である。"], "ans": 0, "essential": false}, {"q": "前立腺で正しいのはどれか。", "opts": ["直腸の前方に接する。", "膀胱の上方に位置する。", "尿管で貫かれる。", "酸性の液を分泌する。"], "ans": 0, "essential": false}, {"q": "受精は卵管のどこで起こるか。", "opts": ["膨大部", "漏斗部", "峡　部", "子宮部"], "ans": 0, "essential": false}, {"q": "内分泌器で正しいのはどれか。", "opts": ["副腎は腹膜後器官である。", "松果体は視床下部にある。", "下垂体は第四脳室の下方にある。", "上皮小体は甲状腺の前面にある。"], "ans": 0, "essential": false}, {"q": "小脳にあるのはどれか。", "opts": ["歯状核", "淡蒼球", "被　殻", "尾状核"], "ans": 0, "essential": false}, {"q": "伝導路で正しいのはどれか。", "opts": ["錐体路は大脳脚を通る。", "随意運動の伝導路は脊髄で左右交叉する。", "視覚伝導路は内側膝状体で中継される。", "温痛覚の伝導路は後索を上行する。"], "ans": 0, "essential": false}, {"q": "橋背部に脳神経核群をもつのはどれか。", "opts": ["内耳神経", "舌咽神経", "迷走神経", "舌下神経"], "ans": 0, "essential": false}, {"q": "神経支配で正しいのはどれか。", "opts": ["横隔膜は頸神経叢の枝に支配される。", "深背筋第1層は脊髄神経後枝に支配される。", "浅胸筋は胸神経前枝に支配される。", "側腹筋は腰神経叢の枝に支配される。"], "ans": 0, "essential": false}, {"q": "動眼神経支配を受けるのはどれか。", "opts": ["毛様体筋", "眼輪筋", "瞳孔散大筋", "上斜筋"], "ans": 0, "essential": false}, {"q": "内耳に含まれるのはどれか。", "opts": ["前　庭", "鼓　膜", "鼓　室", "耳　管"], "ans": 0, "essential": false}, {"q": "体表から触れる部位と骨の組合せで正しいのはどれか。", "opts": ["乳様突起　−　側頭骨", "外　果　　−　脛　骨", "肘　頭　　−　上腕骨", "頸切痕　　−　肩甲骨"], "ans": 0, "essential": false}, {"q": "上皮組織で正しい組合せはどれか。", "opts": ["気管支−−−−−−−−多列線毛円柱上皮", "食　道−−−−−−−−単層円柱上皮", "尿細管−−−−−−−−移行上皮", "血　管−−−−−−−−単層立方上皮"], "ans": 0, "essential": false}, {"q": "中胚葉由来はどれか。", "opts": ["腎　臓", "脳", "肺", "肝　臓"], "ans": 0, "essential": false}, {"q": "筋の起始で正しいのはどれか。", "opts": ["体肢の筋では体幹に近い方", "筋の両端で動きの大きい方", "体幹の筋で起始と停止が明確でない筋では脊柱から遠い方", "体幹の筋で上下方向に走る筋では骨盤から遠い方"], "ans": 0, "essential": false}, {"q": "頭蓋を構成する骨の数はどれか。", "opts": ["23", "21", "25", "27"], "ans": 0, "essential": false}, {"q": "椎間円板で正しいのはどれか。", "opts": ["髄核は 70〜80 ％の水分を含む。", "硝子軟骨を含む。", "老化により肥厚する。", "後面で黄色靱帯と接する。"], "ans": 0, "essential": false}, {"q": "胸郭で正しいのはどれか。", "opts": ["第10胸椎は下肋骨窩を欠く。", "肋骨は長管骨に分類される。", "胸骨の肋骨切痕は12対ある。", "胸骨角は第 2 胸椎の高さにある。"], "ans": 0, "essential": false}, {"q": "肩関節の内旋と内転に働く筋はどれか。", "opts": ["大円筋", "棘上筋", "棘下筋", "小円筋"], "ans": 0, "essential": false}, {"q": "閉鎖動脈と関わりがあるのはどれか。", "opts": ["大腿骨頭靱帯", "坐骨大腿靱帯", "恥骨大腿靱帯", "腸骨大腿靱帯"], "ans": 0, "essential": false}, {"q": "奇静脈に注ぐのはどれか。", "opts": ["肋間静脈", "肝静脈", "脾静脈", "腎静脈"], "ans": 0, "essential": false}, {"q": "一次リンパ器官はどれか。", "opts": ["胸　腺", "脾　臓", "扁　桃", "リンパ節"], "ans": 0, "essential": false}, {"q": "舌の分界溝の前に一列に並んでいるのはどれか。", "opts": ["有郭乳頭", "糸状乳頭", "茸状乳頭", "葉状乳頭"], "ans": 0, "essential": false}, {"q": "胃潰瘍や胃癌の好発部位はどれか。", "opts": ["角切痕周囲", "噴門部", "大弯側", "幽門部"], "ans": 0, "essential": false}, {"q": "集合リンパ小節（パイエル板）がみられるのはどれか。", "opts": ["回　腸", "盲　腸", "結　腸", "直　腸"], "ans": 0, "essential": false}, {"q": "喉頭隆起を形成するのはどれか。", "opts": ["甲状軟骨", "喉頭蓋軟骨", "披裂軟骨", "輪状軟骨"], "ans": 0, "essential": false}, {"q": "肺で正しいのはどれか。", "opts": ["胸膜腔の内圧は外気圧より低い。", "肺門は肺胸膜でおおわれる。", "肺尖は胸郭の内部にある。", "気管支動脈は肺動脈から分枝する。"], "ans": 0, "essential": false}, {"q": "腎臓の髄質にみられるのはどれか。", "opts": ["ヘンレのワナ", "糸球体", "近位曲尿細管", "遠位曲尿細管"], "ans": 0, "essential": false}, {"q": "尿管に存在する狭窄部の数はどれか。", "opts": ["3", "1", "2", "4"], "ans": 0, "essential": false}, {"q": "精巣導帯に相当するのはどれか。", "opts": ["子宮円索", "卵　管", "卵巣堤索", "子宮広間膜"], "ans": 0, "essential": false}, {"q": "プロゲステロンを分泌するのはどれか。", "opts": ["ルテイン細胞", "セルトリ細胞", "パネート細胞", "ライディッヒ細胞"], "ans": 0, "essential": false}, {"q": "下垂体後葉ホルモンはどれか。", "opts": ["オキシトシン", "成長ホルモン", "副腎皮質刺激ホルモン", "プロラクチン"], "ans": 0, "essential": false}, {"q": "内側膝状体が関与しているのはどれか。", "opts": ["聴覚路", "嗅覚路", "視覚路", "味覚路"], "ans": 0, "essential": false}, {"q": "脳幹の背面から出ているのはどれか。", "opts": ["滑車神経", "動眼神経", "外転神経", "顔面神経"], "ans": 0, "essential": false}, {"q": "脊髄神経で正しいのはどれか。", "opts": ["前脛骨動脈に沿う神経は足関節背屈筋を支配する。", "梨状筋上孔を通る神経は大殿筋を支配する。", "鼡径靱帯下の筋裂孔を通る神経は大腿屈筋群を支配する。", "足根管を通る神経は足背の筋を支配する。"], "ans": 0, "essential": false}, {"q": "尺骨神経の障害はどれか。", "opts": ["骨間筋が萎縮する。", "第1指と第2指で正円を作れない。", "手関節の背屈ができない。", "第4指ＭＰ関節が屈曲する。"], "ans": 0, "essential": false}, {"q": "白内障の病変部位はどれか。", "opts": ["水晶体", "虹　彩", "硝子体", "視神経乳頭"], "ans": 0, "essential": false}, {"q": "手関節部の掌側尺側面で触れるのはどれか。", "opts": ["豆状骨", "舟状骨", "月状骨", "有頭骨"], "ans": 0, "essential": false}, {"q": "転写の意味で正しいのはどれか。", "opts": ["DNA から mRNA が読まれる。", "mRNA を核外へ輸送する。", "mRNAがリボソームと結合する。", "tRNA が mRNA を認識する。"], "ans": 0, "essential": false}, {"q": "硝子軟骨を有するのはどれか。", "opts": ["鼻軟骨", "半月板軟骨", "耳介軟骨", "喉頭蓋軟骨"], "ans": 0, "essential": false}, {"q": "胸骨角が連結する肋軟骨はどれか。", "opts": ["第2肋軟骨", "第1肋軟骨", "第3肋軟骨", "第4肋軟骨"], "ans": 0, "essential": false}, {"q": "成人の脊柱を構成する骨の数はどれか。", "opts": ["26", "16", "36", "46"], "ans": 0, "essential": false}, {"q": "上腕骨の小結節稜に停止するのはどれか。", "opts": ["大円筋", "棘上筋", "棘下筋", "小円筋"], "ans": 0, "essential": false}, {"q": "梨状筋上孔を通る神経で支配されるのはどれか。", "opts": ["小殿筋", "大殿筋", "内閉鎖筋", "外閉鎖筋"], "ans": 0, "essential": false}, {"q": "脛骨粗面に付く筋を支配する神経はどれか。", "opts": ["大腿神経", "坐骨神経", "脛骨神経", "閉鎖神経"], "ans": 0, "essential": false}, {"q": "リスフラン関節に関係があるのはどれか。", "opts": ["立方骨", "距　骨", "舟状骨", "踵　骨"], "ans": 0, "essential": false}, {"q": "上大静脈に注ぐのはどれか。", "opts": ["奇静脈", "肝静脈", "脾静脈", "門　脈"], "ans": 0, "essential": false}, {"q": "有郭乳頭の味覚を支配するのはどれか。", "opts": ["第IX脳神経", "第V脳神経", "第VII脳神経", "第XII脳神経"], "ans": 0, "essential": false}, {"q": "壁側腹膜の背側を走行するのはどれか。", "opts": ["脾動脈", "左胃動脈", "固有肝動脈", "右胃大網動脈"], "ans": 0, "essential": false}, {"q": "横紋筋があるのはどれか。", "opts": ["食　道", "胃", "回　腸", "Ｓ状結腸"], "ans": 0, "essential": false}, {"q": "気管支にないのはどれか。", "opts": ["横紋筋", "線　毛", "軟　骨", "杯細胞"], "ans": 0, "essential": false}, {"q": "腎臓皮質の構造物はどれか。", "opts": ["腎　柱", "腎錐体", "腎　洞", "腎　杯"], "ans": 0, "essential": false}, {"q": "男性尿道の4つの部位のうち最も狭いのはどれか。", "opts": ["隔膜部", "壁内部", "前立腺部", "海綿体部"], "ans": 0, "essential": false}, {"q": "男性生殖器で誤っているのはどれか。", "opts": ["前立腺は男性ホルモンを分泌する。", "精子は精巣でつくられる。", "射精管は尿道に開口する。", "精嚢の分泌物は果糖を含む。"], "ans": 0, "essential": false}, {"q": "卵胞上皮が単層の立方または円柱上皮なのはどれか。", "opts": ["一次卵胞", "原始卵胞", "二次卵胞", "成熟卵胞"], "ans": 0, "essential": false}, {"q": "濾胞で構成されるのはどれか。", "opts": ["甲状腺", "下垂体", "膵　島", "副　腎"], "ans": 0, "essential": false}, {"q": "硝子軟骨を有するのはどれか。", "opts": ["肋軟骨", "耳介軟骨", "喉頭蓋軟骨", "恥骨結合"], "ans": 0, "essential": false}, {"q": "副腎から分泌されるホルモンとその産生部位の組合せで正しいのはどれか。", "opts": ["アルドステロン −−−−− 球状帯", "アンドロゲン −−−−−−− 束状帯", "コルチコステロン −−− 網状帯", "コルチゾール −−−−−−− 髄　質"], "ans": 0, "essential": false}, {"q": "中大脳動脈が通るのはどれか。", "opts": ["クモ膜下腔", "硬　膜", "クモ膜", "軟　膜"], "ans": 0, "essential": false}, {"q": "錐体路の構成要素でないのはどれか。", "opts": ["橋背側部", "大脳皮質", "大脳髄質", "脊髄前角"], "ans": 0, "essential": false}, {"q": "頸動脈小体および頸動脈洞に関わる脳神経はどれか。", "opts": ["舌咽神経", "三叉神経", "顔面神経", "副神経"], "ans": 0, "essential": false}, {"q": "腕神経叢が通過するのはどこか。", "opts": ["前斜角筋と中斜角筋の間", "前斜角筋の前", "中斜角筋と後斜角筋の間", "後斜角筋の後"], "ans": 0, "essential": false}, {"q": "下腿の伸筋を支配するのはどれか。", "opts": ["深腓骨神経", "脛骨神経", "腓腹神経", "浅腓骨神経"], "ans": 0, "essential": false}, {"q": "臍部の皮神経はどれか。", "opts": ["第10胸神経", "第7胸神経", "第1腰神経", "第3腰神経"], "ans": 0, "essential": false}, {"q": "滑車神経が支配するのはどれか。", "opts": ["上斜筋", "上直筋", "下斜筋", "下直筋"], "ans": 0, "essential": false}, {"q": "殿筋の注射部位はどれか。", "opts": ["上外側部", "上内側部", "下外側部", "下内側部"], "ans": 0, "essential": false}, {"q": "頸動脈三角で脈拍が触れるのはどれか。", "opts": ["総頸動脈", "頸横動脈", "外頸動脈", "内頸動脈"], "ans": 0, "essential": false}, {"q": "滑車が関与するのはどれか。", "opts": ["上斜筋", "上直筋", "下斜筋", "下直筋"], "ans": 0, "essential": false}, {"q": "下顎頸に停止するのはどれか。", "opts": ["外側翼突筋", "内側翼突筋", "咬　筋", "側頭筋"], "ans": 0, "essential": false}, {"q": "椎弓間を連結するのはどれか。", "opts": ["黄色靭帯", "項靱帯", "棘上靱帯", "棘間靱帯"], "ans": 0, "essential": false}, {"q": "写真(別冊 No.1)を別に示す。矢印の部位に付く筋の支配神経はどれか。図", "opts": ["長胸神経", "胸背神経", "肩甲上神経", "肩甲下神経"], "ans": 0, "essential": false}, {"q": "鼡径管の構成要素でないのはどれか。", "opts": ["腹直筋鞘後葉", "外腹斜筋腱膜", "鼡径靱帯", "腹横筋"], "ans": 0, "essential": false}, {"q": "三角筋下包が接する腱をもつのはどれか。", "opts": ["棘上筋", "棘下筋", "小円筋", "大円筋"], "ans": 0, "essential": false}, {"q": "足関節を背屈させるのはどれか。", "opts": ["第三腓骨筋", "後脛骨筋", "長腓骨筋", "短腓骨筋"], "ans": 0, "essential": false}, {"q": "外腸骨動脈の枝はどれか。", "opts": ["下腹壁動脈", "臍動脈", "上殿動脈", "閉鎖動脈"], "ans": 0, "essential": false}, {"q": "胸管と連絡しないのはどれか。", "opts": ["右腋窩リンパ節", "左浅頸リンパ節", "左膝窩リンパ節", "右深鼡径リンパ節"], "ans": 0, "essential": false}, {"q": "導管が口腔前庭に開口するのはどれか。", "opts": ["耳下腺", "顎下腺", "口蓋腺", "舌下腺"], "ans": 0, "essential": false}, {"q": "十二指腸で胆汁が分泌されるのはどこか。", "opts": ["下行部", "上　部", "水平部", "上行部"], "ans": 0, "essential": false}, {"q": "喉頭で複数あるのはどれか。", "opts": ["披裂軟骨", "甲状軟骨", "喉頭蓋軟骨", "輪状軟骨"], "ans": 0, "essential": false}, {"q": "気管が左右の気管支に分岐するのはどこか。", "opts": ["第4 〜 5胸椎位", "第1 〜 2胸椎位", "第7 〜 8胸椎位", "第10 〜 11胸椎位"], "ans": 0, "essential": false}, {"q": "腎臓を包む最内側の膜はどれか。", "opts": ["線維被膜", "腹　膜", "腎筋膜", "脂肪被膜"], "ans": 0, "essential": false}, {"q": "射精管開口部位は尿道のどこか。", "opts": ["前立腺部", "壁内部", "隔膜部", "海綿体部"], "ans": 0, "essential": false}, {"q": "精細管外に位置する細胞はどれか。", "opts": ["間細胞", "精祖細胞", "精母細胞", "セルトリ細胞"], "ans": 0, "essential": false}, {"q": "下垂体で誤っているのはどれか。", "opts": ["間脳の上後部に位置する。", "下垂体門脈がある。", "前葉は腺組織からなる。", "後葉は神経組織からなる。"], "ans": 0, "essential": false}, {"q": "脳の部位と脳室の組合せで誤っているのはどれか。", "opts": ["中　脳  −−−−−− 第4脳室", "視　床  −−−−−− 第3脳室", "視床下部 −−−−− 第3脳室", "小　脳  −−−−−− 第4脳室"], "ans": 0, "essential": false}, {"q": "上行性伝導路はどれか。", "opts": ["脊髄視床路", "視蓋脊髄路", "前庭脊髄路", "赤核脊髄路"], "ans": 0, "essential": false}, {"q": "中脳の上丘レベルで脳神経核群をもつのはどれか。", "opts": ["動眼神経", "外転神経", "滑車神経", "顔面神経"], "ans": 0, "essential": false}, {"q": "副交感性線維を含む脳神経はいくつか。", "opts": ["4", "3", "5", "6"], "ans": 0, "essential": false}, {"q": "右の反回神経が反回する動脈はどれか。", "opts": ["鎖骨下動脈", "頸動脈", "腕頭動脈", "大動脈"], "ans": 0, "essential": false}, {"q": "仙骨神経由来はどれか。", "opts": ["後大腿皮神経", "陰部大腿神経", "外側大腿皮神経", "大腿神経"], "ans": 0, "essential": false}, {"q": "外肛門括約筋の支配神経はどれか。", "opts": ["下直腸神経", "骨盤内臓神経", "上直腸神経", "会陰神経"], "ans": 0, "essential": false}, {"q": "皮脂腺はどれか。", "opts": ["乳　腺", "耳下腺", "顎下腺", "前立腺"], "ans": 0, "essential": false}, {"q": "網膜の浅層から深層の順で正しいのはどれか。", "opts": ["視神経細胞層 → 双極細胞層 → 視細胞層", "視細胞層 → 双極細胞層 → 視神経細胞層", "視細胞層 → 視神経細胞層 → 双極細胞層", "視神経細胞層 → 視細胞層 → 双極細胞層"], "ans": 0, "essential": false}, {"q": "肺尖の高さはどこか。", "opts": ["鎖骨の頭側", "胸鎖関節", "胸鎖関節と胸骨角の間", "胸骨角"], "ans": 0, "essential": false}, {"q": "エックス線CT値が最も高いのはどれか。", "opts": ["緻密質", "血　液", "脂　肪", "脳髄質"], "ans": 0, "essential": false}, {"q": "単層扁平上皮を有するのはどれか。", "opts": ["血　管", "気　管", "尿　管", "肛門管"], "ans": 0, "essential": false}, {"q": "骨の組織で正しいのはどれか。", "opts": ["フォルクマン管は血管の通路である。", "ハバース管は海綿質にある。", "骨端部は主に緻密質からなる。", "骨端軟骨は骨膜で被われている。"], "ans": 0, "essential": false}, {"q": "生後、大泉門が閉鎖する時期はどれか。", "opts": ["2　年", "3か月", "6か月", "1　年"], "ans": 0, "essential": false}, {"q": "橈骨手根関節の構成に関与するのはどれか。", "opts": ["月状骨", "有頭骨", "有鉤骨", "豆状骨"], "ans": 0, "essential": false}, {"q": "上肢帯の筋はどれか。", "opts": ["棘上筋", "大胸筋", "広背筋", "大菱形筋"], "ans": 0, "essential": false}, {"q": "歩行時に骨盤挙上に働く筋はどれか。", "opts": ["中殿筋", "梨状筋", "内閉鎖筋", "大腿方形筋"], "ans": 0, "essential": false}, {"q": "房室結節があるのはどれか。", "opts": ["右心房", "左心房", "左心室", "右心室"], "ans": 0, "essential": false}, {"q": "胎児循環で最も低い酸素飽和度の血液が流れるのはどれか。", "opts": ["臍動脈", "静脈管(アランチウス管)", "動脈管(ボタロー管)", "臍静脈"], "ans": 0, "essential": false}, {"q": "胃の部位で一番高位にあるのはどれか。", "opts": ["胃　底", "噴　門", "胃　体", "幽　門"], "ans": 0, "essential": false}, {"q": "オッディの括約筋があるのはどれか。", "opts": ["十二指腸", "食　道", "胃", "空　腸"], "ans": 0, "essential": false}, {"q": "前頭洞の鼻腔への開口部位はどれか。", "opts": ["中鼻道", "最上鼻道", "上鼻道", "下鼻道"], "ans": 0, "essential": false}, {"q": "右肺のみにあるのはどれか。", "opts": ["水平裂", "胸膜洞", "斜　裂", "心圧痕"], "ans": 0, "essential": false}, {"q": "縦隔の境界をなすのはどれか。", "opts": ["横隔膜", "第1肋骨", "心　臓", "肺胸膜"], "ans": 0, "essential": false}, {"q": "腎臓で正しいのはどれか。", "opts": ["尿管は腎門から出る。", "糸球体は腎髄質にある。", "乳頭孔は腎皮質にある。", "腎臓は骨盤内に位置する。"], "ans": 0, "essential": false}, {"q": "男性の尿道括約筋があるのはどれか。", "opts": ["隔膜部", "壁内部", "前立腺部", "海綿体部"], "ans": 0, "essential": false}, {"q": "男女の生殖器で相同な組合せはどれか。", "opts": ["陰　嚢──── 大陰唇", "前立腺 ──── 大前庭腺", "陰茎亀頭 ─── 前庭球", "尿道海綿体 ── 陰核脚"], "ans": 0, "essential": false}, {"q": "子宮の正常位はどれか。", "opts": ["前傾前屈", "前傾後屈", "後傾前屈", "後傾後屈"], "ans": 0, "essential": false}, {"q": "ホルモンを産生しないのはどれか。", "opts": ["視　床", "視床下部", "腎　臓", "副　腎"], "ans": 0, "essential": false}, {"q": "皮質と髄質からなるのはどれか。", "opts": ["副　腎", "下垂体", "甲状腺", "上皮小体"], "ans": 0, "essential": false}, {"q": "脳脊髄液で満たされているのはどれか。", "opts": ["クモ膜と軟膜の間", "硬膜外葉と硬膜内葉の間", "硬膜内葉とクモ膜の間", "軟膜と脳実質の間"], "ans": 0, "essential": false}, {"q": "運動野があるのはどれか。", "opts": ["前頭葉", "頭頂葉", "側頭葉", "後頭葉"], "ans": 0, "essential": false}, {"q": "視床と接していないのはどれか。", "opts": ["レンズ核", "内　包", "視床下部", "第三脳室"], "ans": 0, "essential": false}, {"q": "咀嚼筋を支配するのはどれか。", "opts": ["三叉神経", "顏面神経", "舌咽神経", "迷走神経"], "ans": 0, "essential": false}, {"q": "耳下腺を支配しているのはどれか。", "opts": ["舌咽神経", "動眼神経", "顔面神経", "迷走神経"], "ans": 0, "essential": false}, {"q": "皮膚の内部構造物と部位の組合せで正しいのはどれか。", "opts": ["エクリン汗腺 ─── 真　皮", "アポクリン汗腺 ── 表　皮", "パチニ小体 ──── 真　皮", "マイスナー小体 ── 皮下組織"], "ans": 0, "essential": false}, {"q": "眼球に付着しないのはどれか。", "opts": ["上眼瞼挙筋", "上斜筋", "下直筋", "外側直筋"], "ans": 0, "essential": false}, {"q": "平衡斑があるのはどれか。", "opts": ["前　庭", "蝸牛管", "鼓室階", "半規管"], "ans": 0, "essential": false}, {"q": "肩、殿部における筋肉注射で正しいのはどれか。", "opts": ["下殿動脈損傷に注意する。", "尺骨神経損傷に注意する。", "肩峰より5横指下に注射する。", "殿部の下外側 1/4に注射する。"], "ans": 0, "essential": false}, {"q": "中硬膜動脈が通るのはどれか。", "opts": ["棘　孔", "正円孔", "破裂孔", "卵円孔"], "ans": 0, "essential": false}, {"q": "全身の静脈血が最初に通過するのはどれか。", "opts": ["三尖弁", "大動脈弁", "肺動脈弁", "僧帽弁"], "ans": 0, "essential": false}, {"q": "平滑筋と横紋筋の両方からなるのはどれか。", "opts": ["食　道", "胃", "回　腸", "結　腸"], "ans": 0, "essential": false}, {"q": "十二指腸で正しいのはどれか。", "opts": ["器官である。", "胆嚢管が開口する。", "腸間膜がある。", "腹膜垂がある。"], "ans": 0, "essential": false}, {"q": "グリソン鞘を有するのはどれか。", "opts": ["肝　臓", "咽　頭", "食　道", "膵　臓"], "ans": 0, "essential": false}, {"q": "縦隔にないのはどれか。", "opts": ["葉気管支", "主気管支", "気　管", "心　臓"], "ans": 0, "essential": false}, {"q": "腎臓の髄質にあるのはどれか。", "opts": ["ヘンレのワナ", "遠位曲尿細管", "近位曲尿細管", "ボーマン嚢"], "ans": 0, "essential": false}, {"q": "男性生殖器で正しいのはどれか。", "opts": ["尿道球腺は尿生殖隔膜内に位置する。", "精巣上体は精巣の前面に位置する。", "前立腺は膀胱の後面に位置する。", "精嚢は膀胱の側面に位置する。"], "ans": 0, "essential": false}, {"q": "卵巣出血時に血液が貯留しやすい場所はどれか。", "opts": ["直腸子宮窩", "直腸膀胱窩", "膀胱子宮窩", "卵巣窩"], "ans": 0, "essential": false}, {"q": "副腎皮質で正しいのはどれか。", "opts": ["3層の組織構造をとる。", "アドレナリンを分泌する。", "外胚葉由来である。", "中心静脈が走る。"], "ans": 0, "essential": false}, {"q": "海馬があるのはどれか。", "opts": ["側頭葉", "前頭葉", "頭頂葉", "後頭葉"], "ans": 0, "essential": false}, {"q": "脳の構造物で一番前方にあるのはどれか。", "opts": ["視交叉", "四丘体", "松果体", "乳頭体"], "ans": 0, "essential": false}, {"q": "遠心性神経線維のみ通すのはどれか。", "opts": ["脊髄の前根", "脊髄神経の前枝", "脊髄神経の後枝", "脊髄の後根"], "ans": 0, "essential": false}, {"q": "副交感神経線維を含むのはどれか。", "opts": ["動眼神経", "眼窩上神経", "眼窩下神経", "視神経"], "ans": 0, "essential": false}, {"q": "障害されると猿手を起こすのはどれか。", "opts": ["正中神経", "腋窩神経", "尺骨神経", "橈骨神経"], "ans": 0, "essential": false}, {"q": "鼻涙管の開口部位はどれか。", "opts": ["下鼻道", "最上鼻道", "上鼻道", "中鼻道"], "ans": 0, "essential": false}, {"q": "味覚に関与しないのはどれか。", "opts": ["舌下神経", "顔面神経", "舌咽神経", "迷走神経"], "ans": 0, "essential": false}, {"q": "血液で異常値はどれか。", "opts": ["血小板 1,000個/mm3", "赤血球 500万個/mm3", "白血球 6,000 個/mm3", "リンパ球 2,000個/mm3"], "ans": 0, "essential": false}, {"q": "卵円孔があるのはどれか。", "opts": ["蝶形骨", "後頭骨", "前頭骨", "側頭骨"], "ans": 0, "essential": false}, {"q": "上皮組織と臓器の組合せで正しいのはどれか。", "opts": ["移行上皮─────膀　胱", "重層扁平上皮───肺", "単層円柱上皮───血　管", "単層扁平上皮───皮　膚"], "ans": 0, "essential": false}, {"q": "線維軟骨がみられるのはどれか。", "opts": ["恥骨結合", "気　管", "喉頭蓋", "耳　介"], "ans": 0, "essential": false}, {"q": "内胚葉に由来するのはどれか。", "opts": ["気　管", "心　臟", "腎　臟", "脊　髄"], "ans": 0, "essential": false}, {"q": "トルコ鞍があるのはどれか。", "opts": ["蝶形骨", "篩　骨", "側頭骨", "後頭骨"], "ans": 0, "essential": false}, {"q": "関節と分類の組合せで正しいのはどれか。", "opts": ["腕尺関節─────蝶番関節", "上橈尺関節────楕円関節", "肩関節──────鞍関節", "橈骨手根関節───球関節"], "ans": 0, "essential": false}, {"q": "精巣挙筋に移行するのはどれか。", "opts": ["内腹斜筋", "錐体筋", "外腹斜筋", "腹直筋"], "ans": 0, "essential": false}, {"q": "筋と支配神経の組合せで正しいのはどれか。", "opts": ["三角筋───腋窩神経", "小円筋───肩甲下神経", "肩甲下筋──肩甲上神経", "大胸筋───胸背神経"], "ans": 0, "essential": false}, {"q": "総腓骨神経が支配するのはどれか。", "opts": ["大腿二頭筋短頭", "大腿二頭筋長頭", "半腱様筋", "半膜様筋"], "ans": 0, "essential": false}, {"q": "正中神経が支配するのはどれか。", "opts": ["円回内筋", "腕橈骨筋", "尺側手根屈筋", "長母指外転筋"], "ans": 0, "essential": false}, {"q": "内転筋管を通過するのはどれか。", "opts": ["大腿動脈", "閉鎖神経", "閉鎖動脈", "大腿神経"], "ans": 0, "essential": false}, {"q": "大動脈弓から分岐するのはどれか。", "opts": ["左総頸動脈", "左冠状動脈", "右鎖骨下動脈", "右総頸動脈"], "ans": 0, "essential": false}, {"q": "括約筋を有するのはどれか。", "opts": ["胃", "空　腸", "横行結腸", "下行結腸"], "ans": 0, "essential": false}, {"q": "大十二指腸乳頭に開口するのはどれか。", "opts": ["総胆管", "胆　管", "副膵管", "総肝管"], "ans": 0, "essential": false}, {"q": "声帯筋を支配するのはどれか。", "opts": ["迷走神経", "副神経", "三叉神経", "舌咽神経"], "ans": 0, "essential": false}, {"q": "水平裂はどれか。", "opts": ["右肺の上葉と中葉の間", "右肺の中葉と下葉の間", "右肺の上葉と下葉の間", "左肺の上葉と下葉の間"], "ans": 0, "essential": false}, {"q": "胸膜腔の説明で正しいのはどれか。", "opts": ["肺胸膜と壁側胸膜の間", "肺と肺胸膜の間", "左右の肺胸膜の間", "左右の壁側胸膜の間"], "ans": 0, "essential": false}, {"q": "子宮で正しいのはどれか。", "opts": ["子宮体に粘膜が存在する。", "直腸の後面に位置する。", "子宮底は膣に包まれる。", "子宮頸に卵管が開口する。"], "ans": 0, "essential": false}, {"q": "卵胞刺激ホルモンを分泌するのはどれか。", "opts": ["下垂体前葉", "副腎皮質", "視床下部", "卵　巣"], "ans": 0, "essential": false}, {"q": "上皮小体(副甲状腺)で正しいのはどれか。", "opts": ["主細胞と酸好性細胞からなる。", "体表から触知できる。", "甲状腺の頭側に位置する。", "濾胞で構成される。"], "ans": 0, "essential": false}, {"q": "大脳白質(大脳髄質)はどれか。", "opts": ["脳　梁", "尾状核", "レンズ核", "海　馬"], "ans": 0, "essential": false}, {"q": "感覚性言語中枢が局在するのはどれか。", "opts": ["側頭葉", "後頭葉", "前頭葉", "頭頂葉"], "ans": 0, "essential": false}, {"q": "舌の運動を支配するのはどれか。", "opts": ["舌下神経", "三叉神経", "顏面神経", "舌咽神経"], "ans": 0, "essential": false}, {"q": "横隔神経の構成要素になるのはどれか。", "opts": ["第4頸神経", "第1頸神経", "第7頸神経", "第1胸神経"], "ans": 0, "essential": false}, {"q": "神経叢と支配筋の組合せで正しいのはどれか。", "opts": ["腰神経叢───恥骨筋", "頸神経叢───肩甲挙筋", "腕神経叢───僧帽筋", "仙骨神経叢──外閉鎖筋"], "ans": 0, "essential": false}, {"q": "筋皮神経の枝はどれか。", "opts": ["外側前腕皮神経", "内側前腕皮神経", "後上腕皮神経", "内側上腕皮神経"], "ans": 0, "essential": false}, {"q": "交感神経で支配されるのはどれか。", "opts": ["瞳孔散大筋", "毛様体筋", "上眼瞼挙筋", "瞳孔括約筋"], "ans": 0, "essential": false}, {"q": "骨盤で触知できないのはどれか。", "opts": ["坐骨棘", "坐骨結節", "恥骨結節", "上前腸骨棘"], "ans": 0, "essential": false}, {"q": "聴診三角と腰三角の両方の構成に関わるのはどれか。", "opts": ["広背筋", "外腹斜筋", "大菱形筋", "僧帽筋"], "ans": 0, "essential": false}, {"q": "三角筋胸筋溝を通るのはどれか。", "opts": ["橈側皮静脈", "尺側皮静脈", "上腕静脈", "腕頭静脈"], "ans": 0, "essential": false}, {"q": "触知できないのはどれか。", "opts": ["閉鎖動脈", "膝窩動脈", "足背動脈", "大腿動脈"], "ans": 0, "essential": false}];
+
+let questions = [];
+let current = 0;
+let selected = null;
+let results = [];
+let optMap = [];
+let shuffleOpts = true;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const numVal = parseInt(document.getElementById('selectNum').value);
+  const isRandom = document.getElementById('selectOrder').value === '1';
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+
+  let pool = [...ALL_DATA];
+  if (isRandom) pool = shuffle(pool);
+  questions = numVal === 0 ? pool : pool.slice(0, numVal);
+
+  current = 0;
+  results = [];
+
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current];
+  const total = questions.length;
+  const pct = (current / total) * 100;
+
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('headerSub').textContent = `${current + 1} / ${total} 問`;
+  document.getElementById('qNum').textContent = `問${current + 1}`;
+  document.getElementById('qText').textContent = q.q;
+
+  const badge = document.getElementById('qBadge');
+  badge.style.display = q.essential ? 'inline-block' : 'none';
+
+  // Build option order
+  let indices = [0, 1, 2, 3];
+  if (shuffleOpts) indices = shuffle(indices);
+  optMap = indices;
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  const labels = ['ア', 'イ', 'ウ', 'エ'];
+  indices.forEach((origIdx, dispIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[dispIdx]}</span><span class="opt-text">${q.opts[origIdx]}</span>`;
+    btn.onclick = () => selectOption(dispIdx, origIdx, q.ans);
+    grid.appendChild(btn);
+  });
+
+  selected = null;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('btnNext').disabled = true;
+  document.getElementById('btnNext').textContent = current < questions.length - 1 ? '次の問題 →' : '結果を見る';
+}
+
+function selectOption(dispIdx, origIdx, ans) {
+  if (selected !== null) return;
+  selected = origIdx;
+
+  const btns = document.querySelectorAll('.opt-btn');
+  const isCorrect = origIdx === ans;
+
+  btns.forEach((btn, i) => {
+    btn.onclick = null;
+    if (optMap[i] === ans) btn.classList.add('correct');
+    if (i === dispIdx && !isCorrect) btn.classList.add('wrong');
+    if (i === dispIdx && isCorrect) btn.classList.add('correct');
+  });
+
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'ng');
+  fb.innerHTML = isCorrect ? '✅ 正解！' : `❌ 不正解　正解：${questions[current].opts[ans]}`;
+
+  results.push({ q: questions[current], chosen: origIdx, correct: isCorrect });
+  recordAnswer(questions[current], isCorrect);
+  document.getElementById('btnNext').disabled = false;
+
+  // Haptic feedback (iOS/Android)
+  if (navigator.vibrate) navigator.vibrate(isCorrect ? 30 : [50, 30, 50]);
+}
+
+function nextQuestion() {
+  if (selected === null) return;
+  current++;
+  if (current >= questions.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  document.getElementById('progressBar').style.width = '100%';
+
+  const total = results.length;
+  const correct = results.filter(r => r.correct).length;
+  const score = Math.round(correct / total * 100);
+  saveSession(total, correct, score);
+  setTimeout(refreshWeakBtn, 100);
+
+  document.getElementById('resultScore').innerHTML = `${score}<span>点</span>`;
+  document.getElementById('resultDetail').textContent = `${total}問中 ${correct}問正解`;
+  document.getElementById('headerSub').textContent = '結果';
+
+  let emoji = '😢', msg = 'もう少し頑張りましょう！';
+  if (score >= 60) { emoji = '🙂'; msg = '合格ライン到達！'; }
+  if (score >= 80) { emoji = '😊'; msg = 'よくできました！'; }
+  if (score === 100) { emoji = '🎉'; msg = 'Perfect!! おめでとう！'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultMsg').textContent = msg;
+
+  setTimeout(() => {
+    document.getElementById('scoreBar').style.width = score + '%';
+  }, 100);
+
+  const wrongCount = results.filter(r => !r.correct).length;
+  const btnRetry = document.getElementById('btnRetry');
+  btnRetry.style.display = wrongCount > 0 ? 'block' : 'none';
+  btnRetry.textContent = `間違えた${wrongCount}問をやり直す`;
+
+  // Review list
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (r.correct ? 'correct-item' : 'wrong-item');
+    div.innerHTML = `
+      <div class="review-q">問${i+1}：${r.q.q}</div>
+      <div class="review-ans">
+        ${r.correct
+          ? `<span class="label-correct">✅ 正解：${r.q.opts[r.q.ans]}</span>`
+          : `<span class="label-wrong">❌ あなた：${r.q.opts[r.chosen]}</span>　正解：<span class="label-correct">${r.q.opts[r.q.ans]}</span>`
+        }
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function retryWrong() {
+  const wrongItems = results.filter(r => !r.correct).map(r => r.q);
+  if (wrongItems.length === 0) return;
+  questions = wrongItems;
+  current = 0;
+  results = [];
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function backToStart() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('headerSub').textContent = '第14回〜第33回 国家試験問題';
+}
+
+
+
+// ===== 苦手問題・成績履歴機能 =====
+var SKEY = (document.title || '').replace(/（第\d+回〜第\d+回）/, '').trim();
+var sessionStart = null;
+var weakData = {};
+var historyData = [];
+
+function loadData() {
+  try {
+    var w = localStorage.getItem('wk_' + SKEY);
+    var h = localStorage.getItem('hs_' + SKEY);
+    weakData    = w ? JSON.parse(w) : {};
+    historyData = h ? JSON.parse(h) : [];
+  } catch(e) { weakData = {}; historyData = []; }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('wk_' + SKEY, JSON.stringify(weakData));
+    localStorage.setItem('hs_' + SKEY, JSON.stringify(historyData));
+  } catch(e) {}
+}
+
+function getWeakList() {
+  return ALL_DATA.filter(function(q, i) {
+    var d = weakData[String(i)];
+    if (!d) return false;
+    var t = d.c + d.w;
+    return t >= 2 && (d.c / t) < 0.5;
+  });
+}
+
+function refreshWeakBtn() {
+  var btn = document.getElementById('btnWeak');
+  if (!btn) return;
+  var wl = getWeakList();
+  if (wl.length === 0) {
+    btn.textContent = '⚡ 苦手問題なし（まず通常クイズを解いてください）';
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+  } else {
+    btn.textContent = '⚡ 苦手問題だけ出題する（' + wl.length + '問）';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+}
+
+function doStartQuiz() {
+  sessionStart = Date.now();
+  startQuiz();
+}
+
+function doStartWeak() {
+  var wl = getWeakList();
+  if (wl.length === 0) { alert('苦手問題がありません。まず通常クイズを解いてください。'); return; }
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  questions = wl;
+  current = 0; results = [];
+  sessionStart = Date.now();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function recordAnswer(qObj, isCorrect) {
+  var i = String(ALL_DATA.indexOf(qObj));
+  if (i === '-1') return;
+  if (!weakData[i]) weakData[i] = { c: 0, w: 0 };
+  if (isCorrect) weakData[i].c++; else weakData[i].w++;
+  saveData();
+}
+
+function saveSession(total, correct, score) {
+  var mins = sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart) / 60000)) : 0;
+  var now = new Date();
+  var d = now.getFullYear() + '/' +
+    String(now.getMonth()+1).padStart(2,'0') + '/' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  historyData.unshift({ date: d, score: score, total: total, correct: correct, mins: mins });
+  if (historyData.length > 50) historyData.length = 50;
+  saveData();
+  sessionStart = null;
+}
+
+function openHistory() {
+  loadData();
+  var n  = historyData.length;
+  var tq = historyData.reduce(function(a,b){ return a+b.total; }, 0);
+  var as = n ? Math.round(historyData.reduce(function(a,b){ return a+b.score; }, 0) / n) : 0;
+  var tt = historyData.reduce(function(a,b){ return a+(b.mins||0); }, 0);
+  var wl = getWeakList();
+  document.getElementById('hSessions').textContent   = n;
+  document.getElementById('hQuestions').textContent  = tq;
+  document.getElementById('hAvgScore').textContent   = as + '%';
+  document.getElementById('hTime').textContent       = tt + '分';
+  document.getElementById('hWeakCount').textContent  = wl.length + '問';
+  var list = document.getElementById('hSessionList');
+  list.innerHTML = n === 0
+    ? '<div style="color:#718096;font-size:13px;text-align:center;padding:20px">まだ履歴がありません</div>'
+    : historyData.map(function(h){
+        return '<div class="hist-row"><div>' +
+          '<div style="font-weight:600">' + h.correct + '/' + h.total + '問正解　' + (h.mins||0) + '分</div>' +
+          '<div class="hist-date">' + h.date + '</div></div>' +
+          '<div class="hist-score">' + h.score + '点</div></div>';
+      }).join('');
+  document.getElementById('historyPanel').classList.add('show');
+}
+
+// ===== イベント登録（iOS Safari対応）=====
+window.addEventListener('load', function() {
+  loadData();
+  refreshWeakBtn();
+
+  function tap(id, fn) {
+    var el = typeof id === 'string' ? document.getElementById(id) : id;
+    if (!el) return;
+    el.addEventListener('click', fn);
+    el.addEventListener('touchend', function(e){ e.preventDefault(); fn(); });
+  }
+
+  tap('btnStart',    doStartQuiz);
+  tap('btnWeak',     doStartWeak);
+  tap('btnNext',     nextQuestion);
+  tap('btnRetry',    function(){ sessionStart = Date.now(); retryWrong(); });
+  tap('btnRestart', backToStart);
+  tap('historyBtn',  openHistory);
+  tap('historyClose', function(){ document.getElementById('historyPanel').classList.remove('show'); });
+  tap('btnClear', function(){
+    if (confirm('履歴と苦手データをすべてリセットしますか？')) {
+      weakData = {}; historyData = [];
+      saveData(); openHistory(); refreshWeakBtn();
+    }
+  });
+  var panel = document.getElementById('historyPanel');
+  if (panel) panel.addEventListener('click', function(e){ if(e.target===panel) panel.classList.remove('show'); });
+});
+</script>
+
+<button class="history-btn" id="historyBtn">📊</button>
+<div class="history-panel" id="historyPanel">
+  <div class="history-inner">
+    <div class="history-header">
+      <h2>📊 成績・履歴</h2>
+      <button class="history-close" id="historyClose">✕</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="hSessions">0</div><div class="stat-label">総セッション数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hQuestions">0</div><div class="stat-label">総解答問題数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hAvgScore">0%</div><div class="stat-label">平均正答率</div></div>
+      <div class="stat-card"><div class="stat-val" id="hTime">0分</div><div class="stat-label">総学習時間</div></div>
+    </div>
+    <div class="weak-stat">
+      <div class="weak-count" id="hWeakCount">0問</div>
+      <div style="font-size:13px;color:#e65100;margin-top:4px;">苦手問題数（正答率50%未満・2回以上解いた問題）</div>
+    </div>
+    <div class="hist-section-title">📅 セッション履歴（最新50件）</div>
+    <div id="hSessionList"></div>
+    <button class="btn-clear" id="btnClear">🗑 履歴・苦手データをリセット</button>
+  </div>
+</div>
+</body>
+</html>
