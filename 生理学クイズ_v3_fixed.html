@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>生理学クイズ（第14回〜第33回）</title>
+<style>
+  :root {
+    --primary: #2d7a4f;
+    --primary-light: #e8f5ee;
+    --accent: #e74c3c;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --bg: #f0f7f2;
+    --card: #ffffff;
+    --text: #1a202c;
+    --text-sub: #718096;
+    --border: #e2e8f0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 14px;
+    --option-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; color: var(--text); }
+
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 14px 16px 10px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .progress-bar-wrap { height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin-top: 10px; }
+  .progress-bar { height: 100%; background: #ffd700; border-radius: 2px; transition: width 0.4s ease; }
+
+  #startScreen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 80px); padding: 24px;
+  }
+  .start-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 32px 24px; width: 100%; max-width: 420px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .start-icon { font-size: 56px; margin-bottom: 16px; }
+  .start-card h2 { font-size: 22px; color: var(--primary); margin-bottom: 8px; }
+  .start-card p { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px 14px; background: var(--bg); border-radius: 10px; }
+  .setting-label { font-size: 14px; font-weight: 600; }
+  .setting-row select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--border); background: white; color: var(--text); appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+  .btn-start {
+    width: 100%; padding: 16px; font-size: 18px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; letter-spacing: 1px; margin-top: 8px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 14px rgba(45,122,79,0.4);
+  }
+  .btn-start:active { transform: scale(0.97); }
+
+  #quizScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .q-num { background: var(--primary); color: white; font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .q-badge-hissu { background: #ff9500; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .q-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .q-text { font-size: 17px; line-height: 1.65; font-weight: 600; }
+  .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .opt-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; cursor: pointer;
+    font-size: 15px; line-height: 1.4; text-align: left;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    min-height: var(--option-h);
+    box-shadow: var(--shadow);
+    -webkit-user-select: none; user-select: none;
+  }
+  .opt-btn:active { transform: scale(0.98); }
+  .opt-btn.selected { border-color: var(--primary); background: var(--primary-light); }
+  .opt-btn.correct { border-color: var(--correct); background: #eafaf1; }
+  .opt-btn.wrong { border-color: var(--wrong); background: #fdecea; }
+  .opt-label {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%; background: var(--border); font-weight: 700; font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .opt-btn.selected .opt-label { background: var(--primary); color: white; }
+  .opt-btn.correct .opt-label { background: var(--correct); color: white; }
+  .opt-btn.wrong .opt-label { background: var(--wrong); color: white; }
+  .opt-text { flex: 1; }
+
+  .feedback { display: none; padding: 14px 16px; border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 15px; align-items: center; gap: 10px; }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: #eafaf1; color: var(--correct); border: 1.5px solid var(--correct); }
+  .feedback.ng { background: #fdecea; color: var(--wrong); border: 1.5px solid var(--wrong); }
+
+  .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .btn-next {
+    flex: 1; padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; transition: transform 0.1s;
+    box-shadow: 0 4px 14px rgba(45,122,79,0.35);
+  }
+  .btn-next:active { transform: scale(0.97); }
+  .btn-next:disabled { background: var(--border); color: var(--text-sub); box-shadow: none; }
+
+  #resultScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .result-hero {
+    background: var(--card); border-radius: var(--radius); padding: 32px 24px;
+    text-align: center; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 12px; }
+  .result-score { font-size: 56px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .result-score span { font-size: 24px; font-weight: 400; }
+  .result-msg { font-size: 17px; font-weight: 600; color: var(--text); margin: 10px 0; }
+  .result-detail { font-size: 14px; color: var(--text-sub); margin-bottom: 4px; }
+  .score-bar-wrap { background: var(--bg); border-radius: 8px; height: 12px; margin: 14px 0; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--primary), #5abf7e); transition: width 0.8s ease; }
+  .btn-retry, .btn-restart {
+    width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px;
+    transition: transform 0.1s;
+  }
+  .btn-retry { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(45,122,79,0.35); }
+  .btn-restart { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-retry:active, .btn-restart:active { transform: scale(0.97); }
+  .review-section { margin-top: 8px; }
+  .review-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
+  .review-item { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid var(--border); }
+  .review-item.wrong-item { border-left-color: var(--wrong); }
+  .review-item.correct-item { border-left-color: var(--correct); }
+  .review-q { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .review-ans { font-size: 13px; color: var(--text-sub); }
+  .review-ans .label-correct { color: var(--correct); font-weight: 700; }
+  .review-ans .label-wrong { color: var(--wrong); font-weight: 700; }
+
+  .btn-weak {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
+    background: #fff3e0; color: #e65100; border: 2px solid #ffb74d;
+    border-radius: 12px; cursor: pointer; margin-top: 10px;
+    -webkit-user-select: none; user-select: none; display: block; text-align: center;
+  }
+  .btn-weak:active { transform: scale(0.97); }
+  .history-btn {
+    position: fixed; bottom: 24px; right: 20px; z-index: 200;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--primary); color: white; border: none;
+    font-size: 22px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .history-panel {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.55); overflow-y: auto;
+  }
+  .history-panel.show { display: block; }
+  .history-inner {
+    background: white; border-radius: 16px 16px 0 0;
+    padding: 24px 16px 60px; margin-top: 60px;
+    min-height: calc(100vh - 60px);
+  }
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .history-header h2 { font-size: 18px; font-weight: 700; }
+  .history-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f0f0f0; border: none; font-size: 18px; cursor: pointer;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: #f8f9fa; border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+  .stat-label { font-size: 11px; color: #718096; margin-top: 2px; }
+  .weak-stat { background: #fff3e0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .weak-count { font-size: 24px; font-weight: 800; color: #e65100; }
+  .hist-section-title { font-size: 13px; font-weight: 700; color: #718096; margin: 16px 0 10px; }
+  .hist-row {
+    background: #f8f9fa; border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 8px; font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .hist-score { font-weight: 800; font-size: 18px; color: var(--primary); }
+  .hist-date { color: #718096; font-size: 12px; }
+  .btn-clear {
+    width: 100%; padding: 12px; font-size: 13px;
+    background: white; color: #e74c3c; border: 1.5px solid #e74c3c;
+    border-radius: 10px; cursor: pointer; margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🫀 生理学クイズ</h1>
+  <div class="header-sub" id="headerSub">第14回〜第33回 国家試験問題</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+</div>
+
+<div id="startScreen">
+  <div class="start-card">
+    <div class="start-icon">🫀</div>
+    <h2>生理学クイズ</h2>
+    <p>国家試験（第14回〜第34回）から<br>出題された生理学問題を学習しましょう。<br>全<strong>580問</strong>収録</p>
+    <div class="setting-row">
+      <span class="setting-label">出題数</span>
+      <select id="selectNum">
+        <option value="10">10問</option>
+        <option value="20">20問</option>
+        <option value="30" selected>30問</option>
+        <option value="50">50問</option>
+        <option value="100">100問</option>
+        <option value="0">全問（580問）</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">出題順</span>
+      <select id="selectOrder">
+        <option value="1" selected>ランダム</option>
+        <option value="0">番号順</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">選択肢順</span>
+      <select id="selectShuffle">
+        <option value="1" selected>ランダム</option>
+        <option value="0">固定</option>
+      </select>
+    </div>
+    <button class="btn-start" id="btnStart">スタート ▶</button>
+    <button class="btn-weak" id="btnWeak">⚡ 苦手問題だけ出題する</button>
+  </div>
+</div>
+
+<div id="quizScreen">
+  <div class="q-meta">
+    <span class="q-num" id="qNum">問1</span>
+    <span class="q-badge-hissu" id="qBadge" style="display:none">必修</span>
+  </div>
+  <div class="q-card">
+    <p class="q-text" id="qText"></p>
+  </div>
+  <div class="options-grid" id="optionsGrid"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="action-row">
+    <button class="btn-next" id="btnNext" disabled>次の問題 →</button>
+  </div>
+</div>
+
+<div id="resultScreen">
+  <div class="result-hero">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-score" id="resultScore">0<span>点</span></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="score-bar-wrap"><div class="score-bar" id="scoreBar" style="width:0%"></div></div>
+  </div>
+  <button class="btn-retry" id="btnRetry">間違えた問題をやり直す</button>
+  <button class="btn-restart" id="btnRestart">トップへ戻る</button>
+  <div class="review-section">
+    <div class="review-title">📝 解答一覧</div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<script>
+const ALL_DATA = [{"q": "正常の心拍動における歩調取り部位はどれか。", "opts": ["洞房結節", "脚", "房室結節", "プルキンエ線維"], "ans": 0, "essential": true}, {"q": "ステロイドホルモンでないのはどれか。", "opts": ["インスリン", "エストロゲン", "アンドロゲン", "コルチゾン"], "ans": 0, "essential": true}, {"q": "副交感神経が興奮した時に起こる反応はどれか。", "opts": ["腸管運動の促進", "心拍出量の増加", "気管支の拡張", "瞳孔の散大"], "ans": 0, "essential": true}, {"q": "肥満細胞と結合する免疫グロブリンはどれか。", "opts": ["IgE", "IgA", "IgG", "IgM"], "ans": 0, "essential": false}, {"q": "線維素溶解現象を起こすのはどれか。", "opts": ["プラスミン", "フィブリノゲン", "トロンボプラスチン", "プロトロンビン"], "ans": 0, "essential": false}, {"q": "抵抗血管はどれか。", "opts": ["細動脈", "大静脈", "毛細血管", "大動脈"], "ans": 0, "essential": false}, {"q": "収縮期血圧140mmHg、拡張期血圧80mmHgのときの平均血圧はどれか。", "opts": ["100mmHg", "90mmHg", "110mmHg", "120mmHg"], "ans": 0, "essential": false}, {"q": "呼息時の肺胞内圧と胸膜腔内圧との組み合わせで正しいのはどれか。<br>肺胞内圧（左）・胸膜腔内圧（右）", "opts": ["陽 圧────陰 圧", "陽 圧────陽 圧", "陰 圧────陽 圧", "陰 圧────陰 圧"], "ans": 0, "essential": false}, {"q": "肺の伸展受容器からの求心性インパルスによって吸息が抑制されるのはどれか。", "opts": ["ヘリングーブロイヤー反射", "クッシング反射", "ファーガソン反射", "ベインブリッジ反射"], "ans": 0, "essential": false}, {"q": "誤っている組み合わせはどれか。", "opts": ["マルターゼ────小腸液", "アミラーゼ────唾　液", "ペプシン─────胃　液", "キモトリプシン────膵　液"], "ans": 0, "essential": false}, {"q": "ミセルを形成して吸収されるのはどれか。", "opts": ["脂肪酸", "ビタミンC", "ブドウ糖", "アミノ酸"], "ans": 0, "essential": false}, {"q": "セクレチンによって分泌が起こるのはどれか。", "opts": ["膵液", "唾液", "胃液", "大腸液"], "ans": 0, "essential": false}, {"q": "体温調節に関係しないのはどれか。", "opts": ["手掌の汗腺", "対向流熱交換系", "視床下部前部", "交感神経"], "ans": 0, "essential": false}, {"q": "バゾプレッシンの作用部位はどれか。", "opts": ["集合管", "近位尿細管", "ヘンレの係蹄", "遠位尿細管"], "ans": 0, "essential": false}, {"q": "受容体が細胞内にあるのはどれか。", "opts": ["アルドステロン", "アドレナリン", "グルカゴン", "カルシトニン"], "ans": 0, "essential": false}, {"q": "血圧調節に関係しないのはどれか。", "opts": ["パラソルモン", "バゾプレッシン", "アンギオテンシン", "アルドステロン"], "ans": 0, "essential": false}, {"q": "血糖調節に関係しないのはどれか。", "opts": ["オキシトシン", "コルチゾン", "グルカゴン", "インスリン"], "ans": 0, "essential": false}, {"q": "活動電位の伝導が最も速いのはどれか。", "opts": ["直径15μmの有髄神経線維", "直径15μmの無髄神経線維", "直径5μmの無髄神経線維", "直径5μmの有髄神経線維"], "ans": 0, "essential": false}, {"q": "α運動ニューロンについて正しいのはどれか。", "opts": ["Iα線維とシナプスをつくる。", "細胞体は脊髄の白質にある。", "軸索は後根を通る。", "１本の筋線維とシナプスをつくる。"], "ans": 0, "essential": false}, {"q": "ムスカリン受容体があるのはどれか。", "opts": ["消化管平滑筋", "交感神経節後ニューロン", "副交感神経節前ニューロン", "骨格筋"], "ans": 0, "essential": false}, {"q": "視床下部にあるのはどれか。", "opts": ["摂食中枢", "呼吸中枢", "嘔吐中枢", "血管運動中枢"], "ans": 0, "essential": false}, {"q": "脊髄反射はどれか。", "opts": ["伸張反射", "角膜反射", "前庭眼球反射", "緊張性迷路反射"], "ans": 0, "essential": false}, {"q": "受容体に結合して骨格筋に活動電位を発生させるのはどれか。", "opts": ["アセチルコリン", "ノルアドレナリン", "クラーレ", "セロトニン"], "ans": 0, "essential": false}, {"q": "骨格筋が収縮するとき直接のエネルギー源となるのはどれか。", "opts": ["アデノシンリン酸", "クレアチンリン酸", "グリコーゲン", "乳酸"], "ans": 0, "essential": false}, {"q": "誤っている組み合わせはどれか。", "opts": ["杆状体────中心窩", "毛様体────遠近調節", "錐状体────ヨドプシン", "水晶体────光屈曲"], "ans": 0, "essential": false}, {"q": "平衡感覚と関係しないのはどれか。", "opts": ["蝸牛管", "半規管", "卵形嚢", "球形嚢"], "ans": 0, "essential": false}, {"q": "誤っている組み合わせはどれか。", "opts": ["温　覚────ルフィニ小体", "触　覚────マイスネル小体", "深部感覚───筋紡錘", "痛　覚────自由神経終末"], "ans": 0, "essential": false}, {"q": "妊娠初期に胎盤から多量に分泌されるのはどれか。", "opts": ["ヒト絨毛性ゴナドトロピン（hCG）", "エストリオール", "プレグナンジオール", "ヒト絨毛性乳腺刺激ホルモン（hCS）"], "ans": 0, "essential": false}, {"q": "貯蔵型の炭水化物はどれか。", "opts": ["グリコーゲン", "グルコース", "ガラクトース", "フルクトース"], "ans": 0, "essential": true}, {"q": "下垂体後葉ホルモンはどれか。", "opts": ["オキシトシン", "成長ホルモン", "副腎皮質刺激ホルモン", "黄体形成ホルモン"], "ans": 0, "essential": true}, {"q": "骨格筋の収縮を引き起こす際、筋小胞体から放出されるのはどれか。", "opts": ["Caイオン", "Naイオン", "Kイオン", "Clイオン"], "ans": 0, "essential": true}, {"q": "エネルギー源としてＡＴＰを必要とするのはどれか。", "opts": ["能動輸送", "拡散", "浸透", "ろ過"], "ans": 0, "essential": false}, {"q": "正常血漿の組成はどれか。", "opts": ["Na＋　140mEq/l　、K＋　5mEq/l　、　Cl−　100mEq/l", "Na＋　140mEq/l　、K＋　5mEq/l　、　Cl−　10mEq/l", "Na＋　10mEq/l　、K＋　140mEq/l　、　Cl−　100mEq/l", "Na＋　10mEq/l　、K＋　140mEq/l　、　Cl−　10mEq/l"], "ans": 0, "essential": false}, {"q": "血液凝固に関して正しいのはどれか。", "opts": ["ビタミンKが不足すると凝固能が低下する", "フィブリンは一時血栓を形成する", "カルシウムは血液凝固を抑制する", "プラスミンは抗凝固剤である"], "ans": 0, "essential": false}, {"q": "心周期の等容性収縮期に関して正しいのはどれか。", "opts": ["第Ｉ心音が発生する", "動脈弁が開いている", "心房筋が収縮する", "心室に血液が流入する"], "ans": 0, "essential": false}, {"q": "総断面積が最も大きいのはどれか。", "opts": ["毛細血管", "大動脈", "細動脈", "大静脈"], "ans": 0, "essential": false}, {"q": "容量が増加すると血中酸素分圧が低下するのはどれか。", "opts": ["死腔量", "肺活量", "肺胞換気量", "1回換気量"], "ans": 0, "essential": false}, {"q": "酸素受容器が存在するのはどれか。", "opts": ["頸動脈小体", "大動脈弓", "肺胞壁", "延髄"], "ans": 0, "essential": false}, {"q": "酸素受容器が存在するのはどれか。", "opts": ["大動脈体", "頸動脈洞", "肺胞壁", "延髄"], "ans": 0, "essential": false}, {"q": "ビタミンDに関して正しいのはどれか。", "opts": ["骨からのカルシウム動員を促進する", "肺で酸素に触れることで活性化される", "日光によって分解が促進される", "腸管からのカルシウム吸収を抑制する"], "ans": 0, "essential": false}, {"q": "ビタミンDに関して正しいのはどれか。", "opts": ["腎臓で活性化される", "過剰に摂取しても副作用はみられない。", "日光によって分解が促進される", "腸管からのカルシウム吸収を抑制する"], "ans": 0, "essential": false}, {"q": "胃液の分泌機序で誤っている組み合わせはどれか。", "opts": ["脳　相────舌下神経", "胃　相────ガストリン", "胃　相────迷走神経", "腸　相────セクレチン"], "ans": 0, "essential": false}, {"q": "消化吸収過程で正しい組み合わせはどれか。", "opts": ["蛋白質────細胞内消化", "ビタミン───カイロミクロン", "糖　質────リンパ管", "脂　質────担体輸送"], "ans": 0, "essential": false}, {"q": "誤っている組み合わせはどれか。", "opts": ["セクレチン────胆嚢収縮促進", "ガストリン────塩酸分泌促進", "ガストリン────胃運動促進", "セクレチン────膵液分泌促進"], "ans": 0, "essential": false}, {"q": "低温に暴露されたときに起こるのはどれか。", "opts": ["立毛筋の収縮", "代謝低下", "発汗", "皮膚血管拡張"], "ans": 0, "essential": false}, {"q": "精神性発汗が起こりやすいのはどれか。", "opts": ["手掌", "腹部", "背部", "大腿"], "ans": 0, "essential": false}, {"q": "糸球体内血圧が47mmHg、血漿コロイド浸透圧が22mmHg、ボーマン嚢内圧が12mmHgのとき、糸球体ろ過圧はどれか。", "opts": ["13mmHg", "81mmHg", "57mmHg", "37mmHg"], "ans": 0, "essential": false}, {"q": "バゾプレッシンによって水の透過性が増すのはどれか。", "opts": ["集合管", "近位尿細管", "ヘンレの係蹄下行脚", "ヘンレの係蹄上行脚"], "ans": 0, "essential": false}, {"q": "甲状腺ホルモンの作用でないのはどれか。", "opts": ["水分保持", "熱産生", "血糖上昇", "脂質分解"], "ans": 0, "essential": false}, {"q": "膵臓から分泌されないのはどれか。", "opts": ["インヒビテン", "ソマトスタチン", "インスリン", "グルカゴン"], "ans": 0, "essential": false}, {"q": "骨密度が高くなるのはどれか。", "opts": ["大理石病", "骨軟化症", "くる病", "骨粗鬆症"], "ans": 0, "essential": false}, {"q": "体性神経により調節されているのはどれか。", "opts": ["骨格筋", "心筋", "血管平滑筋", "消化管平滑筋"], "ans": 0, "essential": false}, {"q": "脊髄の後根が切断されたときに起こるのはどれか。", "opts": ["感覚障害のみ", "運動麻痺のみ", "感覚障害と運動麻痺", "腱反射亢進"], "ans": 0, "essential": false}, {"q": "視交叉が障害されたとき両眼の視野で欠損するのはどれか。", "opts": ["耳側（外側）視野", "右側視野", "左側視野", "鼻側（内側）視野"], "ans": 0, "essential": false}, {"q": "脊髄の左半分が損傷したときに病変部以下で障害されるのはどれか。", "opts": ["右半身の温覚", "右半身の随意運動", "左半身の温覚", "右半身の深部感覚"], "ans": 0, "essential": false}, {"q": "脊髄の左半分が損傷したときに病変部以下で障害されるのはどれか。", "opts": ["左半身の深部感覚", "右半身の皮膚の血管運動", "左半身の温覚", "右半身の深部感覚"], "ans": 0, "essential": false}, {"q": "女性への性分化について誤っている組み合わせはどれか。", "opts": ["ウォルフ管────子宮", "生殖隆起────卵巣", "生殖結節────陰核", "尿道ヒダ────小陰唇"], "ans": 0, "essential": false}, {"q": "精子形成と関係ないのはどれか。", "opts": ["プロラクチン", "果糖", "アンドロジェン", "卵胞刺激ホルモン"], "ans": 0, "essential": false}, {"q": "血中エストラジオール値が最も高くなる時期はどれか。", "opts": ["排卵前期", "卵胞期", "排卵期", "黄体期"], "ans": 0, "essential": false}, {"q": "酸素分圧の低い血液が流れている部位はどれか。", "opts": ["右心房", "大動脈", "左心室", "肺静脈"], "ans": 0, "essential": true}, {"q": "血液凝固因子の合成に必要なのはどれか。", "opts": ["ビタミンK", "ビタミンA", "ビタミンC", "ビタミンE"], "ans": 0, "essential": true}, {"q": "ステロイドホルモンはどれか。", "opts": ["コルチゾール", "チロキシン", "インスリン", "アドレナリン"], "ans": 0, "essential": true}, {"q": "ナトリウムポンプについて正しいのはどれか。", "opts": ["Naイオンを細胞内から細胞外へ運ぶ。", "Kイオンを細胞内から細胞外へ運ぶ。", "Naイオンを細胞外から細胞内へ運ぶ。", "Clイオンを細胞外から細胞内へ運ぶ。"], "ans": 0, "essential": false}, {"q": "ナトリウムポンプについて正しいのはどれか。", "opts": ["Kイオンを細胞外から細胞内へ運ぶ。", "Kイオンを細胞内から細胞外へ運ぶ。", "Naイオンを細胞外から細胞内へ運ぶ。", "Clイオンを細胞内から細胞外へ運ぶ。"], "ans": 0, "essential": false}, {"q": "代謝性アシドーシスの時、血液にみられる所見はどれか。ただし、血漿HCO3−濃度の正常値は25mEq/lである。", "opts": ["pH7.2", "pH7.6", "HCO3−濃度25mEq／1", "HCO3−濃度30mEq／1"], "ans": 0, "essential": false}, {"q": "代謝性アシドーシスの時、血液にみられる所見はどれか。ただし、血漿HCO3−濃度の正常値は25mEq/lである。", "opts": ["HCO3−濃度20mEq／l", "pH7.6", "pH7.4", "HCO3−濃度30mEq／l"], "ans": 0, "essential": false}, {"q": "遺伝性に存在している抗体はどれか。", "opts": ["抗A抗体（α凝集素）", "花粉に対する抗体", "ウイルスに対する抗体", "Rh抗原に対する抗体"], "ans": 0, "essential": false}, {"q": "心室内圧が心房内圧よりも低い時期はどれか。", "opts": ["充満期", "等容性収縮期", "駆出期", "等容性弛緩期"], "ans": 0, "essential": false}, {"q": "心電図から得られない情報はどれか。", "opts": ["1回拍出量", "心拍数", "電気軸", "房室伝導時間"], "ans": 0, "essential": false}, {"q": "ヘモグロビンの酸素解離曲線に関して誤っているのはどれか。", "opts": ["代謝が低下した組織では、曲線は右方へシフトする。", "温度の高い組織では、酸素の解離は多くなる。", "pHの低い組織では、酸素の結合は少なくなる。", "CO2分圧の低い組織では、酸素結合度は上がる。"], "ans": 0, "essential": false}, {"q": "肺伸展受容器からの求心性神経はどれか。", "opts": ["迷走神経", "肋間神経", "横隔神経", "舌咽神経"], "ans": 0, "essential": false}, {"q": "呼吸商を求めるのに必要なのはどれか。", "opts": ["酸素消費量", "一酸化炭素排出量", "尿中窒素排泄量", "機能的残気量"], "ans": 0, "essential": false}, {"q": "呼吸商を求めるのに必要なのはどれか。", "opts": ["二酸化炭素排出量", "水素消費量", "尿中窒素排泄量", "機能的残気量"], "ans": 0, "essential": false}, {"q": "小腸上皮の刷子縁膜にあるのはどれか。", "opts": ["アミノペプチダーゼ", "ペプシン", "トリプシン", "キモトリプシン"], "ans": 0, "essential": false}, {"q": "黄疸の発生に関与するのはどれか。", "opts": ["ヘモグロビン", "コレステロール", "フィブリノゲン", "グリコーゲン"], "ans": 0, "essential": false}, {"q": "体温を下げるときに現れるのはどれか。", "opts": ["皮膚血管の拡張", "心拍数の減少", "アドレナリン分泌", "ふるえ"], "ans": 0, "essential": false}, {"q": "体温を下げるときに現れるのはどれか。", "opts": ["発汗", "皮膚血管の縮小", "アドレナリン分泌", "ふるえ"], "ans": 0, "essential": false}, {"q": "ある物質Ｘのクリアランスを求めるのに必要でないのはどれか。", "opts": ["尿比重", "Ｘの血漿中濃度", "Ｘの尿中濃度", "1分間尿量"], "ans": 0, "essential": false}, {"q": "細胞膜に受容体をもつのはどれか。", "opts": ["アドレナリン", "サイロキシン", "コルチゾール", "アルドステロン"], "ans": 0, "essential": false}, {"q": "細胞膜に受容体をもつのはどれか。", "opts": ["グルカゴン", "ビタミンＤ", "コルチゾール", "アルドステロン"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["粘液水腫　−　カルシトニン", "糖尿病　−　インスリン", "骨粗鬆症　−　エストロジェン", "胃潰瘍　−　ガストリン"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["パラソルモン　−　骨再吸収抑制", "骨粗鬆症　−　骨基質の減少", "活性型ビタミンD3　−　腎臓", "上皮小体機能低下　−　トルーソー徴候"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["瞳孔は交感神経によって縮小する。", "唾液分泌は副交感神経によって促進される。", "胃腸管運動は交感神経によって抑制される。", "気道は副交感神経によって収縮する。"], "ans": 0, "essential": false}, {"q": "大脳基底核障害の症状でないのはどれか。", "opts": ["バビンスキー反射", "筋緊張の異常", "運動緩慢", "不随意運動"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["Ib群の感覚線維は腱紡錘の伸長に反応する。", "γ運動ニューロンは筋紡錘の感度を調節しない。", "Ia群の感覚線維は筋紡錘の伸長に反応しない。", "屈筋と伸筋の伸張反射は互いに抑制しない。"], "ans": 0, "essential": false}, {"q": "速筋と比べて遅筋の特徴はどれか。", "opts": ["筋線維は細い。", "色は白い。", "ミトコンドリアは少ない。", "ATPの供給源は解糖系である。"], "ans": 0, "essential": false}, {"q": "骨格筋の興奮収縮連関について誤っているのはどれか。", "opts": ["Caイオンがアクチンに結合すると筋収縮が起こる。", "運動神経からのアセチルコリンによって筋細胞が興奮する。", "筋細胞膜の興奮が横行小管によって内部に伝えられる。", "筋細胞の筋小胞体は興奮によってCaイオンを放出する。"], "ans": 0, "essential": false}, {"q": "受容器電位について誤っているのはどれか。", "opts": ["振幅が増大すると活動電位頻度は減少する。", "振幅は刺激の大きさと持続時間に影響される。", "順応現象に関与する。", "非伝導性の脱分極電位である。"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["1種類の匂い受容体は1種類の匂い分子と結合する。", "嗅覚では神経細胞が刺激を受容する。", "味細胞は受容器細胞である。", "水素イオンは味細胞における酸味の受容機構を刺激する。"], "ans": 0, "essential": false}, {"q": "皮膚感覚について誤っているのはどれか。", "opts": ["触圧点の密度の高い部位では刺激閾値が高い。", "自由神経終末は痛みの受容器として機能する。", "温点よりも冷点の方が平均密度が高い。", "2点弁別閾は触圧覚における識別能の指標となる。"], "ans": 0, "essential": false}, {"q": "テストステロンの作用でないのはどれか。", "opts": ["ゴナドトロピン合成を促進する。", "精子形成を促進する。", "頭髪の生え際を後退させる。", "骨格筋を発達させる。"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["プロラクチン　−　胎児・胎盤単位", "黄体形成ホルモン（LH）　−　排卵", "ヒト絨毛性ゴナドトロピン（hCG）　−　妊娠反応", "オキシトシン　−　分娩"], "ans": 0, "essential": false}, {"q": "細胞内に含まれる陽イオンで最も濃度が高いのはどれか。", "opts": ["カリウム", "ナトリウム", "カルシウム", "マグネシウム"], "ans": 0, "essential": true}, {"q": "貪食作用があるのはどれか。", "opts": ["好中球", "赤血球", "血小板", "リンパ球"], "ans": 0, "essential": true}, {"q": "エストロゲンの生理作用で誤っているのはどれか。", "opts": ["体温を上昇させる。", "骨形成を促進する。", "子宮内膜を増殖させる。", "卵胞を発育させる。"], "ans": 0, "essential": true}, {"q": "正常な体液で誤っているのはどれか。", "opts": ["細胞内液よりも細胞外液の方が多い。", "成人では体重の約60％は水である。", "食塩の過剰摂取で体液量は増加する。", "緩衝系は体液のpHを変動しにくくする。"], "ans": 0, "essential": false}, {"q": "線維素を溶解するのはどれか。", "opts": ["プラスミン", "ビタミンK", "トロンビン", "フィブリノゲン"], "ans": 0, "essential": false}, {"q": "心電図のT波が反映するのはどれか。", "opts": ["心室の再分極", "心房の脱分極", "心房の再分極", "心室の脱分極"], "ans": 0, "essential": false}, {"q": "平均血圧は拡張期血圧（最低血圧）に何を加えた圧か。", "opts": ["脈圧の1/3", "脈圧の2倍", "脈　圧", "脈圧の1/4"], "ans": 0, "essential": false}, {"q": "肺胞の表面活性剤（界面活性剤）で正しいのはどれか。", "opts": ["肺胞を広がりやすくする。", "表面張力を増大させる。", "気管支上皮細胞が分泌する。", "未熟児に多い。"], "ans": 0, "essential": false}, {"q": "酸素受容器があるのはどれか。", "opts": ["頸動脈体", "延　髄", "頚動脈洞", "肺　胞"], "ans": 0, "essential": false}, {"q": "1グラムあたりの発生エネルギーが最も大きいのはどれか。", "opts": ["脂　質", "糖　質", "蛋白質", "無機物"], "ans": 0, "essential": false}, {"q": "胆のうを収縮させるホルモンはどれか。", "opts": ["コレシストキニン", "ガストリン", "セクレチン", "インスリン"], "ans": 0, "essential": false}, {"q": "胆汁に含まれないのはどれか。", "opts": ["間接型ビリルビン", "コレステロール", "胆汁酸塩", "中性脂肪"], "ans": 0, "essential": false}, {"q": "無風の高温環境下で、最も重要な体熱放散機構はどれか。", "opts": ["蒸　発", "伝　導", "対　流", "輻　射"], "ans": 0, "essential": false}, {"q": "マクロファージが分泌する内因性発熱物質はどれか。", "opts": ["インターロイキン1", "アセチルコリン", "アドレナリン", "インターフェロン"], "ans": 0, "essential": false}, {"q": "腎臓で最も高率に排泄される物質はどれか。", "opts": ["クレアチニン", "水　分", "ブドウ糖", "蛋白質"], "ans": 0, "essential": false}, {"q": "甲状腺を摘出すると甲状腺刺激ホルモンの分泌はどうなるか。", "opts": ["上昇する。", "変わらない。", "低下する。", "上昇する場合と低下する場合がある。"], "ans": 0, "essential": false}, {"q": "視床下部で産生されるホルモンはどれか。", "opts": ["バゾプレッシン", "プロラクチン", "エストロゲン", "テストステロン"], "ans": 0, "essential": false}, {"q": "インスリンの分泌を刺激するのはどれか。", "opts": ["血　糖", "体　温", "浸透圧", "血液量"], "ans": 0, "essential": false}, {"q": "カルシトニンで正しいのはどれか。", "opts": ["尿中へのカルシウムの排泄を促進する。", "ステロイドホルモンである。", "血中カルシウム濃度を高める。", "骨の再吸収を促進する。"], "ans": 0, "essential": false}, {"q": "下部胸髄の右半側障害で起こらない右下肢の症状はどれか。", "opts": ["痛覚障害", "随意運動麻痺", "深部感覚障害", "皮膚の血管運動障害"], "ans": 0, "essential": false}, {"q": "筋紡錘を受容器としないのはどれか。", "opts": ["挙睾筋反射", "上腕二頭筋反射", "膝蓋腱反射", "アキレス腱反射"], "ans": 0, "essential": false}, {"q": "一次運動野で誤っているのはどれか。", "opts": ["シナプスを介さず骨格筋を支配する。", "中心前回にある。", "遠心性伝導路として皮質脊髄路がある。", "体部位局在がある。"], "ans": 0, "essential": false}, {"q": "レム睡眠で誤っているのはどれか。", "opts": ["脳波に高振幅徐波が記録される。", "急速眼球運動が起こる。", "姿勢維持に関与する筋の活動が急激に減少する。", "夢を見ることが多い。"], "ans": 0, "essential": false}, {"q": "筋肉で誤っているのはどれか。", "opts": ["骨格筋は自律神経系の支配を受ける。", "幽門括約筋は平滑筋である。", "心筋は横紋筋である。", "平滑筋は不随意筋である。"], "ans": 0, "essential": false}, {"q": "骨格筋の収縮で正しいのはどれか。", "opts": ["静止長付近で張力は最大となる。", "等尺性収縮では筋肉の張力は一定である。", "単収縮が加重しても張力は変わらない。", "反復刺激によって筋肉が疲労すると張力は増大する。"], "ans": 0, "essential": false}, {"q": "視細胞で誤っているのはどれか。", "opts": ["錐状体細胞の視物質はロドプシンである。", "錐状体細胞は色彩を感受する。", "杆状体細胞は明暗に反応する。", "中心窩には錐状体細胞がある。"], "ans": 0, "essential": false}, {"q": "加速度を感受するのはどれか。", "opts": ["耳石器", "鼓　膜", "蝸牛管", "耳小骨"], "ans": 0, "essential": false}, {"q": "性染色体で正しいのはどれか。", "opts": ["減数分裂によって数が半分になる。", "男性はXXである。", "ターナー（Turner）症候群ではX染色体がない。", "卵子の半分はY染色体を持っている。"], "ans": 0, "essential": false}, {"q": "蛋白質を合成する細胞内小器官はどれか。", "opts": ["リボゾーム", "核", "滑面小胞体", "ミトコンドリア"], "ans": 0, "essential": true}, {"q": "正常な尿に含まれないのはどれか。", "opts": ["ブドウ糖", "アンモニア", "ナトリウム", "クレアチニン"], "ans": 0, "essential": true}, {"q": "血糖値を下げるホルモンはどれか。", "opts": ["インスリン", "アドレナリン", "サイロキシン", "グルカゴン"], "ans": 0, "essential": true}, {"q": "蛋白質を合成する細胞内小器官はどれか。", "opts": ["リボゾーム", "核", "滑面小胞体", "ミトコンドリア"], "ans": 0, "essential": true}, {"q": "正常な尿に含まれないのはどれか。", "opts": ["ブドウ糖", "アンモニア", "ナトリウム", "クレアチニン"], "ans": 0, "essential": true}, {"q": "血糖値を下げるホルモンはどれか。", "opts": ["インスリン", "アドレナリン", "サイロキシン", "グルカゴン"], "ans": 0, "essential": true}, {"q": "ステロイド化合物でないのはどれか。", "opts": ["トリグリセリド", "コルチゾール", "テストステロン", "アルドステロン"], "ans": 0, "essential": false}, {"q": "代謝性アルカローシスの原因となるのはどれか。", "opts": ["頻回の嘔吐", "ケトン体の増加", "腎機能の低下", "呼吸量の増加"], "ans": 0, "essential": false}, {"q": "抗A抗体（α凝集素）があるのはどの血液型か。", "opts": ["Ｂ型とＯ型", "ＡＢ型とＯ型", "Ａ型とＢ型", "Ａ型とＡＢ型"], "ans": 0, "essential": false}, {"q": "心電図から判読できないのはどれか。", "opts": ["心拍出量", "心拍数", "平均電気軸", "房室伝導時間"], "ans": 0, "essential": false}, {"q": "心室が弛緩（拡張）している時に動脈血を末梢組織へ送るのはどれか。", "opts": ["大動脈の収縮", "心房の収縮", "細動脈の収縮", "大静脈の収縮"], "ans": 0, "essential": false}, {"q": "安静呼吸で誤っているのはどれか。", "opts": ["胸膜腔内圧は呼息時には陽圧である。", "肺胞内圧は吸息時には陰圧である。", "胸膜腔内圧は吸息時には陰圧である。", "肺胞内圧は呼息時には陽圧である。"], "ans": 0, "essential": false}, {"q": "ヘモグロビンと酸素の結合を低下させる要因はどれか。", "opts": ["体温の上昇", "酸素分圧の上昇", "二酸化炭素分圧の低下", "pHの上昇"], "ans": 0, "essential": false}, {"q": "基礎代謝量で正しいのはどれか。", "opts": ["思春期には成人より高い。", "夏は冬より高い。", "甲状腺ホルモンによって低下する。", "飢餓によって上昇する。"], "ans": 0, "essential": false}, {"q": "酸性条件（pH1）で活性が高いのはどれか。", "opts": ["ペプシン", "アミラーゼ", "トリプシン", "ラクターゼ"], "ans": 0, "essential": false}, {"q": "成人の肝臓の機能で誤っているのはどれか。", "opts": ["赤血球をつくる。", "胆汁を生成する。", "血液凝固因子を生成する。", "有毒物質を無毒化する。"], "ans": 0, "essential": false}, {"q": "気温25℃で体熱放散の割合が最も多いのはどれか。", "opts": ["輻射", "蒸発", "対流", "伝導"], "ans": 0, "essential": false}, {"q": "バゾプレッシンで誤っているのはどれか。", "opts": ["分泌が異常に亢進すると脱水する。", "尿量を減らす。", "脱水時に分泌が亢進する。", "体液の浸透圧を低下させる。"], "ans": 0, "essential": false}, {"q": "内分泌腺としての機能を持っている臓器はどれか。", "opts": ["腎臓", "脾臓", "胆のう", "膀胱"], "ans": 0, "essential": false}, {"q": "視床下部ホルモンによる分泌調節を受けないのはどれか。", "opts": ["オキシトシン", "プロラクチン", "甲状腺刺激ホルモン", "副腎皮質刺激ホルモン"], "ans": 0, "essential": false}, {"q": "糖質コルチコイドで誤っているのはどれか。", "opts": ["副腎髄質から分泌される。", "ストレスによって分泌される。", "免疫抑制作用がある。", "血糖値を上昇させる。"], "ans": 0, "essential": false}, {"q": "副甲状腺ホルモンで正しいのはどれか。", "opts": ["血中カルシウム濃度が高いと分泌は抑制される。", "傍ろ胞細胞が分泌する。", "ステロイドホルモンがある。", "骨吸収を抑制する。"], "ans": 0, "essential": false}, {"q": "有髄神経線維の興奮伝導で誤っているのはどれか。", "opts": ["一方向性伝導", "跳躍伝導", "不減衰伝導", "絶縁性伝導"], "ans": 0, "essential": false}, {"q": "大脳皮質の一次感覚領野で正しい組み合わせはどれか。", "opts": ["聴覚野　&#8722;　側頭葉", "視覚野　&#8722;　頭頂葉", "運動野　&#8722;　後頭葉", "体性感覚野　&#8722;　前頭葉"], "ans": 0, "essential": false}, {"q": "腱紡錘を受容器とする反射はどれか。", "opts": ["折りたたみナイフ反射", "屈曲反射", "伸張反射", "交叉伸展反射"], "ans": 0, "essential": false}, {"q": "骨格筋で誤っているのはどれか。", "opts": ["自動性がある。", "随意筋である。", "横紋筋である。", "体性神経系の支配を受ける。"], "ans": 0, "essential": false}, {"q": "心筋で誤っているのはどれか。", "opts": ["繰り返し刺激すると収縮の加重が起こる。", "筋細胞がギャップ結合で連結している。", "活動電位の持続が長い。", "不応期が長い。"], "ans": 0, "essential": false}, {"q": "痛覚で誤っているのはどれか。", "opts": ["Aδ線維はポリモーダル侵害受容線維である。", "痛覚受容器は自由神経終末である。", "一次求心線維は無髄のＣ線維を含む。", "Ｃ線維は二次痛を伝達する。"], "ans": 0, "essential": false}, {"q": "聴覚に関与しないのはどれか。", "opts": ["耳石器", "鼓膜", "耳小骨", "蝸牛管"], "ans": 0, "essential": false}, {"q": "皮膚感覚で正しいのはどれか。", "opts": ["温覚と冷覚の温度受容器は異なる。", "触覚は圧覚の強いものである。", "触・圧覚の二点弁別閾の最小部位は背部である。", "運動感覚は皮膚感覚の一つである。"], "ans": 0, "essential": false}, {"q": "思春期における変化で誤っているのはどれか。", "opts": ["卵巣の原始卵胞数が増加する。", "女性は皮下脂肪が増加する。", "男性は変声する。", "精巣の精子が増加する。"], "ans": 0, "essential": false}, {"q": "尿細管から再吸収された物質が通過する部位はどれか。〔必〕", "opts": ["腎静脈", "リンパ管", "尿　管", "腎動脈"], "ans": 0, "essential": false}, {"q": "ホルモンの作用経路はどれか。〔必〕", "opts": ["血液", "消化液", "リンパ液", "間質液"], "ans": 0, "essential": false}, {"q": "上皮小体（副甲状腺）が血中濃度の調節に関与している電解質はどれか。〔必〕", "opts": ["Ca2＋", "Na＋", "K＋", "Cl&#8722;"], "ans": 0, "essential": false}, {"q": "高分子物質を消化する細胞内小器官はどれか。", "opts": ["リソソーム", "ミトコンドリア", "ペルオキシソーム", "リボソーム"], "ans": 0, "essential": false}, {"q": "体液でK＋濃度がNa＋濃度より高いのはどれか。", "opts": ["細胞内液", "血液", "組織液", "体液腔"], "ans": 0, "essential": false}, {"q": "線維素を溶解するのはどれか。", "opts": ["プラスミン", "第VIII因子", "ビタミンK", "フィブリノーゲン"], "ans": 0, "essential": false}, {"q": "収縮期血圧の上昇がみられるのはどれか。", "opts": ["動脈弾性の低下", "動脈平滑筋の弛緩", "血液量の減少", "心室収縮力の低下"], "ans": 0, "essential": false}, {"q": "喘息などの気道の閉塞性障害で低下するのはどれか。", "opts": ["1秒率", "肺活量", "努力肺活量", "機能的残気量"], "ans": 0, "essential": false}, {"q": "ヘモグロビンからの酸素解離を促進するのはどれか。", "opts": ["アシドーシス", "酸素分圧上昇", "二酸化炭素分圧低下", "低　温"], "ans": 0, "essential": false}, {"q": "体内でステロイドホルモンの原料となるのはどれか。", "opts": ["コレステロール", "トリグリセリド", "リン脂質", "糖脂質"], "ans": 0, "essential": false}, {"q": "O2消費量が10&#8467;／時間、CO2排出量が7&#8467;／時間であるとき、呼吸商はいくらか。", "opts": ["0.7", "1.4", "3.0", "7.0"], "ans": 0, "essential": false}, {"q": "胃液の分泌を抑制するのはどれか。", "opts": ["セクレチン", "ガストリン", "ヒスタミン", "アセチルコリン"], "ans": 0, "essential": false}, {"q": "胆汁色素のヘモグロビンからの代謝過程で正しいのはどれか。", "opts": ["間接ビリルビン→直接ビリルビン→ウロビリノゲン", "直接ビリルビン→間接ビリルビン→ウロビリノゲン", "間接ビリルビン→ウロビリノゲン→直接ビリルビン", "ウロビリノゲン→間接ビリルビン→直接ビリルビン"], "ans": 0, "essential": false}, {"q": "体温で正しいのはどれか。", "opts": ["食事後30&#12316;90分に高くなる。", "腋窩温は直腸温より高い。", "一日のうちで正午頃が最も高くなる。", "月経周期で卵胞期に高くなる。"], "ans": 0, "essential": false}, {"q": "尿の浸透圧が上昇するのはどれか。", "opts": ["発汗の亢進", "水分摂取の増加", "バゾプレッシン分泌の低下", "アルドステロン分泌の亢進"], "ans": 0, "essential": false}, {"q": "尿細管で分泌されるのはどれか。", "opts": ["水素イオン", "ブドウ糖", "ナトリウムイオン", "イヌリン"], "ans": 0, "essential": false}, {"q": "外分泌機能と内分泌機能の両者を有するのはどれか。", "opts": ["膵　臓", "視床下部", "副腎髄質", "乳　腺"], "ans": 0, "essential": false}, {"q": "視床下部で産生されるホルモンはどれか。", "opts": ["オキシトシン", "ビタミンD", "グルカゴン", "アルドステロン"], "ans": 0, "essential": false}, {"q": "インスリンで正しいのはどれか。", "opts": ["グリコーゲンの合成を促進する。", "ステロイドホルモンである。", "膵臓のα細胞から分泌される。", "血糖値の低下により分泌が刺激される。"], "ans": 0, "essential": false}, {"q": "ビタミンDの活性化に重要な臓器はどれか。", "opts": ["腎 臓", "肺", "心 臓", "脾 臓"], "ans": 0, "essential": false}, {"q": "太い有髄神経線維に比較して細い有髄神経線維にあてはまるのはどれか。", "opts": ["局所麻酔が速く効く。", "興奮の伝導速度が速い。", "圧迫により麻痺を起こしやすい。", "電気刺激による興奮の閾値が低い。"], "ans": 0, "essential": false}, {"q": "延髄に存在しないのはどれか。", "opts": ["満腹中枢", "唾液分泌中枢", "嚥下中枢", "嘔吐中枢"], "ans": 0, "essential": false}, {"q": "ヒトの一次運動野の体部位再現で正しいのはどれか。採点除外", "opts": ["発声に関わる領域は体幹の領域より広い。", "下肢の領域は手の領域より外側にある。", "体幹の領域は顔の領域より外側にある。", "ブローカ野は口の領域の中にある。"], "ans": 0, "essential": false}, {"q": "骨格筋の遅筋に比較して速筋にあてはまるのはどれか。", "opts": ["疲労しやすい。", "筋線維が細い。", "収縮力が弱い。", "色が赤い。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["錘内筋線維の中央部にIa群線維が終末する。", "錘内筋線維はα運動ニューロンの支配を受ける。", "錘外筋線維はγ運動ニューロンの支配を受ける。", "錘外筋線維の中央部にII群線維が終末する。"], "ans": 0, "essential": false}, {"q": "感覚の種類と感覚受容器との組合せで正しいのはどれか。", "opts": ["触&#8722;圧覚　 &#8722;　パチニ小体", "筋の張力　&#8722;　筋紡錘", "温度覚　　&#8722;　マイスネル小体", "痛　覚　　&#8722;　ルフィニ小体"], "ans": 0, "essential": false}, {"q": "味覚の部位と求心路との組合せで正しいのはどれか。", "opts": ["舌の後1/3　&#8722;　舌咽神経", "舌の前1/3　&#8722;　舌下神経", "舌の中1/3　&#8722;　三叉神経", "咽　頭　　 &#8722;　顔面神経"], "ans": 0, "essential": false}, {"q": "胎盤の機能で誤っているのはどれか。", "opts": ["血球の産生", "老廃物の排泄", "ガス交換", "ホルモンの産生"], "ans": 0, "essential": false}, {"q": "アミノ酸で構成されるのはどれか。〔必〕", "opts": ["蛋白質", "トリグリセリド", "リン脂質", "多糖類"], "ans": 0, "essential": false}, {"q": "循環系で誤っているのはどれか。〔必〕", "opts": ["体循環で二酸化炭素分圧は低くなる。", "右心室より左心室では酸素分圧が高い。", "左心室より右心室では二酸化炭素分圧が高い。", "肺循環では酸素分圧は高くなる。"], "ans": 0, "essential": false}, {"q": "ビタミンDが消化管での吸収に関与するのはどれか。〔必〕", "opts": ["カルシウム", "鉄", "銅", "マグネシウム"], "ans": 0, "essential": false}, {"q": "蛋白質濃度が最も低いのはどれか。", "opts": ["組織液", "血　漿", "血　清", "細胞内液"], "ans": 0, "essential": false}, {"q": "ABO式血液型のAB型のヒトで正しいのはどれか。", "opts": ["α凝集素とβ凝集素のいずれもみられない。", "α（抗A）凝集素のみみられる。", "β（抗B）凝集素のみみられる。", "α凝集素とβ凝集素の両方みられる。"], "ans": 0, "essential": false}, {"q": "心電図で誤っている組合せはどれか。", "opts": ["P　波　　−　心房の再分極", "PR間隔　−　房室伝導時間", "QRS波　−　心室の脱分極", "T　波　−　心室の再分極"], "ans": 0, "essential": false}, {"q": "呼吸中枢が存在するのはどこか。", "opts": ["延　髄", "大脳皮質", "大脳基底核", "視　床"], "ans": 0, "essential": false}, {"q": "拘束性換気障害で減少するのはどれか。", "opts": ["肺活量", "1秒率", "機能的残気量", "残気量"], "ans": 0, "essential": false}, {"q": "基礎代謝を測定する条件で誤っているのはどれか。", "opts": ["睡眠状態", "摂食後12〜14時間", "室温20〜25℃", "肉体的安静状態"], "ans": 0, "essential": false}, {"q": "β酸化により代謝されるのはどれか。", "opts": ["脂肪酸", "アミノ酸", "ケト酸", "クエン酸"], "ans": 0, "essential": false}, {"q": "小腸の刷子縁に結合して消化を行うのはどれか。", "opts": ["ラクターゼ", "αアミラーゼ", "トリプシン", "リパーゼ"], "ans": 0, "essential": false}, {"q": "脂質の消化と吸収とに関与しないのはどれか。", "opts": ["グルクロン酸", "胆汁酸塩", "リパーゼ", "カイロミクロン"], "ans": 0, "essential": false}, {"q": "非ふるえ熱産生が顕著にみられるのはどれか。", "opts": ["褐色脂肪組織", "骨格筋", "血管平滑筋", "甲状腺"], "ans": 0, "essential": false}, {"q": "近位尿細管で受動的に再吸収されるのはどれか。", "opts": ["水", "ナトリウムイオン", "クレアチニン", "グルコース"], "ans": 0, "essential": false}, {"q": "腎臓に作用しないのはどれか。", "opts": ["エリスロポエチン", "アルドステロン", "心房性ナトリウム利尿ペプチド", "バゾプレッシン"], "ans": 0, "essential": false}, {"q": "受容体が細胞内にあるホルモンはどれか。", "opts": ["アルドステロン", "ゴナドトロピン", "バゾプレッシン", "レニン"], "ans": 0, "essential": false}, {"q": "神経分泌される下垂体ホルモンはどれか。", "opts": ["バゾプレッシン", "成長ホルモン", "プロラクチン", "卵胞刺激ホルモン"], "ans": 0, "essential": false}, {"q": "テストステロンの生理的作用はどれか。", "opts": ["筋肉増強", "血糖値下降", "浸透圧上昇", "体温低下"], "ans": 0, "essential": false}, {"q": "骨芽細胞で誤っているのはどれか。", "opts": ["エストロゲンによって活動が抑制される。", "中胚葉由来である。", "コラーゲンを分泌する。", "骨細胞になる。"], "ans": 0, "essential": false}, {"q": "カルシウムが関与しないのはどれか。", "opts": ["糖質の吸収", "筋の収縮", "血液凝固", "骨の形成"], "ans": 0, "essential": false}, {"q": "シナプス伝達で誤っているのはどれか。", "opts": ["シナプス伝達は双方向性に起こる。", "グルタミン酸は興奮性伝達物質として働く。", "化学伝達物質はシナプス間隙に放出される。", "シナプス伝達では時間的遅れが生じる。"], "ans": 0, "essential": false}, {"q": "ニコチン性受容体を介して生理作用を発現するのはどれか。", "opts": ["副腎髄質", "瞳孔括約筋", "唾液腺", "汗　腺"], "ans": 0, "essential": false}, {"q": "IIB型筋と比べてI型筋で正しいのはどれか。", "opts": ["ミオグロビン含量が多い。", "収縮速度が速い。", "疲労しやすい。", "グリコーゲン含量が多い。"], "ans": 0, "essential": false}, {"q": "骨格筋と比べて心筋の特徴で誤っているのはどれか。", "opts": ["強縮を起こしやすい。", "活動電位の持続が長い。", "活動電位の絶対不応期が長い。", "疲労しにくい。"], "ans": 0, "essential": false}, {"q": "速やかに順応する感覚受容器はどれか。", "opts": ["パチニ小体", "筋紡錘", "クラウゼ小体", "頚動脈洞圧受容器"], "ans": 0, "essential": false}, {"q": "味覚で誤っているのはどれか。☆参考問題", "opts": ["苦味は舌根部で強く感じる。", "塩味は舌尖から舌縁で強く感じる。", "甘味は舌尖部で強く感じる。", "酸味は舌縁部で強く感じる。"], "ans": 0, "essential": false}, {"q": "味覚で誤っているのはどれか。", "opts": ["塩味を感じる閾値は低い。", "苦味を感じる閾値は低い。", "甘味は糖で強く感じる。", "酸味は腐敗物で強く感じる。"], "ans": 0, "essential": false}, {"q": "一次痛を伝達する神経線維はどれか。", "opts": ["Aδ線維", "Aα線維", "Aβ線維", "C線維"], "ans": 0, "essential": false}, {"q": "性染色体異常で誤っている組合せはどれか。", "opts": ["XX／XY　−　仮性半陰陽", "XO　−　ターナー（Turner）症候群", "XXX　−　超女性", "XXY　−　クラインフェルター（Klinefelter）症候群"], "ans": 0, "essential": false}, {"q": "ＤＮＡの塩基配列にしたがって生成されるのはどれか。〔必〕", "opts": ["蛋白質", "糖　質", "脂　質", "電解質"], "ans": 0, "essential": false}, {"q": "酸素を多く含む血液が流れているのはどれか。〔必〕", "opts": ["肺静脈", "門　脈", "腎静脈", "上大静脈"], "ans": 0, "essential": false}, {"q": "ステロイドホルモンはどれか。〔必〕", "opts": ["エストロゲン", "アドレナリン", "インスリン", "オキシトシン"], "ans": 0, "essential": false}, {"q": "細胞膜の機能でないのはどれか。", "opts": ["電子伝達系", "ホルモンの情報受容", "ナトリウムポンプ", "脂質の拡散"], "ans": 0, "essential": false}, {"q": "膠質浸透圧を生じるのはどれか。", "opts": ["アルブミン", "グルコース", "ナトリウムイオン", "バゾプレッシン"], "ans": 0, "essential": false}, {"q": "寿命を終えた赤血球を破壊する主な臓器はどれか。", "opts": ["脾 臓", "骨 髄", "心 臓", "腎 臓"], "ans": 0, "essential": false}, {"q": "左心室の駆出期に認められるのはどれか。", "opts": ["大動脈弁は開いている。", "心室内容積は変化しない。", "心電図上でＰ波がみられる。", "心室内圧は最も低くなる。"], "ans": 0, "essential": false}, {"q": "運動時に血流量が減少するのはどれか。", "opts": ["肝 臓", "心 臓", "肺", "骨格筋"], "ans": 0, "essential": false}, {"q": "吸息時に起こらないのはどれか。", "opts": ["胸膜腔内圧の陽圧化", "横隔膜の収縮", "肺胞壁弾性力の増大", "肺胞内の陰圧化"], "ans": 0, "essential": false}, {"q": "へーリング-ブロイエル反射で正しいのはどれか。", "opts": ["受容器は肺伸展受容器である。", "求心性末梢神経は舌咽神経である。", "反射中枢は視床下部である。", "反射的に吸息が増強する。"], "ans": 0, "essential": false}, {"q": "糖質摂取後に血中濃度が低下するのはどれか。", "opts": ["グルカゴン", "乳　酸", "グルコース", "インスリン"], "ans": 0, "essential": false}, {"q": "呼吸商はどれか。", "opts": ["二酸化炭素排出量／酸素消費量", "酸素摂取量／酸素消費量", "呼息にかかる時間／吸息にかかる時間", "運動開始時の酸素不足／運動後に返済される酸素負債"], "ans": 0, "essential": false}, {"q": "胃酸の分泌を抑制するのはどれか。", "opts": ["セクレチン", "アセチルコリン", "ガストリン", "ヒスタミン"], "ans": 0, "essential": false}, {"q": "肝臓の役割で誤っているのはどれか。", "opts": ["Ｔリンパ球の成熟の場となる。", "血液凝固因子を生成する。", "グルコースからグリコーゲンを合成する。", "グリコーゲンを分解してグルコースを産生する。"], "ans": 0, "essential": false}, {"q": "発熱状態から解熱する際にみられるのはどれか。", "opts": ["皮膚血管の拡張", "ふるえ", "立毛筋の収縮", "アドレナリンの分泌増加"], "ans": 0, "essential": false}, {"q": "腎動脈血と腎静脈血の間で最も濃度変化の大きい物質はどれか。ただし、血漿は等張とする。", "opts": ["クレアチニン", "ナトリウムイオン", "アルブミン", "カルシウムイオン"], "ans": 0, "essential": false}, {"q": "下垂体前葉ホルモンはどれか。", "opts": ["プロラクチン", "オキシトシン", "サイロキシン", "ノルアドレナリン"], "ans": 0, "essential": false}, {"q": "糖質コルチコイドの作用はどれか。", "opts": ["糖取り込み抑制", "炎症促進", "グリコーゲン合成抑制", "蛋白質合成促進"], "ans": 0, "essential": false}, {"q": "閉経によって上昇するホルモンはどれか。", "opts": ["ゴナドトロピン", "エス卜ロゲン", "糖質コルチコイド", "バゾプレッシン"], "ans": 0, "essential": false}, {"q": "ビタミンＤの活性化に重要な太陽光線はどれか。", "opts": ["紫外線", "赤外線", "可視光線", "エックス線"], "ans": 0, "essential": false}, {"q": "カルシウムの生理作用で誤っているのはどれか。", "opts": ["浸透圧維持", "筋肉収縮", "止血促進", "脱分極の発生"], "ans": 0, "essential": false}, {"q": "伝導速度が最も速いのはどれか。", "opts": ["筋紡錘の求心性線維", "痛覚の求心性線維", "温覚の求心性線維", "触覚の求心性線維"], "ans": 0, "essential": false}, {"q": "姿勢反射のうち脊髄反射はどれか。", "opts": ["陽性支持反射", "前庭迷路反射", "立ち直り反射", "踏み直り反射"], "ans": 0, "essential": false}, {"q": "無酸素的な筋肉の収縮で起こるのはどれか。", "opts": ["乳酸の生成", "グリコーゲンの蓄積", "ミトコンドリアの機能亢進", "筋蛋白の生成"], "ans": 0, "essential": false}, {"q": "核袋線維で正しいのはどれか。", "opts": ["線維の中央部は収縮が起こらない。", "腱紡錘の中に存在する。", "線維の両端に多くの核が集まっている。", "錐外筋線維と直列に並んでいる。"], "ans": 0, "essential": false}, {"q": "感覚受容器が自由神経終末でないのはどれか。", "opts": ["触圧覚", "温 覚", "冷 覚", "痛 覚"], "ans": 0, "essential": false}, {"q": "身体の平衡に関係しない感覚情報はどれか。", "opts": ["聴 覚", "視 覚", "前庭感覚", "足底部の触圧覚"], "ans": 0, "essential": false}, {"q": "女性への性分化で誤っている組合せはどれか。", "opts": ["ウォルフ管　――　子 宮", "生殖隆起　―――　卵 巣", "生殖結節　―――　陰 核", "尿道ヒダ　―――　小陰唇"], "ans": 0, "essential": false}, {"q": "老化によって上昇・増加するのはどれか。〔必〕", "opts": ["収縮期血圧", "聴　力", "肺活量", "記銘力"], "ans": 0, "essential": false}, {"q": "細胞外液より細胞内液の濃度が高いのはどれか。〔必〕", "opts": ["カリウムイオン", "ナトリウムイオン", "塩素イオン", "重炭酸イオン"], "ans": 0, "essential": false}, {"q": "筋の長さを検知するのはどれか。〔必〕", "opts": ["筋紡錘", "パチニ小体", "ルフィニ小体", "ゴルジ腱受容器"], "ans": 0, "essential": false}, {"q": "細胞膜にないのはどれか。", "opts": ["リボソーム", "酵　素", "受容体", "ポンプ"], "ans": 0, "essential": false}, {"q": "血漿には含まれるが血清には含まれないのはどれか。", "opts": ["フィブリノゲン", "抗A抗体", "血小板", "尿　素"], "ans": 0, "essential": false}, {"q": "ヘモグロビンが酸素を解離しやすい要因はどれか。", "opts": ["温度の上昇", "窒素分圧の上昇", "pHの上昇", "塩素濃度の上昇"], "ans": 0, "essential": false}, {"q": "心筋の特徴で誤っているのはどれか。", "opts": ["活動電位の持続は骨格筋より短い。", "自動性がある。", "活動電位の経過中にカルシウムイオンが細胞内に流入する。", "伸展すれば伸展するほど大きな張力を発生する。"], "ans": 0, "essential": false}, {"q": "圧が最も低いのはどれか。", "opts": ["静　脈", "動　脈", "細動脈", "毛細血管"], "ans": 0, "essential": false}, {"q": "機能的残気量で正しいのはどれか。", "opts": ["予備呼気量＋残気量", "予備吸気量＋１回換気量＋予備吸気量", "１回換気量 &#8722; 死腔量", "肺胞換気量＋死腔量"], "ans": 0, "essential": false}, {"q": "呼吸調節で誤っている組合せはどれか。", "opts": ["頚動脈洞　&#8212;　酸素受容器", "迷走神経　&#8212;　ヘーリング･ブロイエル反射", "横隔膜　&#8212;　吸　息", "延　髄　&#8212;　呼吸中枢"], "ans": 0, "essential": false}, {"q": "特異動的作用の説明で正しいのはどれか。", "opts": ["摂食後に肝臓における熱産生が増加する。", "摂食時に腸管に逆蠕動を生じる。", "吸息時に心音のII音が分裂して聞こえる。", "大脳基底核の障害により不随意運動が出現する。"], "ans": 0, "essential": false}, {"q": "唾液に含まれているのはどれか。", "opts": ["アミラーゼ", "トリプシン", "ペプシン", "リパーゼ"], "ans": 0, "essential": false}, {"q": "成人健常者において最も体温が高くなる時期はどれか。", "opts": ["夕方（午後３&#12316;６時）", "早朝（午前３&#12316;６時）", "昼（午前11時&#12316;午前２時）", "深夜（午後11時&#12316;午前２時）"], "ans": 0, "essential": false}, {"q": "発熱物質はどれか。", "opts": ["プロスタグランジン", "アセチルコリン", "エリスロポエチン", "コレシストキニン"], "ans": 0, "essential": false}, {"q": "腎臓における水分のろ過量を増加させるのはどれか。", "opts": ["糸球体血圧の上昇", "膀胱内圧の上昇", "血漿の膠質浸透圧の上昇", "ボーマン嚢内圧の上昇"], "ans": 0, "essential": false}, {"q": "尿細管で再吸収されるのが最も少ないのはどれか。", "opts": ["クレアチニン", "ナトリウムイオン", "水", "ブドウ糖"], "ans": 0, "essential": false}, {"q": "ホルモンを分泌するのはどれか。", "opts": ["心　臓", "虫　垂", "脾　臓", "膀　胱"], "ans": 0, "essential": false}, {"q": "糖質コルチコイドで正しいのはどれか。", "opts": ["細胞の糖の取り込みを抑制する。", "炎症を促進する。", "糖新生を抑制する。", "グリコーゲン合成を抑制する。"], "ans": 0, "essential": false}, {"q": "アルドステロンの作用はどれか。", "opts": ["血圧を上昇させる。", "カリウムの再吸収を促進する。", "レニンの分泌を促進する。", "血中pHを低下させる。"], "ans": 0, "essential": false}, {"q": "ビタミンDで正しいのはどれか。", "opts": ["腎臓で活性化される。", "過剰摂取で骨軟化症になる。", "紫外線によって不活性化される。", "腸管からのカルシウム吸収を抑制する。"], "ans": 0, "essential": false}, {"q": "低下するとテタニーをきたすのはどれか。", "opts": ["カルシウムイオン", "カリウムイオン", "ナトリウムイオン", "マグネシウムイオン"], "ans": 0, "essential": false}, {"q": "有髄線維の髄鞘を除去したときに起こる変化はどれか。", "opts": ["跳躍伝導の消失", "神経伝導速度の上昇", "両側性伝導の消失", "シナプス遅延の消失"], "ans": 0, "essential": false}, {"q": "除脳固縮でみられるのはどれか。", "opts": ["屈曲反射の消失", "伸張反射の消失", "抗重力筋の弛緩", "ダイテルス核の活動停止"], "ans": 0, "essential": false}, {"q": "錐体交叉直後の左外側皮質脊髄路の切断で障害されるのはどれか。", "opts": ["左下肢の随意運動", "舌の随意運動", "左顔面の随意運動", "右上肢の随意運送"], "ans": 0, "essential": false}, {"q": "表面筋電図で記録できないのはどれか。", "opts": ["単一運動単位の活動", "単一骨格筋の活動", "H　波", "M　波"], "ans": 0, "essential": false}, {"q": "平滑筋の性質で誤っているのはどれか。", "opts": ["骨格筋に比べて疲労しやすい。", "自律神経の支配を受ける。", "自動性をもつ細胞がある。", "副腎髄質ホルモンの調節を受ける。"], "ans": 0, "essential": false}, {"q": "網膜の錐状体細胞で誤っているのはどれか。", "opts": ["暗順応は杆状体細胞より遅い。", "明所視に関与する。", "色彩視に関与する。", "中心窩には高密度に分布する。"], "ans": 0, "essential": false}, {"q": "精子の発育過程で正しいのはどれか。", "opts": ["女性生殖器内で受精能を獲得する。", "精母細胞の段階で運動能を獲得する。", "アンドロゲンは関与しない。", "カウパー腺で成熟する。"], "ans": 0, "essential": false}, {"q": "ヘモグロビンを含有するのはどれか。〔必〕", "opts": ["赤血球", "好中球", "リンパ球", "血小板"], "ans": 0, "essential": false}, {"q": "小循環に属するのはどれか。〔必〕", "opts": ["肺動脈", "門　脈", "臍静脈", "上腕動脈"], "ans": 0, "essential": false}, {"q": "ホルモンを運搬するのはどれか。〔必〕", "opts": ["血　液", "リンパ液", "唾　液", "脳脊髄液"], "ans": 0, "essential": false}, {"q": "物質を消化する酵素を含むのはどれか。", "opts": ["リソソーム", "ミトコンドリア", "核", "小胞体"], "ans": 0, "essential": false}, {"q": "抗体を産生するのはどれか。", "opts": ["形質細胞", "マクロファージ", "ヘルパーＴリンパ球", "細胞傷害性Ｔリンパ球"], "ans": 0, "essential": false}, {"q": "フィブリンを分解するのはどれか。", "opts": ["プラスミン", "トロンビン", "セロトニン", "カルシウムイオン"], "ans": 0, "essential": false}, {"q": "静脈が属するのはどれか。", "opts": ["容量血管系", "弾性血管系", "抵抗血管系", "交換血管系"], "ans": 0, "essential": false}, {"q": "ヘモグロビンの酸素解離曲線が左方偏移する要因はどれか。", "opts": ["血液のｐＨの上昇", "血液の温度の上昇", "血液の二酸化炭素分圧の上昇", "血圧の上昇"], "ans": 0, "essential": false}, {"q": "ビタミンＡの欠乏症はどれか。", "opts": ["夜盲症", "脚　気", "壊血病", "悪性貧血"], "ans": 0, "essential": false}, {"q": "１グラムの脂質が発生するエネルギー源はどれか。", "opts": ["9.3kcal", "1.5kcal", "4.1kcal", "15.0kcal"], "ans": 0, "essential": false}, {"q": "タンパク分解酵素はどれか。", "opts": ["トリプシン", "リパーゼ", "アミラーゼ", "マルターゼ"], "ans": 0, "essential": false}, {"q": "胃で産生されるのはどれか。", "opts": ["ガストリン", "インスリン", "レプチン", "レニン"], "ans": 0, "essential": false}, {"q": "身体からの熱放散を増加させるのはどれか。", "opts": ["発　汗", "ふるえ", "特異動的作用", "皮膚血管の収縮"], "ans": 0, "essential": false}, {"q": "バゾプレッシンが作用する部位はどれか。", "opts": ["集合管", "近位尿細管", "遠位尿細管", "ボーマン嚢"], "ans": 0, "essential": false}, {"q": "ホルモンを産生しないのはどれか。", "opts": ["脾 臓", "小 腸", "脳", "心 臓"], "ans": 0, "essential": false}, {"q": "甲状腺ホルモンの生理作用はどれか。", "opts": ["熱量産生増大", "血糖低下", "酸素消費抑制", "水分保持"], "ans": 0, "essential": false}, {"q": "ノルアドレナリンで正しいのはどれか。", "opts": ["副腎髄質から分泌される。", "副交感神経系の神経伝達物質である。", "熱産生を抑制する。", "末梢血管抵抗を減少させる。"], "ans": 0, "essential": false}, {"q": "エストロジェンの生理作用はどれか。", "opts": ["子宮内膜の増殖", "オキシトシン感受性の抑制", "体温の上昇", "乳腺の発達の抑制"], "ans": 0, "essential": false}, {"q": "上皮小体ホルモンの生理作用はどれか。", "opts": ["腎臓でビタミンＤの活性化を促進する。", "血漿中のカルシウムイオン濃度を低下させる。", "腎尿細管からのカルシウムイオンの排泄を促進する。", "骨からのカルシウムイオンの遊離を抑制する。"], "ans": 0, "essential": false}, {"q": "神経細胞の静止膜電位形成に関与するのはどれか。", "opts": ["ナトリウムポンプ", "ナトリウムの膜透過性増大", "カリウムの膜透過性低下", "カルシウムチャネル"], "ans": 0, "essential": false}, {"q": "コリン作動性の交感神経節後線維の支配を受けるのはどれか。", "opts": ["汗　腺", "心　臓", "消化管", "副腎髄質"], "ans": 0, "essential": false}, {"q": "大脳皮質の第Ｖ層が発達しているのはどれか。", "opts": ["一次運動野", "一次視覚野", "一次聴覚野", "一次体性感覚野"], "ans": 0, "essential": false}, {"q": "平滑筋で正しいのはどれか。", "opts": ["細胞内カルシウム濃度の上昇により収縮が始まる。", "体性神経の支配を受ける。", "神経筋接合部を形成する。", "筋小胞体が横紋筋より発達している。"], "ans": 0, "essential": false}, {"q": "筋電図のＭ波で正しいのはどれか。", "opts": ["閾値はＨ波より高い。", "潜時はＨ波より長い。", "Ia群線維の興奮が必要である。", "単シナプス反射回路を介する。"], "ans": 0, "essential": false}, {"q": "視床で中継されない感覚情報はどれか。", "opts": ["嗅　覚", "味　覚", "視　覚", "聴　覚"], "ans": 0, "essential": false}, {"q": "神経細胞はどれか。", "opts": ["嗅上皮の嗅細胞", "網膜の錐状体細胞", "味蕾の味細胞", "平衡班の有毛細胞"], "ans": 0, "essential": false}, {"q": "性染色体で正しいのはどれか。", "opts": ["減数分裂によって数が半分になる。", "男性はＸＸである。", "ターナー(Turner)症候群ではＸ染色体がない。", "卵子の半分はＹ染色体を持っている。"], "ans": 0, "essential": false}, {"q": "受精、妊娠で正しいのはどれか。", "opts": ["排卵された卵子の生存期間は２〜３日である。", "女性生殖器内で精子の生存期間は２〜３週間である。", "受精してから子宮に着床するまで１〜２日である。", "胎盤が形成されるのに５〜６か月かかる。"], "ans": 0, "essential": false}, {"q": "細胞小器官でATPを合成するのはどれか。〔必〕", "opts": ["ミトコンドリア", "小胞体", "中心小体", "ゴルジ装置"], "ans": 0, "essential": false}, {"q": "血圧を上昇させるのはどれか。〔必〕", "opts": ["心拍出量増加", "大出血", "尿量増加", "血管拡張"], "ans": 0, "essential": false}, {"q": "栄養素が吸収される主な部位はどれか。〔必〕", "opts": ["小　腸", "食　道", "胃", "大　腸"], "ans": 0, "essential": false}, {"q": "無髄線維でみられないのはどれか。", "opts": ["跳躍伝導", "不応期", "両側性伝導", "全か無かの法則"], "ans": 0, "essential": false}, {"q": "代謝性アルカローシスをきたすのはどれか。", "opts": ["嘔吐による胃酸の喪失", "呼吸量減少によるＯ2の減少", "下痢によるＨＣＯ3−の喪失", "糖尿病によるケトン体の増加"], "ans": 0, "essential": false}, {"q": "エリスロポエチンによって増加するのはどれか。", "opts": ["赤血球", "血小板", "リンパ球", "顆粒白血球"], "ans": 0, "essential": false}, {"q": "好中球の機能はどれか。", "opts": ["細菌を貪食して殺菌する。", "マクロファージとなる。", "免疫グロブリンを分泌する。", "ウイルス感染細胞を破壊する。"], "ans": 0, "essential": false}, {"q": "心停止とみなされる不整脈はどれか。", "opts": ["心室細動", "洞徐脈", "脚ブロック", "心室性期外収縮"], "ans": 0, "essential": false}, {"q": "最大吸気位から呼気として吐き出しうる最大の空気量はどれか。", "opts": ["肺活量", "残気量", "肺胞換気量", "機能的残気量"], "ans": 0, "essential": false}, {"q": "肺胞気から血液への酸素の移動様式はどれか。", "opts": ["拡　散", "浸　透", "分　泌", "ろ　過"], "ans": 0, "essential": false}, {"q": "欠乏により骨軟化症をきたすのはどれか。", "opts": ["ビタミンＤ", "ビタミンＡ", "ビタミンＣ", "ビタミンＥ"], "ans": 0, "essential": false}, {"q": "肝臓の役割として正しいのはどれか。", "opts": ["胆汁を産生する。", "体液量を調節する。", "リパーゼを分泌する。", "胃の蠕動運動を調節する。"], "ans": 0, "essential": false}, {"q": "精神性発汗が最も顕著にみられる身体部位はどれか。", "opts": ["手　掌", "顔　面", "前胸部", "臀　部"], "ans": 0, "essential": false}, {"q": "腎臓でナトリウムイオンの再吸収を促進するのはどれか。", "opts": ["アルドステロン", "オキシトシン", "バゾプレッシン", "心房性ナトリウム利尿ペプチド"], "ans": 0, "essential": false}, {"q": "ペプチドホルモンの原料となるのはどれか。", "opts": ["アミノ酸", "コレステロール", "ステロイド", "ヨウ素"], "ans": 0, "essential": false}, {"q": "バゾプレッシンの分泌を促す刺激はどれか。", "opts": ["浸透圧上昇", "血圧上昇", "体温低下", "血糖低下"], "ans": 0, "essential": false}, {"q": "プロラクチンの生理作用で正しいのはどれか。", "opts": ["乳腺発育促進", "子宮内膜の増殖", "基礎体温の上昇", "排卵誘発"], "ans": 0, "essential": false}, {"q": "糖質コルチコイドで誤っているのはどれか。", "opts": ["グリコーゲン分解を促進する。", "血糖値を上昇させる。", "ストレスによって分泌される。", "免疫抑制作用がある。"], "ans": 0, "essential": false}, {"q": "体内におけるカルシウムイオンの役割で正しいのはどれか。", "opts": ["血液の凝固", "浸透圧の維持", "酸塩基平衡の調節", "血液容量の保持"], "ans": 0, "essential": false}, {"q": "上皮小体ホルモンで正しいのはどれか。", "opts": ["血中のカルシウムイオン濃度を高める。", "ビタミンＫにより分泌が促進される。", "甲状腺で産生される。", "ステロイドホルモンである。"], "ans": 0, "essential": false}, {"q": "体性感覚刺激で誘発されないのはどれか。", "opts": ["筋性防御", "発　汗", "勃起反射", "くしゃみ反射"], "ans": 0, "essential": false}, {"q": "筋細胞膜の興奮を伝えるのはどれか。", "opts": ["横行小管", "筋小胞体", "終末槽", "アクチン"], "ans": 0, "essential": false}, {"q": "誘発筋電図で正しいのはどれか。", "opts": ["Ｍ波は後根が切断されても誘発される。", "Ｈ波は前根が切断されても誘発される。", "Ｍ波の発生は筋弛緩薬で抑えられない。", "Ｈ波の発生に脊髄は関わらない。"], "ans": 0, "essential": false}, {"q": "血液酸素分圧を感受するのはどれか。", "opts": ["頸動脈小体", "パチニ小体", "頸動脈洞", "コルチ器官"], "ans": 0, "essential": false}, {"q": "網膜の中で強膜に最も近い位置にあるのはどれか。", "opts": ["視細胞", "双極細胞", "神経節細胞", "アマクリン細胞"], "ans": 0, "essential": false}, {"q": "痛覚を伝達するＡδ線維で誤っているのはどれか。", "opts": ["ポリモーダル侵害受容線維である。", "自由神経終末は無髄である。", "速い痛みを伝達する。", "局在の明確な痛みを伝達する。"], "ans": 0, "essential": false}, {"q": "染色体で正しいのはどれか。", "opts": ["減数分裂で染色体の数が半分になる。", "Ｘ染色体に精巣分化因子がある。", "性を決定するのは常染色体である。", "卵子はＹ染色体を持つ。"], "ans": 0, "essential": false}, {"q": "ホメオスタシスの説明で正しいのはどれか。〔必〕", "opts": ["体内環境が常に狭い範囲で一定に保たれていること。", "生殖により子孫を残すことができること。", "血液が全身を絶えず循環していること。", "神経回路網が全身に張り巡らされていること。"], "ans": 0, "essential": false}, {"q": "安静時の呼吸で呼息終了時の肺容量はどれか。〔必〕", "opts": ["機能的残気量", "肺活量", "予備呼気量", "１回換気量"], "ans": 0, "essential": false}, {"q": "カルシウム代謝に関与するのはどれか。〔必〕", "opts": ["ビタミンＤ", "ビタミンＡ", "ビタミンＢ", "ビタミンＣ"], "ans": 0, "essential": false}, {"q": "代償性変化で呼吸促進が起こるのはどれか。", "opts": ["代謝性アシドーシス", "呼吸性アシドーシス", "呼吸性アルカローシス", "代謝性アルカローシス"], "ans": 0, "essential": false}, {"q": "胸腺で成熟する細胞はどれか。", "opts": ["Ｔリンパ球", "好中球", "好酸球", "Ｂリンパ球"], "ans": 0, "essential": false}, {"q": "生合成にビタミンＫを必要とする血液凝固因子はどれか。", "opts": ["第II因子（プロトロンビン）", "第XI因子（組織トロンボプラスチン）", "第VIII因子（抗血友病因子）", "第I因子（フィブリノゲン）"], "ans": 0, "essential": false}, {"q": "心筋の特徴で正しいのはどれか。", "opts": ["細胞内に流入するＣa2+が増加すると発生張力が増加する。", "伸展すると発生張力が減少する。", "心筋細胞同士は電気的に絶縁されている。", "心筋細胞の興奮の持続時間は神経細胞のそれよりも短い。"], "ans": 0, "essential": false}, {"q": "１秒率を求める式はどれか。", "opts": ["１秒量÷努力肺活量×100(％)", "１秒量÷全肺気量×100(％)", "１秒量÷１回換気量×100(％)", "１秒量÷肺胞換気量×100(％)"], "ans": 0, "essential": false}, {"q": "熱の放散を増加させるのはどれか。", "opts": ["発　汗", "ふるえ", "蛋白質摂取", "皮膚血管の収縮"], "ans": 0, "essential": false}, {"q": "肝細胞が血中グルコースから合成・貯蔵するのはどれか。", "opts": ["グリコーゲン", "コレステロール", "コラーゲン", "デンプン"], "ans": 0, "essential": false}, {"q": "蛋白質代謝の結果として生じたアンモニアを処理する経路はどれか。", "opts": ["尿素回路", "クエン酸回路", "電子伝達系", "解糖系"], "ans": 0, "essential": false}, {"q": "胃の役割で正しいのはどれか。", "opts": ["食べた物を一時的に収納する。", "脂肪を分解する。", "栄養素を吸収する。", "セクレチンを分泌する。"], "ans": 0, "essential": false}, {"q": "排便反射に関与するのはどれか。", "opts": ["骨盤神経", "迷走神経", "正中神経", "坐骨神経"], "ans": 0, "essential": false}, {"q": "非抱合（間接）ビリルビンを抱合（直接）ビリルビンに変化させるのはどれか。", "opts": ["肝　臓", "胆　嚢", "腎　臓", "脾　臓"], "ans": 0, "essential": false}, {"q": "熱中症への応急対応で誤っているのはどれか。", "opts": ["解熱剤を投与する。", "冷水を飲ます。", "日陰に移動させる。", "身体を水で濡らして扇ぐ。"], "ans": 0, "essential": false}, {"q": "クリアランスが糸球体ろ過量の指標となるのはどれか。", "opts": ["イヌリン", "グルコース", "パラアミノ馬尿酸", "尿　素"], "ans": 0, "essential": false}, {"q": "視床下部で合成されるホルモンはどれか。", "opts": ["オキシトシン", "サイロキシン", "コルチゾール", "エリスロポエチン"], "ans": 0, "essential": false}, {"q": "ホルモンとその欠乏症による症状の組合せで誤っているのはどれか。", "opts": ["甲状腺ホルモン　-　アジソン（Addison）病", "成長ホルモン　　-　低身長症", "エストロゲン　　-　骨粗鬆症", "インスリン　　　-　糖尿病"], "ans": 0, "essential": false}, {"q": "飢餓時に起きるのはどれか。", "opts": ["グルカゴン分泌増加", "グリコーゲン生成促進", "蛋白質合成促進", "インスリン分泌増加"], "ans": 0, "essential": false}, {"q": "副甲状腺ホルモン（上皮小体ホルモン）で正しいのはどれか。", "opts": ["ビタミンＤを活性型に変換する。", "骨の吸収を抑制する。", "腸管からのカルシウム吸収を抑制する。", "腎臓のリン酸の再吸収を亢進させる。"], "ans": 0, "essential": false}, {"q": "非興奮時の神経細胞膜で透過性が最も高いのはどれか。", "opts": ["カリウムイオン", "カルシウムイオン", "水素イオン", "ナトリウムイオン"], "ans": 0, "essential": false}, {"q": "大脳皮質運動野で正しいのはどれか。", "opts": ["中心前回に存在する。", "下肢の支配領域が外側に存在する。", "組織学的には４層が発達している。", "障害により同側の運動麻痺が生じる。"], "ans": 0, "essential": false}, {"q": "筋収縮で正しいのはどれか。", "opts": ["収縮時に細いアクチンフィラメントが滑走する。", "筋細胞では興奮が弛緩を誘発する。", "筋小胞体からカリウムイオンが放出される。", "筋収縮によりＡＴＰが発生する。"], "ans": 0, "essential": false}, {"q": "神経筋接合部のシナプス伝達で正しいのはどれか。", "opts": ["放出された神経伝達物質は酵素により分解される。", "終板から神経伝達物質が放出される。", "神経伝達物質はアドレナリンである。", "神経伝達物質の結合により筋細胞膜に過分極が生じる。"], "ans": 0, "essential": false}, {"q": "筋紡錘で正しいのはどれか。", "opts": ["錘内筋線維をγ運動線維が支配する。", "錘外筋線維に直交するように位置する。", "無髄神経線維が終末をつくる。", "筋張力の変化に反応する。"], "ans": 0, "essential": false}, {"q": "網膜で正しいのはどれか。", "opts": ["硝子体寄りの最内層に神経節細胞が並んでいる。", "中心窩に杆体が多く存在する。", "視神経乳頭部に錐体が多く存在する。", "光照射で視細胞に脱分極が生じる。"], "ans": 0, "essential": false}, {"q": "月経周期の中で血中プロゲステロン値が最も高くなる時期はどれか。", "opts": ["分泌期", "月経期", "増殖期", "排卵期"], "ans": 0, "essential": false}, {"q": "エストロゲンの生理作用で正しいのはどれか。", "opts": ["子宮内膜の増殖", "骨吸収の促進", "骨格筋の発達", "体温の上昇"], "ans": 0, "essential": false}, {"q": "ＡＴＰを必要とする物質移動はどれか。［必］", "opts": ["能動輸送", "ろ　過", "浸　透", "単純拡散"], "ans": 0, "essential": false}, {"q": "身体の構成成分として体重に占める割合が最も多いのはどれか。［必］", "opts": ["水", "脂　質", "無機塩類", "蛋白質"], "ans": 0, "essential": false}, {"q": "免疫抑制作用があるのはどれか。［必］", "opts": ["糖質コルチコイド", "成長ホルモン", "サイロキシン", "エストロゲン"], "ans": 0, "essential": false}, {"q": "筋細胞でカルシウムイオンの貯蔵部はどれか。", "opts": ["筋小胞体", "核", "筋　節", "筋原線維"], "ans": 0, "essential": false}, {"q": "貪食作用があるのはどれか。", "opts": ["好中球", "赤血球", "血小板", "Tリンパ球"], "ans": 0, "essential": false}, {"q": "肥満細胞と結合してヒスタミンを遊離する免疫グロブリンはどれか。", "opts": ["IgE", "IgA", "IgG", "IgM"], "ans": 0, "essential": false}, {"q": "健常者において心臓の歩調とりとして働いている部位はどれか。", "opts": ["洞房結節", "心房筋", "ヒス束", "房室結節"], "ans": 0, "essential": false}, {"q": "房室弁が開いている時期はどれか。", "opts": ["充満期", "等容性収縮期", "駆出期", "等容性弛緩期"], "ans": 0, "essential": false}, {"q": "酸素分圧が最も高いのはどれか。", "opts": ["吸　気", "呼　気", "肺胞気", "動脈血"], "ans": 0, "essential": false}, {"q": "ヘーリング−ブロイエル反射の受容器はどれか。", "opts": ["肺伸展受容器", "頚動脈洞圧受容器", "酸素受容器", "二酸化炭素受容器"], "ans": 0, "essential": false}, {"q": "インスリン分泌の有無に関わらずグルコースを取り込む臓器および組織はどれか。", "opts": ["脳", "肝　臓", "骨格筋", "脂肪組織"], "ans": 0, "essential": false}, {"q": "１g当たりのエネルギー発生量が最も大きいのはどれか。", "opts": ["脂　質", "糖　質", "ビタミン", "蛋白質"], "ans": 0, "essential": false}, {"q": "門脈で正しいのはどれか。", "opts": ["腸管で吸収された栄養素を肝臓に運ぶ。", "動脈血が流れる。", "肝臓から流出する血液を下大静脈に送る。", "肝臓で合成された胆汁を十二指腸に送る。"], "ans": 0, "essential": false}, {"q": "熱産生を増加させるホルモンはどれか。", "opts": ["アドレナリン", "エストロゲン", "グルカゴン", "プロラクチン"], "ans": 0, "essential": false}, {"q": "蛋白質を合成する部位はどれか。", "opts": ["リボソーム", "核", "細胞膜", "滑面小胞体"], "ans": 0, "essential": false}, {"q": "正常な尿にほとんど含まれないのはどれか。", "opts": ["グルコース", "尿　素", "尿　酸", "クレアチニン"], "ans": 0, "essential": false}, {"q": "受容体が細胞内にあるホルモンはどれか。", "opts": ["サイロキシン", "インスリン", "アンギオテンシンII", "プロラクチン"], "ans": 0, "essential": false}, {"q": "バゾプレッシン分泌を促進させるのはどれか。", "opts": ["血漿浸透圧の上昇", "大動脈圧の上昇", "循環血液量の増加", "動脈血酸素分圧の上昇"], "ans": 0, "essential": false}, {"q": "グリコーゲン合成を促進させるのはどれか。", "opts": ["インスリン", "グルカゴン", "アドレナリン", "成長ホルモン"], "ans": 0, "essential": false}, {"q": "骨で誤っているのはどれか。", "opts": ["荷重負荷によって骨形成が抑制される。", "骨内に神経が分布する。", "破骨細胞によって骨吸収が行われる。", "骨芽細胞はコラーゲンを分泌する。"], "ans": 0, "essential": false}, {"q": "血漿カルシウム濃度の低下に対して起こる生体反応はどれか。", "opts": ["上皮小体ホルモン分泌の増加", "カルシトニン分泌の増加", "活性型ビタミンD合成の低下", "腎のカルシウム再吸収の低下"], "ans": 0, "essential": false}, {"q": "大脳皮質連合野と損傷症状との組合せで正しいのはどれか。", "opts": ["頭頂連合野　−　身体失認", "前頭連合野　−　相貌失認", "側頭連合野　−　協調運動障害", "後頭連合野　−　意欲低下"], "ans": 0, "essential": false}, {"q": "筋紡錘を受容器とする反射はどれか。", "opts": ["頸反射", "前庭−眼反射", "角膜反射", "屈曲反射"], "ans": 0, "essential": false}, {"q": "骨格筋細胞の横行小管で正しいのはどれか。", "opts": ["興奮をトライアッドへ伝える。", "筋細胞の表面に並行して存在する。", "アセチルコリンを受容体へ運ぶ。", "筋収縮時に短縮する。"], "ans": 0, "essential": false}, {"q": "骨格筋の長さと張力の関係で正しいのはどれか。", "opts": ["静止長より長くすると静止張力が増加する。", "静止長より短くすると静止張力が増加する。", "静止長より短くすると活動張力が増加する。", "静止長より長くすると活動張力が増加する。"], "ans": 0, "essential": false}, {"q": "ゴルジ腱紡錘（腱器官）で正しいのはどれか。", "opts": ["筋にかかる張力を感知する。", "錘外筋線維の間に並列に位置する。", "Ｉa群感覚線維が終末する。", "応答によって伸張反射を誘発する。"], "ans": 0, "essential": false}, {"q": "半規管で正しいのはどれか。", "opts": ["有毛細胞は内リンパの移動を感知する。", "三つの半規管が平行に配置されている。", "頭部の直線加速度を感知する。", "半規管からの信号は蝸牛神経が伝える。"], "ans": 0, "essential": false}, {"q": "性周期とホルモン分泌の組合せで誤っているのはどれか。", "opts": ["月経期　−　ヒト絨毛性ゴナドトロピン分泌", "卵胞期　−　エストロゲン分泌", "排卵期　−　黄体形成ホルモン分泌", "黄体期　−　プロゲステロン分泌"], "ans": 0, "essential": false}, {"q": "ATPの合成に関与しているのはどれか。〔必〕", "opts": ["ミトコンドリア", "核", "小胞体", "ゴルジ装置"], "ans": 0, "essential": false}, {"q": "心室収縮時、左心室からの血液の逆流を防止する弁はどれか。〔必〕", "opts": ["僧帽弁", "三尖弁", "肺動脈弁", "大動脈弁"], "ans": 0, "essential": false}, {"q": "一次視覚野があるのはどれか。〔必〕", "opts": ["後頭葉", "前頭葉", "頭頂葉", "側頭葉"], "ans": 0, "essential": false}, {"q": "ペプチドホルモンの細胞内から細胞外への移動形式はどれか。", "opts": ["開口分泌", "共輸送", "単純拡散", "促通拡散"], "ans": 0, "essential": false}, {"q": "血液中で最も多いのはどれか。", "opts": ["赤血球", "血小板", "リンパ球", "顆粒白血球"], "ans": 0, "essential": false}, {"q": "吸息時の肺胞内圧と胸膜腔内圧の組合せで正しいのはどれか。", "opts": ["肺胞内圧が陰圧　−　胸膜腔内圧が陰圧", "肺胞内圧が陽圧　−　胸膜腔内圧が陽圧", "肺胞内圧が陽圧　−　胸膜腔内圧が陰圧", "肺胞内圧が陰圧　−　胸膜腔内圧が陽圧"], "ans": 0, "essential": false}, {"q": "閉塞性換気障害で低下するのはどれか。", "opts": ["１秒率", "肺活量", "残気量", "気道抵抗"], "ans": 0, "essential": false}, {"q": "中性脂肪の構成成分はどれか。", "opts": ["グリセロール", "アデノシン", "アミノ酸", "グリコーゲン"], "ans": 0, "essential": false}, {"q": "水溶性ビタミンはどれか。", "opts": ["ビタミンＢ1", "ビタミンＡ", "ビタミンＤ", "ビタミンＫ"], "ans": 0, "essential": false}, {"q": "電子伝達系で最終的に産生されるのはどれか。", "opts": ["水", "脂肪酸", "アンモニア", "ピルビン酸"], "ans": 0, "essential": false}, {"q": "膵液に含まれる重炭酸塩の役割はどれか。", "opts": ["胃酸の中和", "脂肪の乳化", "胆汁分泌の促進", "ペプシノーゲンの活性化"], "ans": 0, "essential": false}, {"q": "消化管からそのまま吸収されるのはどれか。", "opts": ["グルコース", "蛋白質", "中性脂肪", "デンプン"], "ans": 0, "essential": false}, {"q": "血漿膠質浸透圧への影響が大きいのはどれか。", "opts": ["アルブミン", "グルコース", "グロブリン", "ナトリウム"], "ans": 0, "essential": false}, {"q": "妊娠初期に分泌が最大となるのはどれか。", "opts": ["ヒト絨毛性性腺刺激ホルモン", "エストロゲン", "プロラクチン", "プロゲステロン"], "ans": 0, "essential": false}, {"q": "体温調節中枢の設定温度が上昇したときに生じるのはどれか。", "opts": ["ふるえ", "解　熱", "発　汗", "皮膚血管の拡張"], "ans": 0, "essential": false}, {"q": "視床下部に存在するのはどれか。", "opts": ["摂食中枢", "嚥下中枢", "言語中枢", "呼吸中枢"], "ans": 0, "essential": false}, {"q": "量の比較で正しいのはどれか。", "opts": ["腎血漿流量＞糸球体ろ過量＞尿量", "腎血漿流量＞尿量＞糸球体ろ過量", "糸球体ろ過量＞腎血漿流量＞尿量", "糸球体ろ過量＞尿量＞腎血漿流量"], "ans": 0, "essential": false}, {"q": "成長ホルモンの分泌を増加させるのはどれか。", "opts": ["運　動", "摂　食", "排　便", "飲　水"], "ans": 0, "essential": false}, {"q": "成長ホルモンの分泌を増加させるのはどれか。", "opts": ["睡　眠", "排　尿", "摂　食", "飲　水"], "ans": 0, "essential": false}, {"q": "下垂体で合成されるホルモンはどれか。", "opts": ["甲状腺刺激ホルモン", "アドレナリン", "オキシトシン", "コルチゾール"], "ans": 0, "essential": false}, {"q": "上皮小体ホルモンの作用で正しいのはどれか。", "opts": ["骨吸収を増加させる。", "ビタミンＤを不活化する。", "腎臓からのカルシウムイオン排泄を増加させる。", "消化管からのカルシウムイオン吸収を低下させる。"], "ans": 0, "essential": false}, {"q": "副交感神経系の活性化で生じるのはどれか。", "opts": ["心拍数の減少", "散　瞳", "唾液分泌の抑制", "腸管運動の抑制"], "ans": 0, "essential": false}, {"q": "大脳基底核の障害で認められるのはどれか。", "opts": ["筋緊張異常", "企図振戦", "推尺障害", "バビンスキー反射"], "ans": 0, "essential": false}, {"q": "脊髄反射はどれか。", "opts": ["屈曲反射", "頸反射", "立ち直り反射", "前庭迷路反射"], "ans": 0, "essential": false}, {"q": "骨格筋 I 型筋線維の特徴はどれか。", "opts": ["筋疲労しにくい。", "収縮が速い。", "ミオグロビンが少ない。", "ミトコンドリアが少ない。"], "ans": 0, "essential": false}, {"q": "骨格筋の収縮時にカルシウムイオンが結合するのはどれか。", "opts": ["トロポニン", "アクチン", "ミオシン", "トロポミオシン"], "ans": 0, "essential": false}, {"q": "誘発筋電図におけるＨ波で正しいのはどれか。", "opts": ["脊髄を介して発生する。", "Ｍ波より短い潜時で発生する。", "筋を電気刺激することで発生する。", "α運動神経を電気刺激することで発生する。"], "ans": 0, "essential": false}, {"q": "頭部の直線加速度を感知するのはどれか。", "opts": ["耳石器", "蝸　牛", "耳小骨", "半規管"], "ans": 0, "essential": false}, {"q": "卵胞刺激ホルモンで正しいのはどれか。", "opts": ["精子形成を促進する。", "視床下部で合成される。", "ライディッヒ細胞に作用する。", "アンドロゲン合成を促進する。"], "ans": 0, "essential": false}, {"q": "細胞膜でのグルコースの移動を担うのはどれか。", "opts": ["輸送体", "拡　散", "受容体", "チャネル"], "ans": 0, "essential": false}, {"q": "代謝性アシドーシスの血中pHと一次性変化の組合せで正しいのはどれか。", "opts": ["pH7.31 −−−− HCO3−減 少", "pH7.65 −−−− HCO3−増 加", "pH7.50 −−−− HCO3−減 少", "pH7.32 −−−− HCO3−増 加"], "ans": 0, "essential": false}, {"q": "分解されてビリルビンになるのはどれか。", "opts": ["ヘ　ム", "グロビン", "グロブリン", "アルブミン"], "ans": 0, "essential": false}, {"q": "フィブリノゲンをフィブリンに変換するのはどれか。", "opts": ["トロンビン", "コラーゲン", "セロトニン", "プラスミン"], "ans": 0, "essential": false}, {"q": "スターリングの心臓の法則はどれか。", "opts": ["心室拡張期容積が増加すると1 回拍出量が増加する。", "電気的興奮は刺激伝導系によって心室全体に拡がる。", "心臓は外部からの刺激がなくても自発的に興奮・収縮する。", "プラトー相に細胞内へ流入する Ca2＋が収縮の引き金となる。"], "ans": 0, "essential": false}, {"q": "ジョギングをしている時の循環系の変化で正しいのはどれか。", "opts": ["下肢筋群への動脈は拡張する。", "静脈還流量は減少する。", "胃や腸への動脈は拡張する。", "収縮期血圧は低下する。"], "ans": 0, "essential": false}, {"q": "死腔量が150mLのとき1 分間当たりの肺胞換気量が最も大きい組合せはどれか。", "opts": ["呼吸数 10/ 分 −−−− 1 回換気量650 mL", "呼吸数  8/ 分 −−−− 1 回換気量750 mL", "呼吸数 12/ 分 −−−− 1 回換気量550 mL", "呼吸数 15/ 分 −−−− 1 回換気量450 mL"], "ans": 0, "essential": false}, {"q": "ヘモグロビンの酸素親和性を低下させる因子の組合せはどれか。", "opts": ["血中pH低下 −−−− 体温 上昇", "血中pH上昇 −−−− 体温 上昇", "血中pH上昇 −−−− 体温 低下", "血中pH低下 −−−− 体温 低下"], "ans": 0, "essential": false}, {"q": "胃液の分泌を促進するのはどれか。", "opts": ["アセチルコリン", "アドレナリン", "オキシトシン", "セクレチン"], "ans": 0, "essential": false}, {"q": "膵液に含まれないのはどれか。", "opts": ["ペプシノーゲン", "アミラーゼ", "トリプシノーゲン", "リパーゼ"], "ans": 0, "essential": false}, {"q": "不足すると骨軟化症の原因となるのはどれか。", "opts": ["ビタミンＤ", "ビタミンＡ", "ビタミンＢ1", "ビタミンＣ"], "ans": 0, "essential": false}, {"q": "体温調節中枢に作用してセットポイントを上昇させる物質はどれか。", "opts": ["プロスタグランジン", "エリスロポエチン", "コルチゾール", "ヒスタミン"], "ans": 0, "essential": false}, {"q": "ACTH 分泌を抑制するのはどれか。", "opts": ["コルチゾール", "副腎皮質刺激ホルモン放出ホルモン", "ストレス負荷", "睡眠からの覚醒"], "ans": 0, "essential": false}, {"q": "バゾプレッシン分泌を抑制するのはどれか。", "opts": ["体液浸透圧低下", "血圧低下", "血糖値低下", "循環血液量減少"], "ans": 0, "essential": false}, {"q": "インスリンがグルコースの取り込みを促進させるのはどれか。", "opts": ["骨格筋", "腸粘膜", "腎尿細管細胞", "大脳皮質のニューロン"], "ans": 0, "essential": false}, {"q": "性染色体異常はどれか。", "opts": ["クラインフェルター (Klinefelter) 症候群", "ダウン (Down) 症候群", "バセドウ(Basedow) 病", "ギラン・バレー(Guillain−Barre) 症候群"], "ans": 0, "essential": false}, {"q": "テストステロンの作用はどれか。", "opts": ["ウォルフ管の発達", "精細管への分化", "ミュラー管の発達", "ライディッヒ細胞への分化"], "ans": 0, "essential": false}, {"q": "カルシウムで正しいのはどれか。", "opts": ["血漿イオン濃度の低下で骨格筋の興奮性が亢進する。", "結腸から吸収される。", "腎臓では再吸収されない。", "身体内の約 50 %が骨組織にある。"], "ans": 0, "essential": false}, {"q": "伝導速度が最も速いのはどれか。", "opts": ["筋紡錘からの求心性線維", "侵害受容器からの求心性線維", "温受容器からの求心性線維", "自律神経遠心性線維"], "ans": 0, "essential": false}, {"q": "アドレナリン作動性線維はどれか。", "opts": ["交感神経の節後線維", "交感神経の節前線維", "副交感神経の節前線維", "副交感神経の節後線維"], "ans": 0, "essential": false}, {"q": "一次運動野で最も内側に再現されている身体部位はどれか。", "opts": ["足　首", "唇", "肩", "手　指"], "ans": 0, "essential": false}, {"q": "骨格筋の収縮時に長さが変わらないのはどれか。", "opts": ["A　帯", "H　帯", "I　帯", "筋　節"], "ans": 0, "essential": false}, {"q": "ゴルジ腱紡錘（腱器官）を受容器とするのはどれか。", "opts": ["折りたたみナイフ反射", "足底反射", "アキレス腱反射", "バビンスキー反射"], "ans": 0, "essential": false}, {"q": "近くの対象を見るときの眼の調節で正しいのはどれか。", "opts": ["毛様体筋が収縮する。", "水晶体が薄くなる。", "水晶体が前方に移動する。", "毛様体小帯が緊張する。"], "ans": 0, "essential": false}, {"q": "左下肢の温度覚を伝える線維が上行する部位はどれか。", "opts": ["右側の脊髄前側索", "左側の脊髄後索", "左側の脊髄前側索", "右側の脊髄後索"], "ans": 0, "essential": false}, {"q": "細胞膜にあるのはどれか。", "opts": ["輸送体", "滑面小胞体", "ゴルジ装置", "ミトコンドリア"], "ans": 0, "essential": false}, {"q": "細胞内液中の陽イオンで最も濃度が高いのはどれか。", "opts": ["カリウムイオン", "カルシウムイオン", "ナトリウムイオン", "マグネシウムイオン"], "ans": 0, "essential": false}, {"q": "老化した赤血球が破壊される臓器はどれか。", "opts": ["脾　臓", "心　臓", "骨　髄", "腎　臓"], "ans": 0, "essential": false}, {"q": "細胞とその機能の組合せで正しいのはどれか。", "opts": ["マクロファージ  ------- 抗原提示", "好中球  -------------- 抗体産生", "Ｂリンパ球  -------- 細胞破壊", "Ｔリンパ球  -------- 貪食殺菌"], "ans": 0, "essential": false}, {"q": "リンパ管で正しいのはどれか。", "opts": ["リンパ管には弁がある。", "リンパ液には赤血球が含まれる。", "毛細リンパ管には厚い平滑筋層がある。", "下半身からのリンパ液は鎖骨下動脈に戻る。"], "ans": 0, "essential": false}, {"q": "動静脈吻合が発達している組織はどれか。", "opts": ["皮　膚", "脳", "肺", "心　臓"], "ans": 0, "essential": false}, {"q": "肺気量分画の大きさの比較で正しいのはどれか。", "opts": ["肺活量 ＞ 予備呼気量", "予備吸気量 ＞ 肺活量", "残気量 ＞ 機能的残気量", "予備呼気量 ＞ 機能的残気量"], "ans": 0, "essential": false}, {"q": "血液中の二酸化炭素の運搬形態で最も多いのはどれか。", "opts": ["重炭酸イオン", "カルバミノ化合物", "血漿に物理的に溶解したもの", "赤血球中に物理的に溶解したもの"], "ans": 0, "essential": false}, {"q": "膵液で正しいのはどれか。", "opts": ["アルカリ性である。", "ペプシノゲンが含まれる。", "セクレチンは分泌を抑制する。", "膵リパーゼはグルコースを分解する。"], "ans": 0, "essential": false}, {"q": "栄養素の代謝で正しいのはどれか。", "opts": ["脂肪酸はβ酸化により代謝される。", "アミラーゼは蛋白質分解酵素である。", "糖質は脂肪よりもエネルギー発生量が大きい。", "一日に必要なビタミンＣは生体内で合成される。"], "ans": 0, "essential": false}, {"q": "体温で正しいのはどれか。", "opts": ["新生児では環境温の影響を受けやすい。", "早朝時が最も高い。", "月経周期の排卵時に一時的に高くなる。", "深部温として最も信頼性が高いのは腋窩温である。"], "ans": 0, "essential": false}, {"q": "蛋白質に結合しないで血中運搬されるのはどれか。", "opts": ["副腎皮質刺激ホルモン", "ビタミンＤ", "エストロゲン", "甲状腺ホルモン"], "ans": 0, "essential": false}, {"q": "インスリンの作用で正しいのはどれか。", "opts": ["肝臓でのグリコーゲン合成促進", "脂肪組織での脂肪分解促進", "筋肉での蛋白質分解促進", "赤血球へのグルコース取り込み促進"], "ans": 0, "essential": false}, {"q": "性分化で正しいのはどれか。", "opts": ["テストステロンの作用でウォルフ管が発達する。", "テストステロンの作用で原始生殖腺が分化する。", "エストロゲンの作用でミューラー管が発達する。", "エストロゲンの作用でウォルフ管が退化する。"], "ans": 0, "essential": false}, {"q": "分娩を促進するのはどれか。", "opts": ["オキシトシン", "プロラクチン", "プロゲステロン", "ヒト絨毛性性腺刺激ホルモン"], "ans": 0, "essential": false}, {"q": "内分泌腺で貯蔵されないのはどれか。", "opts": ["コルチゾール", "カルシトニン", "グルカゴン", "成長ホルモン"], "ans": 0, "essential": false}, {"q": "骨の吸収を促進するのはどれか。", "opts": ["上皮小体(副甲状腺) ホルモン", "エストロゲン", "カルシトニン", "ビタミンＡ"], "ans": 0, "essential": false}, {"q": "レム睡眠で正しいのはどれか。", "opts": ["急速眼球運動が起こる。", "入眠直後に現れる。", "脳波で高振幅徐波が出現する。", "姿勢維持に関わる筋が緊張する。"], "ans": 0, "essential": false}, {"q": "下肢の屈曲反射時に起こるのはどれか。", "opts": ["刺激の反対側の伸筋群の収縮", "刺激側の伸筋群の収縮", "刺激側の屈筋群の弛緩", "刺激の反対側の屈筋群の収縮"], "ans": 0, "essential": false}, {"q": "神経筋接合部のアセチルコリン受容体で正しいのはどれか。", "opts": ["アセチルコリンの結合でイオンチャネルが開く。", "神経終末に存在する。", "電位作動性イオンチャネルである。", "活性化によって筋細胞膜に過分極を起こす。"], "ans": 0, "essential": false}, {"q": "平滑筋細胞に存在しないのはどれか。", "opts": ["トロポニン", "アクチン", "カルモジュリン", "ミオシン"], "ans": 0, "essential": false}, {"q": "感覚神経線維を脳内へ直接伸ばす感覚細胞はどれか。", "opts": ["嗅上皮の嗅細胞", "味蕾の味細胞", "網膜の視細胞", "半規管の有毛細胞"], "ans": 0, "essential": false}, {"q": "音波の伝達で耳小骨が直接振動させるのはどれか。", "opts": ["前庭窓", "鼓　膜", "蓋　膜", "基底膜"], "ans": 0, "essential": false}, {"q": "筋肉の痛みの感覚受容器はどれか。", "opts": ["自由神経終末", "筋紡錘", "パチニ小体", "ルフィニ小体"], "ans": 0, "essential": false}, {"q": "酸塩基平衡で二酸化炭素の体外への排出低下によって起こるのはどれか。", "opts": ["呼吸性アシドーシス", "呼吸性アルカローシス", "代謝性アシドーシス", "代謝性アルカローシス"], "ans": 0, "essential": false}, {"q": "骨格筋線維で正しいのはどれか。", "opts": ["複数の核をもつ。", "自動性がある。", "自律神経が支配する。", "ギャップ結合で連絡する。"], "ans": 0, "essential": false}, {"q": "強度の運動を続けると筋肉で増加するのはどれか。", "opts": ["乳　酸", "グルコース", "グリコーゲン", "クレアチンリン酸"], "ans": 0, "essential": false}, {"q": "大脳皮質領野と損傷症状の組合せで正しいのはどれか。", "opts": ["頭頂連合野 −−−−−− 半側空間失認", "前頭連合野  −−−−−− 視覚失認", "側頭連合野 −−−−−− 自発運動の減少", "ウェルニッケ野 −−− 運動性失語"], "ans": 0, "essential": false}, {"q": "除脳固縮でみられるのはどれか。", "opts": ["伸張反射の亢進", "屈曲反射の亢進", "α運動ニューロンの抑制", "γ運動ニューロンの抑制"], "ans": 0, "essential": false}, {"q": "小脳損傷で起こるのはどれか。", "opts": ["推尺異常", "仮面様顔貌", "静止時振戦", "バビンスキー反射"], "ans": 0, "essential": false}, {"q": "右視索が障害されたとき両眼で欠損するのはどれか。", "opts": ["左側視野", "右側視野", "鼻側(内側)視野", "耳側(外側)視野"], "ans": 0, "essential": false}, {"q": "ホルモン過剰症で高血圧と高血糖をきたすのはどれか。", "opts": ["コルチゾール", "インスリン", "オキシトシン", "プロラクチン"], "ans": 0, "essential": false}, {"q": "血漿Ｋ+濃度を下げるホルモンはどれか。", "opts": ["アルドステロン", "アンドロゲン", "アドレナリン", "心房性ナトリウム利尿ペプチド"], "ans": 0, "essential": false}, {"q": "性分化の組合せで誤っているのはどれか。", "opts": ["ウォルフ管 −−−− 子　宮", "生殖隆起 −−−−−− 卵　巣", "生殖結節 −−−−−− 陰　核", "尿道ヒダ −−−−−− 小陰唇"], "ans": 0, "essential": false}, {"q": "線維素溶解現象で分解されるのはどれか。", "opts": ["フィブリン", "グロブリン", "トロンビン", "プラスミン"], "ans": 0, "essential": false}, {"q": "液性免疫を担うのはどれか。", "opts": ["抗　体", "好中球", "インターフェロン", "細胞傷害性Ｔリンパ球"], "ans": 0, "essential": false}, {"q": "成人のカルシウムで正しいのはどれか。", "opts": ["99%は骨組織に含まれる。", "総量は約100gである。", "血中レベルは肝機能不全で増大する。", "血中では大部分が蛋白質に結合している。"], "ans": 0, "essential": false}, {"q": "血中のリン酸濃度を低下させるのはどれか。", "opts": ["副甲状腺ホルモン(上皮小体ホルモン)過剰", "インスリン減少", "カルシトニン減少", "ビタミンＤ過剰"], "ans": 0, "essential": false}, {"q": "心拍出量を増やすのはどれか。", "opts": ["全身末梢血管抵抗の低下", "心拍数の低下", "心室収縮力の低下", "心室拡張末期容量の低下"], "ans": 0, "essential": false}, {"q": "細動脈を収縮させるのはどれか。", "opts": ["エンドセリン", "乳　酸", "一酸化窒素", "アデノシン"], "ans": 0, "essential": false}, {"q": "呼吸筋の仕事量を増大させる因子の組合せはどれか。", "opts": ["肺コンプライアンスの低下 −−−−−− 気道抵抗の増加", "肺コンプライアンスの増加 −−−−−− 気道抵抗の増加", "肺コンプライアンスの増加 −−−−−− 気道抵抗の低下", "肺コンプライアンスの低下 −−−−−− 気道抵抗の低下"], "ans": 0, "essential": false}, {"q": "頸動脈小体からの求心性神経はどれか。", "opts": ["舌咽神経", "横隔神経", "迷走神経", "肋間神経"], "ans": 0, "essential": false}, {"q": "バゾプレッシンによって水の透過性が増すのはどれか。", "opts": ["集合管", "近位尿細管", "ヘンレのループの下行脚", "ヘンレのループの上行脚"], "ans": 0, "essential": false}, {"q": "消化酵素で正しいのはどれか。", "opts": ["ペプチダーゼはタンパク質を分解する。", "アミラーゼは脂質を分解する。", "リパーゼは炭水化物を分解する。", "トリプシンは炭水化物を分解する。"], "ans": 0, "essential": false}, {"q": "食前と比べて食後60分に血液中の値が低下するのはどれか。", "opts": ["グルカゴン", "血　糖", "尿素窒素", "インスリン"], "ans": 0, "essential": false}, {"q": "体温調節で正しいのはどれか。", "opts": ["プロスタグランジンは体温上昇作用を持つ。", "体温の調節中枢は延髄にある。", "黄体ホルモンは体温を低下させる。", "皮膚血管は環境温が下がると拡張する。"], "ans": 0, "essential": false}, {"q": "加齢に伴う変化はどれか。", "opts": ["ミトコンドリア数の減少", "細胞膜の流動性の増加", "テロメアの増長", "細胞分裂の増加"], "ans": 0, "essential": false}, {"q": "持久能の運動トレーニングで増加しないのはどれか。", "opts": ["最大心拍数", "最大心拍出量", "最大酸素摂取量", "最大動静脈酸素較差"], "ans": 0, "essential": false}, {"q": "DNA で誤っているのはどれか。", "opts": ["塩基としてウラシルを含む。", "二重らせんを形成している。", "ヌクレオチドから構成される。", "タンパク質の合成に関与する。"], "ans": 0, "essential": false}, {"q": "神経細胞の活動電位で膜電位の急激な上昇に寄与するのはどれか。", "opts": ["Ｎa＋の細胞内への流入", "Ｋ＋の細胞内への流入", "Ｋ＋の細胞外への流出", "Ｎa＋の細胞外への流出"], "ans": 0, "essential": false}, {"q": "交感神経の作用はどれか。", "opts": ["糖新生の促進", "縮　瞳", "心拍数の減少", "腸管運動の亢進"], "ans": 0, "essential": false}, {"q": "筋紡錘を受容器とするのはどれか。", "opts": ["伸張反射", "屈曲反射", "前庭反射", "交叉性伸展反射"], "ans": 0, "essential": false}, {"q": "歩行の基本的なパターンを生み出す神経機構が存在するのはどれか。", "opts": ["脊　髄", "延　髄", "小　脳", "大　脳"], "ans": 0, "essential": false}, {"q": "補足運動野で誤っているのはどれか。", "opts": ["一次運動野の外側に位置する。", "体部位再現がある。", "運動の企画と関係する。", "損傷すると運動発現低下が生じる。"], "ans": 0, "essential": false}, {"q": "感覚の種類と感覚受容器の組合せで正しいのはどれか。", "opts": ["触　覚 ──── マイスナー小体", "温　覚 ──── パチニ小体", "痛　覚 ──── メルケル盤", "関節位置覚 ── コルチ器官"], "ans": 0, "essential": false}, {"q": "四肢の深部感覚の伝導路に含まれないのはどれか。", "opts": ["脊髄の前側索", "視　床", "内側毛帯", "脊髄の後根"], "ans": 0, "essential": false}, {"q": "受容体が細胞表面にあるのはどれか。", "opts": ["副甲状腺ホルモン", "ビタミンＤ", "アンドロゲン", "アルドステロン"], "ans": 0, "essential": false}, {"q": "インスリンの作用で増加するのはどれか。", "opts": ["肝のグリコーゲン合成", "血中遊離脂肪酸濃度", "血中カリウムイオン濃度", "肝のケトン体産生"], "ans": 0, "essential": false}, {"q": "αアドレナリン受容体の活性化で生じる反射はどれか。", "opts": ["射　精", "勃　起", "排　尿", "排　便"], "ans": 0, "essential": false}, {"q": "妊娠初期で妊娠中期に比べ血中濃度が高いのはどれか。", "opts": ["ヒト絨毛性ゴナドトロピン", "エストロゲン", "プロゲステロン", "ヒト胎盤性ラクトーゲン"], "ans": 0, "essential": false}, {"q": "免疫担当細胞で正しいのはどれか。", "opts": ["好塩基球はアレルギー反応を誘導する。", "Ｂ細胞は胸腺で増殖する。", "Ｔ細胞は形質細胞となる。", "樹状細胞はマクロファージとなる。"], "ans": 0, "essential": false}, {"q": "骨吸収を抑制するのはどれか。", "opts": ["エストロゲン", "コルチゾール", "甲状腺ホルモン", "副甲状腺ホルモン"], "ans": 0, "essential": false}, {"q": "収縮期血圧130ｍｍHg、拡張期血圧 70ｍｍHgのときの平均血圧はどれか。", "opts": ["90ｍｍHg", "80ｍｍHg", "100ｍｍHg", "110ｍｍHg"], "ans": 0, "essential": false}, {"q": "リンパ液で正しいのはどれか。", "opts": ["リンパ液には免疫グロブリンが含まれる。", "リンパ流量は心拍出量と等しい。", "リンパ液には赤血球が含まれる。", "乳び槽には頭部からのリンパ液が入る。"], "ans": 0, "essential": false}, {"q": "心臓血管中枢がある部位はどれか。", "opts": ["延　髄", "中　脳", "橋", "頸　髄"], "ans": 0, "essential": false}, {"q": "安静時の吸息で正しいのはどれか。", "opts": ["肺胞内圧の陰圧化", "横隔膜の弛緩", "内肋間筋の収縮", "胸膜腔内圧の陽圧化"], "ans": 0, "essential": false}, {"q": "予備呼気量と残気量との和で示される肺気量はどれか。", "opts": ["機能的残気量", "肺活量", "死腔量", "肺胞換気量"], "ans": 0, "essential": false}, {"q": "ヘモグロビンの酸素解離曲線が左方にシフトする要因はどれか。", "opts": ["pＨの上昇", "温度の上昇", "酸素分圧の上昇", "2,3-ジホスホグリセリン酸の増加"], "ans": 0, "essential": false}, {"q": "糸球体血圧 60mmHg、ボーマン嚢内圧15mmHg、血漿膠質浸透圧25 mmHg の場合の有効濾過圧はどれか。", "opts": ["20mmHg", "50mmHg", "70mmHg", "100mmHg"], "ans": 0, "essential": false}, {"q": "欠乏するビタミンと疾患の組合せで正しいのはどれか。", "opts": ["ビタミンＣ ─── 壊血病", "ビタミンＡ ─── くる病", "ビタミンＢ1 ─── 夜盲症", "ビタミンＤ ─── 多発性神経炎"], "ans": 0, "essential": false}, {"q": "ミトコンドリアを必要としない反応はどれか。", "opts": ["解　糖", "β酸化", "クエン酸回路", "酸化的リン酸化"], "ans": 0, "essential": false}, {"q": "ホルモンと働きの組合せで正しいのはどれか。", "opts": ["グレリン ───────── 摂食促進", "アルドステロン ────── 骨形成の促進", "グルカゴン様ペプチド-1 ── グルカゴン分泌促進", "セクレチン ──────── 胃酸分泌促進"], "ans": 0, "essential": false}, {"q": "加齢による変化はどれか。", "opts": ["大腿直筋の筋量の減少", "残気量の減少", "血中コルチゾール濃度の低下", "大脳皮質視覚野の容積の減少"], "ans": 0, "essential": false}, {"q": "頭が直立位にあるとき頭部の水平回転の開始に応答するのはどれか。", "opts": ["半規管", "球形嚢", "卵形嚢", "コルチ器"], "ans": 0, "essential": false}, {"q": "下行性痛覚抑制系に含まれるのはどれか。", "opts": ["中脳水道灰白質", "後索核", "内側毛帯", "脊髄視床路"], "ans": 0, "essential": false}, {"q": "甲状腺ホルモンの作用で低下するのはどれか。", "opts": ["血中コレステロール値", "心拍数", "熱産生", "酸素消費量"], "ans": 0, "essential": false}, {"q": "インスリンに依存してグルコースの取り込みが促進するのはどれか。", "opts": ["脂肪細胞", "赤血球", "腸上皮細胞", "腎尿細管細胞"], "ans": 0, "essential": false}, {"q": "ステロイドホルモンはどれか。", "opts": ["エストロゲン", "甲状腺ホルモン", "副腎皮質刺激ホルモン", "ヒト絨毛性ゴナドトロピン"], "ans": 0, "essential": false}, {"q": "定型的な二次性徴はどれか。", "opts": ["17歳女子で身長の伸びが止まった。", "9歳男児で声変わりが起きた。", "10歳男児で腋毛が生えた。", "16歳女子で初経が来た。"], "ans": 0, "essential": false}, {"q": "妊娠中に乳汁分泌を抑制しているのはどれか。", "opts": ["エストロゲン", "オキシトシン", "プロラクチン", "成長ホルモン"], "ans": 0, "essential": false}, {"q": "血小板の産生を促進するのはどれか。", "opts": ["トロンボポエチン", "フィブリノゲン", "顆粒球コロニー刺激因子(G-CSF)", "マクロファージコロニー刺激因子(M-CSF)"], "ans": 0, "essential": false}, {"q": "血液型で正しいのはどれか。", "opts": ["Ａ型の血漿には抗Ｂ抗体が存在する。", "日本人の約15％はＲｈ陰性である。", "Ｂ型の赤血球膜表面にはＡ型抗原が存在する。", "ＡＢ型の血漿には抗Ａ抗体と抗Ｂ抗体が存在する。"], "ans": 0, "essential": false}, {"q": "血中カルシウム濃度の低下に対する正常な生体の反応はどれか。", "opts": ["カルシトニン分泌の低下", "骨吸収の減少", "活性型ビタミンＤ合成の低下", "副甲状腺ホルモン(パラソルモン分泌の低下)"], "ans": 0, "essential": false}, {"q": "正常の心臓が興奮する順序を以下に示す。「洞房結節 → 心房筋→ (A) →(B) →右脚・左脚 → (C) → 心室筋 」 (A)、(B)、(C) に入る組合せで正しいのはどれか。", "opts": ["(A) 房室結節────(B)ヒス束──── (C) プルキンエ線維", "(A) ヒス束─────(B)房室結節─── (C) プルキンエ線維", "(A) プルキンエ線維─(B)房室結節─── (C) ヒス束", "(A) 房室結節──(B)プルキンエ線維── (C) ヒス束"], "ans": 0, "essential": false}, {"q": "心周期の等容性心室収縮期で正しいのはどれか。", "opts": ["心音図第Ｉ音が発生する。", "房室弁が開いている。", "動脈弁が開いている。", "心室に血液が流入する。"], "ans": 0, "essential": false}, {"q": "血圧を下げるのはどれか。", "opts": ["一酸化窒素", "アルドステロン", "ノルアドレナリン", "アンジオテンシン?"], "ans": 0, "essential": false}, {"q": "深い呼息で働くのはどれか。", "opts": ["内肋間筋", "前鋸筋", "外肋間筋", "胸鎖乳突筋"], "ans": 0, "essential": false}, {"q": "酸素分圧が最も高いのはどれか。", "opts": ["吸　気", "肺胞気", "動脈血", "肺静脈血"], "ans": 0, "essential": false}, {"q": "バソプレッシン分泌を抑制するのはどれか。", "opts": ["血漿浸透圧の低下", "大量の発汗", "塩分摂取の増加", "循環血液量の減少"], "ans": 0, "essential": false}, {"q": "腎臓でグルコースを能動的に再吸収する部位はどれか。", "opts": ["近位尿細管", "集合管", "遠位尿細管", "ヘンレループの下行脚"], "ans": 0, "essential": false}, {"q": "肝臓の機能でないのはどれか。", "opts": ["リンパ球産生", "解　毒", "糖新生", "胆汁産生"], "ans": 0, "essential": false}, {"q": "調節する因子と消化器の働きの組合せで正しいのはどれか。", "opts": ["セクレチン─────膵液分泌の促進", "ガストリン─────胃酸分泌の抑制", "副交感神経刺激───唾液分泌の抑制", "交感神経刺激────消化管運動の促進"], "ans": 0, "essential": false}, {"q": "暑熱環境に曝露されたときに起こるのはどれか。", "opts": ["エクリン汗腺からの分泌増加", "立毛筋の収縮", "皮膚血管の収縮", "四肢骨格筋のふるえ"], "ans": 0, "essential": false}, {"q": "筋細胞膜に発生した活動電位を筋細胞の深部に伝えるのはどれか。", "opts": ["横行小管", "神経線維", "筋小胞体", "ミトコンドリア"], "ans": 0, "essential": false}, {"q": "神経細胞の軸索を伝導する活動電位で正しいのはどれか。", "opts": ["全か無かの法則に従う。", "不応期はない。", "隣接する別の軸索に伝わる。", "軸索が細いほど速く伝わる。"], "ans": 0, "essential": false}, {"q": "ブローカ野で正しいのはどれか。", "opts": ["運動性皮質に情報を出力する。", "側頭葉に位置する。", "音の意味の理解に関わる。", "損傷すると黙読が障害される。"], "ans": 0, "essential": false}, {"q": "運動単位で正しいのはどれか。", "opts": ["1つの運動単位は複数の筋線維を含む。", "1つの運動単位は複数のα運動ニューロンを含む。", "ＦＦ型運動単位は発生する力が小さい。", "Ｓ型運動単位は疲労しやすい。"], "ans": 0, "essential": false}, {"q": "頭部が左側に傾いた際に起こる姿勢反射で正しいのはどれか。", "opts": ["左下肢は伸展する。", "左上肢は屈曲する。", "右上肢は伸展する。", "右下肢は伸展する。"], "ans": 0, "essential": false}, {"q": "ATP を産生するのはどれか。", "opts": ["ミトコンドリア", "ゴルジ装置", "粗面小胞体", "リソソーム"], "ans": 0, "essential": false}, {"q": "心筋で誤っているのはどれか。", "opts": ["心筋細胞はシナプスを介して結合している。", "横紋筋である。", "不随意筋である。", "自律神経やホルモンの影響を受ける。"], "ans": 0, "essential": false}, {"q": "抑制性シナプスの神経伝達物質はどれか。", "opts": ["ガンマアミノ酪酸 (GABA)", "グルタミン酸", "アセチルコリン", "ノルアドレナリン"], "ans": 0, "essential": false}, {"q": "自律神経の二重支配を受けないのはどれか。", "opts": ["汗　腺", "心　臓", "膵　臓", "唾液腺"], "ans": 0, "essential": false}, {"q": "誘発筋電図のＨ波で正しいのはどれか。", "opts": ["脊髄が介在して発生する。", "Ｍ波より短い潜時で発生する。", "筋を刺激することで発生する。", "振幅の大きさは電気刺激強度に比例する。"], "ans": 0, "essential": false}, {"q": "脳幹を介するのはどれか。", "opts": ["立ち直り反射", "筋性防御", "屈曲反射", "伸張反射"], "ans": 0, "essential": false}, {"q": "協調した滑らかな動作や運動を学習するのに重要なのはどれか。", "opts": ["大脳基底核", "脳　幹", "脊　髄", "大脳辺縁系"], "ans": 0, "essential": false}, {"q": "特殊感覚でないのはどれか。", "opts": ["触　覚", "嗅　覚", "視　覚", "聴　覚"], "ans": 0, "essential": false}, {"q": "視覚で正しいのはどれか。", "opts": ["杆体の視物質はロドプシンである。", "黄斑部には視覚がない。", "明順応には数十分を必要とする。", "近視では網膜の後方で焦点を結ぶ。"], "ans": 0, "essential": false}, {"q": "ステロイドホルモンに分類されるのはどれか。", "opts": ["アンドロゲン", "サイロキシン", "バゾプレッシン", "アドレナリン"], "ans": 0, "essential": false}, {"q": "甲状腺ホルモンで誤っているのはどれか。", "opts": ["基礎代謝を下げる。", "合成にヨウ素が必要である。", "サイロキシンの生理活性は弱い。", "甲状腺刺激ホルモンの分泌を抑制する。"], "ans": 0, "essential": false}, {"q": "子宮復古に関与するのはどれか。", "opts": ["オキシトシン", "プロゲステロン", "アンドロゲン", "エストロゲン"], "ans": 0, "essential": false}, {"q": "赤血球の働きで誤っているのはどれか。", "opts": ["血小板の凝集", "二酸化炭素の運搬", "pHの緩衝", "酸素の運搬"], "ans": 0, "essential": false}, {"q": "ＩgEの受容体を有するのはどれか。", "opts": ["好塩基球", "単　球", "好中球", "樹状細胞"], "ans": 0, "essential": false}, {"q": "腎臓でカルシウムイオンの再吸収を促進するのはどれか。", "opts": ["副甲状腺ホルモン", "アルドステロン", "カルシトニン", "成長ホルモン"], "ans": 0, "essential": false}, {"q": "毛細血管から間質に拡散するのはどれか。", "opts": ["酸　素", "白血球", "アルブミン", "抗　体"], "ans": 0, "essential": false}, {"q": "リンパが胸管に注ぎ込まないのはどれか。", "opts": ["右腋窩リンパ節", "右鼠径リンパ節", "乳び槽", "腹部リンパ節"], "ans": 0, "essential": false}, {"q": "血圧が低下した際に働く受容器が存在するのはどれか。", "opts": ["頸動脈洞", "冠状動脈", "椎骨動脈", "鎖骨下動脈"], "ans": 0, "essential": false}, {"q": "スパイロメーターで直接測れないのはどれか。", "opts": ["残気量", "肺活量", "1回換気量", "予備吸気量"], "ans": 0, "essential": false}, {"q": "酸素分圧が最も低いのはどれか。", "opts": ["静脈血", "呼　気", "動脈血", "肺胞気"], "ans": 0, "essential": false}, {"q": "糸球体濾過率の推定に使用されるのはどれか。", "opts": ["クレアチニン", "ナトリウム", "パラアミノ馬尿酸", "グルコース"], "ans": 0, "essential": false}, {"q": "ビタミンDで正しいのはどれか。", "opts": ["腸管のカルシウムイオン吸収を促進する。", "骨形成を抑制する。", "皮膚で分解される。", "カルシトニンの分泌を促進する。"], "ans": 0, "essential": false}, {"q": "胆汁で正しいのはどれか。", "opts": ["コレシストキニンは胆汁排泄を促進する。", "胆汁酸はタンパク質とミセルを形成する。", "胆汁酸は胆嚢で合成される。", "セクレチンは胆汁排泄を抑制する。"], "ans": 0, "essential": false}, {"q": "体温調節中枢があるのはどれか。", "opts": ["視床下部", "橋", "延　髄", "視　床"], "ans": 0, "essential": false}, {"q": "高齢者の歩行変化で正しいのはどれか。", "opts": ["歩隔の拡大", "歩幅の拡大", "歩行率の増加", "遊脚期の延長"], "ans": 0, "essential": false},{"q": "ゴルジ装置の機能はどれか。","opts": ["分泌顆粒の生成", "ATPの産生", "老廃物の分解", "ステロイドホルモンの合成"], "ans": 0, "essential": false},{"q": "筋原線維でミオシンフィラメントのみで構成されるのはどれか。", "opts": ["Ｈ　帯","Ａ　帯", "Ｉ　帯","Ｚ　膜" ], "ans": 0, "essential": false},{"q": "神経伝導速度が最も遅いのはどれか。", "opts": ["温受容器からの求心性線維","侵害受容器からの求心性線維", "筋紡錘からの求心性線維", "骨格筋への遠心性線維"], "ans": 0, "essential": false},{"q": "ノルアドレナリンを分泌するのはどれか。", "opts": ["交感神経の節後線維", "交感神経の節前線維", "副交感神経の節前線維", "副交感神経の節後線維"], "ans": 0, "essential": false},{"q": "知覚を統合し空間認知に関与するのはどれか。", "opts": ["頭頂連合野","前頭連合野", "側頭連合野", "後頭連合野"], "ans": 0, "essential": false},{"q": "膝蓋腱反射に関与しないのはどれか。", "opts": ["Ⅲ群線維","大腿四頭筋", "筋紡錘", "α運動ニューロン"], "ans": 0, "essential": false},{"q": "一次運動野の最も外側が対応している身体部位はどれか。", "opts": ["顎", "手　指", "体　幹", "足　首"], "ans": 0, "essential": false},{"q": "視床を経由しない感覚情報はどれか。", "opts": ["嗅　覚", "視　覚", "聴　覚", "味　覚"], "ans": 0, "essential": false},{"q": "ペプチドホルモンの受容体が存在するのはどれか。", "opts": ["細胞膜", "核", "細胞質", "ミトコンドリア"], "ans": 0, "essential": false},{"q": "乳汁の産生を促進するのはどれか。", "opts": ["プロラクチン", "成長ホルモン", "性腺刺激ホルモン", "副腎皮質刺激ホルモン"], "ans": 0, "essential": false},{"q": "胎盤から分泌されないのはどれか。", "opts": ["卵胞刺激ホルモン","エストロゲン", "プロゲステロン", "ヒト絨毛性ゴナドトロピン"], "ans": 0, "essential": false},{"q": "血漿タンパク質と機能の組合せで正しいのはどれか。", "opts": ["アルブミン ──── 膠質浸透圧の維持", "βグロブリン ─── 血液の凝固", "γグロブリン ─── 物質の運搬", "フィブリノゲン ── 免疫の制御"], "ans": 0, "essential": false},{"q": "血液凝固で外因系の起点となるのはどれか。", "opts": ["組織トロンボプラスチン", "血小板", "トロンビン", "プラスミン"], "ans": 0, "essential": false},{"q":"自然免疫はどれか。", "opts": ["貪　食", "免疫記憶", "抗体産生", "細胞性免疫" ], "ans": 0, "essential": false},{"q": "骨端線で正しいのはどれか。", "opts": ["成人になると閉鎖する。", "骨吸収に関与する。", "一次骨化中心となる。", "緻密骨の厚さに関与する。"], "ans": 0, "essential": false},{"q": "心周期の等容性収縮期で正しいのはどれか。", "opts": ["房室弁が閉鎖している。", "P波が発生している。", "第Ⅱ心音が聞かれる。", "動脈圧は心室圧と等しい。"], "ans": 0, "essential": false},{"q": "細動脈を拡張させるのはどれか。", "opts": ["心房性ナトリウム利尿ペプチド", "アンジオテンシンⅡ", "エンドセリン", "バゾプレッシン" ], "ans": 0, "essential": false},{"q": "安静吸息時に収縮するのはどれか。", "opts": ["横隔膜", "肺", "胸　膜", "内肋間筋"], "ans": 0, "essential": false},{"q": "自発呼吸の中枢が位置するのはどれか。", "opts": ["延　髄", "小　脳", "大脳皮質", "視床下部"], "ans": 0, "essential": false},{"q": "塩分の過剰摂取時に起こるのはどれか。", "opts": ["体液量の増加", "血漿浸透圧の低下", "レニンの分泌亢進", "心房性ナトリウム利尿ペプチドの分泌抑制"], "ans": 0, "essential": false},{"q": "二糖類はどれか。", "opts": ["スクロース","ガラクトース", "グルコース", "フルクトース"], "ans": 0, "essential": false},{"q": "唾液に含まれる消化酵素はどれか。", "opts": ["アミラーゼ", "キモトリプシン", "ペプシン", "リパーゼ"], "ans": 0, "essential": false},{"q": "胃液の分泌を抑制するのはどれか。", "opts": ["セクレチン", "アセチルコリン", "ガストリン", "ヒスタミン"], "ans": 0, "essential": false},{"q": "熱放散でないのはどれか。", "opts": ["ふるえ", "蒸　発", "伝　導", "輻　射"], "ans": 0, "essential": false},{"q": "高齢者の睡眠で正しいのはどれか。", "opts": ["レム睡眠の割合が減少する。", "中途覚醒が減少する。", "日内リズムが後ろにずれる。", "深い睡眠(徐波睡眠)が増加する。"], "ans": 0, "essential": false}];
+
+let questions = [], current = 0, selected = null, results = [], optMap = [], shuffleOpts = true;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const numVal = parseInt(document.getElementById('selectNum').value);
+  const isRandom = document.getElementById('selectOrder').value === '1';
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  let pool = [...ALL_DATA];
+  if (isRandom) pool = shuffle(pool);
+  questions = numVal === 0 ? pool : pool.slice(0, numVal);
+  current = 0; results = [];
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current];
+  const total = questions.length;
+  document.getElementById('progressBar').style.width = (current / total * 100) + '%';
+  document.getElementById('headerSub').textContent = `${current + 1} / ${total} 問`;
+  document.getElementById('qNum').textContent = `問${current + 1}`;
+  document.getElementById('qText').textContent = q.q;
+  const badge = document.getElementById('qBadge');
+  badge.style.display = q.essential ? 'inline-block' : 'none';
+
+  let indices = [0, 1, 2, 3];
+  if (shuffleOpts) indices = shuffle(indices);
+  optMap = indices;
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  const labels = ['ア', 'イ', 'ウ', 'エ'];
+  indices.forEach((origIdx, dispIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[dispIdx]}</span><span class="opt-text">${q.opts[origIdx]}</span>`;
+    btn.onclick = () => selectOption(dispIdx, origIdx, q.ans);
+    grid.appendChild(btn);
+  });
+
+  selected = null;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('btnNext').disabled = true;
+  document.getElementById('btnNext').textContent = current < questions.length - 1 ? '次の問題 →' : '結果を見る';
+}
+
+function selectOption(dispIdx, origIdx, ans) {
+  if (selected !== null) return;
+  selected = origIdx;
+  const btns = document.querySelectorAll('.opt-btn');
+  const isCorrect = origIdx === ans;
+  btns.forEach((btn, i) => {
+    btn.onclick = null;
+    if (optMap[i] === ans) btn.classList.add('correct');
+    if (i === dispIdx && !isCorrect) btn.classList.add('wrong');
+    if (i === dispIdx && isCorrect) btn.classList.add('correct');
+  });
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'ng');
+  fb.innerHTML = isCorrect ? '✅ 正解！' : `❌ 不正解　正解：${questions[current].opts[ans]}`;
+  results.push({ q: questions[current], chosen: origIdx, correct: isCorrect });
+  recordAnswer(questions[current], isCorrect);
+  document.getElementById('btnNext').disabled = false;
+  if (navigator.vibrate) navigator.vibrate(isCorrect ? 30 : [50, 30, 50]);
+}
+
+function nextQuestion() {
+  if (selected === null) return;
+  current++;
+  if (current >= questions.length) { showResult(); } else { showQuestion(); }
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  document.getElementById('progressBar').style.width = '100%';
+  const total = results.length;
+  const correct = results.filter(r => r.correct).length;
+  const score = Math.round(correct / total * 100);
+  saveSession(total, correct, score);
+  setTimeout(refreshWeakBtn, 100);
+  document.getElementById('resultScore').innerHTML = `${score}<span>点</span>`;
+  document.getElementById('resultDetail').textContent = `${total}問中 ${correct}問正解`;
+  document.getElementById('headerSub').textContent = '結果';
+  let emoji = '😢', msg = 'もう少し頑張りましょう！';
+  if (score >= 60) { emoji = '🙂'; msg = '合格ライン到達！'; }
+  if (score >= 80) { emoji = '😊'; msg = 'よくできました！'; }
+  if (score === 100) { emoji = '🎉'; msg = 'Perfect!! おめでとう！'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultMsg').textContent = msg;
+  setTimeout(() => { document.getElementById('scoreBar').style.width = score + '%'; }, 100);
+  const wrongCount = results.filter(r => !r.correct).length;
+  const btnRetry = document.getElementById('btnRetry');
+  btnRetry.style.display = wrongCount > 0 ? 'block' : 'none';
+  btnRetry.textContent = `間違えた${wrongCount}問をやり直す`;
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (r.correct ? 'correct-item' : 'wrong-item');
+    div.innerHTML = `
+      <div class="review-q">問${i+1}：${r.q.q}</div>
+      <div class="review-ans">
+        ${r.correct
+          ? `<span class="label-correct">✅ 正解：${r.q.opts[r.q.ans]}</span>`
+          : `<span class="label-wrong">❌ あなた：${r.q.opts[r.chosen]}</span>　正解：<span class="label-correct">${r.q.opts[r.q.ans]}</span>`
+        }
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function retryWrong() {
+  const wrongItems = results.filter(r => !r.correct).map(r => r.q);
+  if (wrongItems.length === 0) return;
+  questions = wrongItems; current = 0; results = [];
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function backToStart() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('headerSub').textContent = '第14回〜第33回 国家試験問題';
+}
+
+
+
+// ===== 苦手問題・成績履歴機能 =====
+var SKEY = (document.title || '').replace(/（第\d+回〜第\d+回）/, '').trim();
+var sessionStart = null;
+var weakData = {};
+var historyData = [];
+
+function loadData() {
+  try {
+    var w = localStorage.getItem('wk_' + SKEY);
+    var h = localStorage.getItem('hs_' + SKEY);
+    weakData    = w ? JSON.parse(w) : {};
+    historyData = h ? JSON.parse(h) : [];
+  } catch(e) { weakData = {}; historyData = []; }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('wk_' + SKEY, JSON.stringify(weakData));
+    localStorage.setItem('hs_' + SKEY, JSON.stringify(historyData));
+  } catch(e) {}
+}
+
+function getWeakList() {
+  return ALL_DATA.filter(function(q, i) {
+    var d = weakData[String(i)];
+    if (!d) return false;
+    var t = d.c + d.w;
+    return t >= 2 && (d.c / t) < 0.5;
+  });
+}
+
+function refreshWeakBtn() {
+  var btn = document.getElementById('btnWeak');
+  if (!btn) return;
+  var wl = getWeakList();
+  if (wl.length === 0) {
+    btn.textContent = '⚡ 苦手問題なし（まず通常クイズを解いてください）';
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+  } else {
+    btn.textContent = '⚡ 苦手問題だけ出題する（' + wl.length + '問）';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+}
+
+function doStartQuiz() {
+  sessionStart = Date.now();
+  startQuiz();
+}
+
+function doStartWeak() {
+  var wl = getWeakList();
+  if (wl.length === 0) { alert('苦手問題がありません。まず通常クイズを解いてください。'); return; }
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  questions = wl;
+  current = 0; results = [];
+  sessionStart = Date.now();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function recordAnswer(qObj, isCorrect) {
+  var i = String(ALL_DATA.indexOf(qObj));
+  if (i === '-1') return;
+  if (!weakData[i]) weakData[i] = { c: 0, w: 0 };
+  if (isCorrect) weakData[i].c++; else weakData[i].w++;
+  saveData();
+}
+
+function saveSession(total, correct, score) {
+  var mins = sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart) / 60000)) : 0;
+  var now = new Date();
+  var d = now.getFullYear() + '/' +
+    String(now.getMonth()+1).padStart(2,'0') + '/' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  historyData.unshift({ date: d, score: score, total: total, correct: correct, mins: mins });
+  if (historyData.length > 50) historyData.length = 50;
+  saveData();
+  sessionStart = null;
+}
+
+function openHistory() {
+  loadData();
+  var n  = historyData.length;
+  var tq = historyData.reduce(function(a,b){ return a+b.total; }, 0);
+  var as = n ? Math.round(historyData.reduce(function(a,b){ return a+b.score; }, 0) / n) : 0;
+  var tt = historyData.reduce(function(a,b){ return a+(b.mins||0); }, 0);
+  var wl = getWeakList();
+  document.getElementById('hSessions').textContent   = n;
+  document.getElementById('hQuestions').textContent  = tq;
+  document.getElementById('hAvgScore').textContent   = as + '%';
+  document.getElementById('hTime').textContent       = tt + '分';
+  document.getElementById('hWeakCount').textContent  = wl.length + '問';
+  var list = document.getElementById('hSessionList');
+  list.innerHTML = n === 0
+    ? '<div style="color:#718096;font-size:13px;text-align:center;padding:20px">まだ履歴がありません</div>'
+    : historyData.map(function(h){
+        return '<div class="hist-row"><div>' +
+          '<div style="font-weight:600">' + h.correct + '/' + h.total + '問正解　' + (h.mins||0) + '分</div>' +
+          '<div class="hist-date">' + h.date + '</div></div>' +
+          '<div class="hist-score">' + h.score + '点</div></div>';
+      }).join('');
+  document.getElementById('historyPanel').classList.add('show');
+}
+
+// ===== イベント登録（iOS Safari対応）=====
+window.addEventListener('load', function() {
+  loadData();
+  refreshWeakBtn();
+
+  function tap(id, fn) {
+    var el = typeof id === 'string' ? document.getElementById(id) : id;
+    if (!el) return;
+    el.addEventListener('click', fn);
+    el.addEventListener('touchend', function(e){ e.preventDefault(); fn(); });
+  }
+
+  tap('btnStart',    doStartQuiz);
+  tap('btnWeak',     doStartWeak);
+  tap('btnNext',     nextQuestion);
+  tap('btnRetry',    function(){ sessionStart = Date.now(); retryWrong(); });
+  tap('btnRestart', backToStart);
+  tap('historyBtn',  openHistory);
+  tap('historyClose', function(){ document.getElementById('historyPanel').classList.remove('show'); });
+  tap('btnClear', function(){
+    if (confirm('履歴と苦手データをすべてリセットしますか？')) {
+      weakData = {}; historyData = [];
+      saveData(); openHistory(); refreshWeakBtn();
+    }
+  });
+  var panel = document.getElementById('historyPanel');
+  if (panel) panel.addEventListener('click', function(e){ if(e.target===panel) panel.classList.remove('show'); });
+});
+</script>
+
+<button class="history-btn" id="historyBtn">📊</button>
+<div class="history-panel" id="historyPanel">
+  <div class="history-inner">
+    <div class="history-header">
+      <h2>📊 成績・履歴</h2>
+      <button class="history-close" id="historyClose">✕</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="hSessions">0</div><div class="stat-label">総セッション数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hQuestions">0</div><div class="stat-label">総解答問題数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hAvgScore">0%</div><div class="stat-label">平均正答率</div></div>
+      <div class="stat-card"><div class="stat-val" id="hTime">0分</div><div class="stat-label">総学習時間</div></div>
+    </div>
+    <div class="weak-stat">
+      <div class="weak-count" id="hWeakCount">0問</div>
+      <div style="font-size:13px;color:#e65100;margin-top:4px;">苦手問題数（正答率50%未満・2回以上解いた問題）</div>
+    </div>
+    <div class="hist-section-title">📅 セッション履歴（最新50件）</div>
+    <div id="hSessionList"></div>
+    <button class="btn-clear" id="btnClear">🗑 履歴・苦手データをリセット</button>
+  </div>
+</div>
+</body>
+</html>
