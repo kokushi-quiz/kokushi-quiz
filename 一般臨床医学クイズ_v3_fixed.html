@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>一般臨床医学クイズ（第14回〜第34回）</title>
+<style>
+  :root {
+    --primary: #5b3fa0;
+    --primary-light: #f0ebff;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --bg: #f3f0fa;
+    --card: #ffffff;
+    --text: #1a202c;
+    --text-sub: #718096;
+    --border: #e2e8f0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 14px;
+    --option-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; color: var(--text); }
+
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 14px 16px 10px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .progress-bar-wrap { height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin-top: 10px; }
+  .progress-bar { height: 100%; background: #ffd700; border-radius: 2px; transition: width 0.4s ease; }
+
+  #startScreen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 80px); padding: 24px;
+  }
+  .start-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 32px 24px; width: 100%; max-width: 420px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .start-icon { font-size: 56px; margin-bottom: 16px; }
+  .start-card h2 { font-size: 22px; color: var(--primary); margin-bottom: 8px; }
+  .start-card p { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px 14px; background: var(--bg); border-radius: 10px; }
+  .setting-label { font-size: 14px; font-weight: 600; }
+  .setting-row select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--border); background: white; color: var(--text); appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+  .btn-start {
+    width: 100%; padding: 16px; font-size: 18px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; letter-spacing: 1px; margin-top: 8px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 14px rgba(91,63,160,0.4);
+  }
+  .btn-start:active { transform: scale(0.97); }
+
+  #quizScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .q-num { background: var(--primary); color: white; font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .q-badge-hissu { background: #ff9500; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .q-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .q-text { font-size: 17px; line-height: 1.65; font-weight: 600; }
+  .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .opt-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; cursor: pointer;
+    font-size: 15px; line-height: 1.4; text-align: left;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    min-height: var(--option-h);
+    box-shadow: var(--shadow);
+    -webkit-user-select: none; user-select: none;
+  }
+  .opt-btn:active { transform: scale(0.98); }
+  .opt-btn.selected { border-color: var(--primary); background: var(--primary-light); }
+  .opt-btn.correct { border-color: var(--correct); background: #eafaf1; }
+  .opt-btn.wrong { border-color: var(--wrong); background: #fdecea; }
+  .opt-label {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%; background: var(--border); font-weight: 700; font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .opt-btn.selected .opt-label { background: var(--primary); color: white; }
+  .opt-btn.correct .opt-label { background: var(--correct); color: white; }
+  .opt-btn.wrong .opt-label { background: var(--wrong); color: white; }
+  .opt-text { flex: 1; }
+
+  .feedback { display: none; padding: 14px 16px; border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 15px; align-items: center; gap: 10px; }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: #eafaf1; color: var(--correct); border: 1.5px solid var(--correct); }
+  .feedback.ng { background: #fdecea; color: var(--wrong); border: 1.5px solid var(--wrong); }
+
+  .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .btn-next {
+    flex: 1; padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; transition: transform 0.1s;
+    box-shadow: 0 4px 14px rgba(91,63,160,0.35);
+  }
+  .btn-next:active { transform: scale(0.97); }
+  .btn-next:disabled { background: var(--border); color: var(--text-sub); box-shadow: none; }
+
+  #resultScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .result-hero {
+    background: var(--card); border-radius: var(--radius); padding: 32px 24px;
+    text-align: center; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 12px; }
+  .result-score { font-size: 56px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .result-score span { font-size: 24px; font-weight: 400; }
+  .result-msg { font-size: 17px; font-weight: 600; color: var(--text); margin: 10px 0; }
+  .result-detail { font-size: 14px; color: var(--text-sub); margin-bottom: 4px; }
+  .score-bar-wrap { background: var(--bg); border-radius: 8px; height: 12px; margin: 14px 0; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--primary), #9b7fe0); transition: width 0.8s ease; }
+  .btn-retry, .btn-restart {
+    width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px;
+    transition: transform 0.1s;
+  }
+  .btn-retry { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(91,63,160,0.35); }
+  .btn-restart { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-retry:active, .btn-restart:active { transform: scale(0.97); }
+  .review-section { margin-top: 8px; }
+  .review-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
+  .review-item { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid var(--border); }
+  .review-item.wrong-item { border-left-color: var(--wrong); }
+  .review-item.correct-item { border-left-color: var(--correct); }
+  .review-q { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .review-ans { font-size: 13px; color: var(--text-sub); }
+  .review-ans .label-correct { color: var(--correct); font-weight: 700; }
+  .review-ans .label-wrong { color: var(--wrong); font-weight: 700; }
+
+  .btn-weak {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
+    background: #fff3e0; color: #e65100; border: 2px solid #ffb74d;
+    border-radius: 12px; cursor: pointer; margin-top: 10px;
+    -webkit-user-select: none; user-select: none; display: block; text-align: center;
+  }
+  .btn-weak:active { transform: scale(0.97); }
+  .history-btn {
+    position: fixed; bottom: 24px; right: 20px; z-index: 200;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--primary); color: white; border: none;
+    font-size: 22px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .history-panel {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.55); overflow-y: auto;
+  }
+  .history-panel.show { display: block; }
+  .history-inner {
+    background: white; border-radius: 16px 16px 0 0;
+    padding: 24px 16px 60px; margin-top: 60px;
+    min-height: calc(100vh - 60px);
+  }
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .history-header h2 { font-size: 18px; font-weight: 700; }
+  .history-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f0f0f0; border: none; font-size: 18px; cursor: pointer;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: #f8f9fa; border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+  .stat-label { font-size: 11px; color: #718096; margin-top: 2px; }
+  .weak-stat { background: #fff3e0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .weak-count { font-size: 24px; font-weight: 800; color: #e65100; }
+  .hist-section-title { font-size: 13px; font-weight: 700; color: #718096; margin: 16px 0 10px; }
+  .hist-row {
+    background: #f8f9fa; border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 8px; font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .hist-score { font-weight: 800; font-size: 18px; color: var(--primary); }
+  .hist-date { color: #718096; font-size: 12px; }
+  .btn-clear {
+    width: 100%; padding: 12px; font-size: 13px;
+    background: white; color: #e74c3c; border: 1.5px solid #e74c3c;
+    border-radius: 10px; cursor: pointer; margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏥 一般臨床医学クイズ</h1>
+  <div class="header-sub" id="headerSub">第14回〜第34回 国家試験問題</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+</div>
+
+<div id="startScreen">
+  <div class="start-card">
+    <div class="start-icon">🏥</div>
+    <h2>一般臨床医学クイズ</h2>
+    <p>国家試験（第14回〜第34回）から<br>出題された一般臨床医学問題を学習しましょう。<br>全<strong>502問</strong>収録</p>
+    <div class="setting-row">
+      <span class="setting-label">出題数</span>
+      <select id="selectNum">
+        <option value="10">10問</option>
+        <option value="20">20問</option>
+        <option value="30" selected>30問</option>
+        <option value="50">50問</option>
+        <option value="100">100問</option>
+        <option value="0">全問（502問）</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">出題順</span>
+      <select id="selectOrder">
+        <option value="1" selected>ランダム</option>
+        <option value="0">番号順</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">選択肢順</span>
+      <select id="selectShuffle">
+        <option value="1" selected>ランダム</option>
+        <option value="0">固定</option>
+      </select>
+    </div>
+    <button class="btn-start" id="btnStart">スタート ▶</button>
+    <button class="btn-weak" id="btnWeak">⚡ 苦手問題だけ出題する</button>
+  </div>
+</div>
+
+<div id="quizScreen">
+  <div class="q-meta">
+    <span class="q-num" id="qNum">問1</span>
+    <span class="q-badge-hissu" id="qBadge" style="display:none">必修</span>
+  </div>
+  <div class="q-card">
+    <p class="q-text" id="qText"></p>
+  </div>
+  <div class="options-grid" id="optionsGrid"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="action-row">
+    <button class="btn-next" id="btnNext" disabled>次の問題 →</button>
+  </div>
+</div>
+
+<div id="resultScreen">
+  <div class="result-hero">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-score" id="resultScore">0<span>点</span></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="score-bar-wrap"><div class="score-bar" id="scoreBar" style="width:0%"></div></div>
+  </div>
+  <button class="btn-retry" id="btnRetry">間違えた問題をやり直す</button>
+  <button class="btn-restart" id="btnRestart">トップへ戻る</button>
+  <div class="review-section">
+    <div class="review-title">📝 解答一覧</div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<script>
+const ALL_DATA = [{"q": "後遺症としてマン・ウェルニッケ姿勢が最もよくみられるのはどれか。", "opts": ["脳血管障害", "髄膜炎", "脊髄腫瘍", "破傷風"], "ans": 0, "essential": true}, {"q": "バビンスキー反射がみられる病変部位はどれか。", "opts": ["錐体路", "脊髄前角", "第一次感覚ニューロン", "脊髄後索"], "ans": 0, "essential": true}, {"q": "女性に多い疾患はどれか。", "opts": ["全身性エリテマトーデス", "痛風", "強直性脊椎炎", "悪性関節リウマチ"], "ans": 0, "essential": false}, {"q": "症候性肥満をきたすのはどれか。", "opts": ["クッシング（Cushing）症候群", "アジソン（Addison）病", "甲状腺機能亢進症", "神経性食思不振症"], "ans": 0, "essential": false}, {"q": "精神発達に遅れがみられるのはどれか。", "opts": ["クレチン症", "くる病", "骨・軟骨異栄養症", "下垂体小人症"], "ans": 0, "essential": false}, {"q": "「握った手をすぐに開く事が出来ない」という病態はどれか。", "opts": ["ミオトニア", "ジスキネジア", "テタニー", "ジストニア"], "ans": 0, "essential": false}, {"q": "チアノーゼがみられるのはどれか。", "opts": ["ファロー（Fallot）四徴症", "心房中隔欠損症", "大動脈弁狭窄症", "僧帽弁閉鎖不全症"], "ans": 0, "essential": false}, {"q": "誤っている組み合わせはどれか。", "opts": ["ヘバーデン結節　&#8722;　関節リウマチ", "チアノーゼ　　　&#8722;　心不全", "スプーン状爪　　&#8722;　鉄欠乏性貧血", "太鼓ばち指　　　&#8722;　肺気腫"], "ans": 0, "essential": false}, {"q": "末梢性顔面神経麻痺にみられるのはどれか。", "opts": ["ベル現象", "縮瞳", "複視", "眼振"], "ans": 0, "essential": false}, {"q": "左右の上前腸骨棘を結んだ線上の右1/3部にある急性虫垂炎の圧痛点はどれか。【図】", "opts": ["ランツ（Lanz）点", "ボアス（Boas）点", "ムンロー（Munro）点", "マックバーネー（McBurney）点"], "ans": 0, "essential": false}, {"q": "徐脈になるのはどれか。", "opts": ["アダムスーストークス（Adams・Stokes）症候群", "バセドウ（Basedow）病", "発熱", "貧血"], "ans": 0, "essential": false}, {"q": "高熱と発熱のない時期が周期的にみられるのはどれか。", "opts": ["マラリア", "肝膿瘍", "腸チフス", "敗血症"], "ans": 0, "essential": false}, {"q": "肝硬変の所見でないのはどれか。", "opts": ["高コレステロール血症", "くも状血管腫", "食道静脈瘤", "血小板減少"], "ans": 0, "essential": false}, {"q": "気管支喘息について誤っているのはどれか。", "opts": ["肺機能検査における１秒率の低下は不可逆的である。", "経過の長い患者では発作時に樽状胸がみられる。", "重積発作では呼吸音は減弱する。", "閉塞性換気障害である。"], "ans": 0, "essential": false}, {"q": "肺のブラが破裂して発症するのはどれか。", "opts": ["自然気胸", "気管支喘息", "肺癌", "肺線維症"], "ans": 0, "essential": false}, {"q": "46歳の女性。子宮筋腫があり、生理が不順である。坂道を登るときに息切れがする。血液検査で小球性低色素性貧血が認められる。考えられるのはどれか。", "opts": ["鉄欠乏性貧血", "悪性貧血", "再生不良性貧血", "溶血性貧血"], "ans": 0, "essential": false}, {"q": "周期性四肢麻痺がみられるのはどれか。", "opts": ["原発性アルドステロン症", "褐色細胞腫", "筋萎縮性側索硬化症", "アジソン（Addison）病"], "ans": 0, "essential": false}, {"q": "周期性四肢麻痺がみられるのはどれか。", "opts": ["バセドウ（Basedow）病", "褐色細胞腫", "ギランバレー症候群", "アジソン（Addison）病"], "ans": 0, "essential": false}, {"q": "55歳の女性。半年前から全身倦怠感、嗄声、下腿に圧痕を残さない浮腫がみられ、最近1か月間で5kgの体重増加を認めた。20歳代に甲状腺機能亢進症の治療歴がある。考えられるのはどれか。", "opts": ["橋本病", "バセドウ（Basedow）病", "ネフローゼ症候群", "肝硬変"], "ans": 0, "essential": false}, {"q": "関節リウマチの症状でないのはどれか。", "opts": ["僧帽弁閉鎖不全症", "スワンネック変形", "皮下結節", "肺線維症"], "ans": 0, "essential": false}, {"q": "関節リウマチで罹患しやすいのはどれか。", "opts": ["頸椎環軸関節", "腰椎椎間関節", "胸肋関節", "遠位指節間（DIP）関節"], "ans": 0, "essential": false}, {"q": "ネフローゼ症候群でみられないのはどれか。", "opts": ["高蛋白血症", "蛋白尿", "高脂血症", "浮腫"], "ans": 0, "essential": false}, {"q": "脳塞栓の発症に重要なのはどれか。", "opts": ["心房細動", "糖尿病", "高脂血症", "高血圧症"], "ans": 0, "essential": false}, {"q": "筋萎縮性側索硬化症で正しいのはどれか。", "opts": ["下肢から発症する例がある。", "女性に多い。", "高齢者の発症は少ない。", "終末期には眼球運動も障害される。"], "ans": 0, "essential": false}, {"q": "アルツハイマー（Alzheimer）病の病初期の特徴はどれか。", "opts": ["記銘力障害", "反社会的行為", "計算障害", "不随意運動"], "ans": 0, "essential": false}, {"q": "病的反射の出現を示唆するのはどれか。", "opts": ["錐体路障害", "錐体外路障害", "自律神経障害", "感覚障害"], "ans": 0, "essential": true}, {"q": "関節リウマチで起こりにくいのはどれか。", "opts": ["遠位指節間関節炎", "朝のこわばり", "皮下結節", "対称性手関節炎"], "ans": 0, "essential": true}, {"q": "脳性麻痺の定義で適切でないのはどれか。", "opts": ["出生前に生じた脳の病変", "脳の非進行性病変", "永続的障害", "運動および姿勢の異常"], "ans": 0, "essential": false}, {"q": "マン・ウェルニッケ姿勢として誤っているのはどれか。", "opts": ["凹足", "上肢屈曲", "下肢伸展", "尖足"], "ans": 0, "essential": false}, {"q": "痙攣を生じないのはどれか。", "opts": ["重症筋無力症", "脳血管障害", "副甲状腺機能低下症", "洞不全症候群"], "ans": 0, "essential": false}, {"q": "チアノーゼを起こすのはどれか。", "opts": ["右心不全", "再生不良性貧血", "一酸化炭素中毒", "特発症血小板減少性紫斑病"], "ans": 0, "essential": false}, {"q": "スプーン状爪がみられるのはどれか。", "opts": ["鉄欠乏性貧血", "関節リウマチ", "肺気腫", "ファロー（Fallot）四徴候"], "ans": 0, "essential": false}, {"q": "正しい組み合わせはどれか。", "opts": ["ビタミンB2欠乏症　&#8722;　口角びらん", "猩紅熱　&#8722;　ハンター（Hunter）舌炎", "ジフテリア　&#8722;　コプリック班", "麻疹　&#8722;　咽頭偽膜形成"], "ans": 0, "essential": false}, {"q": "二次性高血圧をきたさないのはどれか。", "opts": ["甲状腺機能低下症", "褐色細胞腫", "大動脈弁不全症", "原発性アルドステロン症"], "ans": 0, "essential": false}, {"q": "頻脈をきたすのはどれか。", "opts": ["貧血", "脳圧亢進", "アダムス・ストークス（Adams-Stokes）症候群", "スポーツ心臓"], "ans": 0, "essential": false}, {"q": "深部感覚障害をきたしうる疾患はどれか。", "opts": ["多発性硬化症", "重症筋無力症", "パーキンソン（Parkinson）病", "筋萎縮性側索硬化症"], "ans": 0, "essential": false}, {"q": "アキレス腱反射が減弱するのはどれか。", "opts": ["糖尿病", "変形性頸椎症", "脳出血", "多発性硬化症"], "ans": 0, "essential": false}, {"q": "食道癌の成因でないのはどれか。", "opts": ["高脂肪食の習慣がある。", "熱い食物をよく食べる。", "大量に喫煙する。", "高濃度のアルコールをよく飲む。"], "ans": 0, "essential": false}, {"q": "腸閉塞の症状でないのはどれか。", "opts": ["下痢", "嘔吐", "腹痛", "腹部膨満"], "ans": 0, "essential": false}, {"q": "気管支喘息で正しいのはどれか。", "opts": ["重積発作では坐位の姿勢をとる。", "発作時は吸気が延長する。", "気道閉塞は不可逆性である。", "発作の好発時期は冬である。"], "ans": 0, "essential": false}, {"q": "冠動脈硬化の危険因子でないのはどれか。", "opts": ["飲酒", "喫煙", "ストレス", "肥満"], "ans": 0, "essential": false}, {"q": "48歳の男性。6ヶ月前から歩行すると両下肢が痛むようになり、2週前から左足趾に潰瘍が出現した。タバコを毎日30本、25年間吸っている。考えられるのはどれか。", "opts": ["バージャー（Buerger）病", "高安病", "ベーチェット（Beh'cet）病", "レイノー（Raynaud）病"], "ans": 0, "essential": false}, {"q": "伴性劣性遺伝するのはどれか。", "opts": ["血友病", "悪性貧血", "特発症血小板減少性紫斑病", "慢性リンパ性白血病"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["末端肥大症は視床下部腫瘍が原因である。", "下垂体性小人症では骨年齢は正常でない。", "末端肥大症では内臓肥大がみられる。", "尿崩症では低張尿が認められる。"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["下垂体性小人症では骨年齢は正常である。", "末端肥大症は下垂体良性腫瘍（下垂体腺腫）が原因となる。", "末端肥大症では内臓肥大がみられる。", "尿崩症では低張尿が認められる。"], "ans": 0, "essential": false}, {"q": "クッシング（Cushing）症候群の徴候でないのはどれか。", "opts": ["下腿浮腫", "満月様顔貌", "骨粗鬆症", "高コレステロール血症"], "ans": 0, "essential": false}, {"q": "全身性エリテマトーデスの症状でないのはどれか。", "opts": ["破壊性関節炎", "日光過敏", "痙攣", "糸球体腎炎"], "ans": 0, "essential": false}, {"q": "ネフローゼ症候群の血清で低値になるのはどれか。", "opts": ["アルブミン", "カリウム", "クレアチニン", "コレステロール"], "ans": 0, "essential": false}, {"q": "46歳の男性。歩行中、くびを右にひねり、後頸部痛と回転性めまいが出現し、立位不能となった。血圧と脈拍は正常。左眼裂狭小、右上肢小脳性運動失調、左顔面と顔面を除く右半身の感覚障害を認めた。考えられるのはどれか。", "opts": ["椎骨動脈解離", "中大脳動脈解離", "内頸動脈解離", "前大脳動脈解離"], "ans": 0, "essential": false}, {"q": "パーキンソン（Parkinson）病でみられないのはどれか。", "opts": ["多動", "振戦", "筋固縮", "姿勢調節障害"], "ans": 0, "essential": false}, {"q": "後天性免疫不全症候群（AIDS）で正しいのはどれか。", "opts": ["進行すると日和見感染症を合併する。", "ヒト免疫不全ウイルス（HIV）感染後、数週間で発症する。", "CD8陽性リンパ球数が著しく減少する。", "新生児AIDSの予後は一般に良い。"], "ans": 0, "essential": false}, {"q": "パーキンソン（Parkinson）病患者に特有な姿勢はどれか。", "opts": ["前かがみの姿勢", "マン・ウェルニッケ姿勢", "後弓反張", "エビ姿勢"], "ans": 0, "essential": true}, {"q": "関節リウマチで最も侵される関節はどれか。", "opts": ["頚椎環軸関節", "腰椎椎間関節", "胸鎖関節", "遠位指節間（DIP）関節"], "ans": 0, "essential": true}, {"q": "起坐位がみられるのはどれか。", "opts": ["うっ血性心不全", "肺炎", "脳梗塞", "破傷風"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["単純性やせ　−　栄養吸収不良", "単純性肥満　−　カロリー摂取過剰", "症候性肥満　−　クッシング（Cushing）症候群", "悪液質　−　慢性消耗性疾患"], "ans": 0, "essential": false}, {"q": "羽ばたき振戦を呈するのはどれか。", "opts": ["肝硬変", "低カルシウム血症", "パーキンソン（Parkinson）病", "ハンチントン（Huntington）舞踏病"], "ans": 0, "essential": false}, {"q": "歩行時に健側の骨盤が下がるのはどれか。", "opts": ["トレンデレンブルグ（Trendelenburg）歩行", "はさみ脚歩行", "間欠性歩行", "失調性歩行"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["スプーン様爪　−　ネフローゼ症候群", "チアノーゼ　−　ファロー（Fallot）四徴症", "浮　腫　−　肝硬変", "黄　疸　−　溶血性貧血"], "ans": 0, "essential": false}, {"q": "口腔内の所見で誤っている組合せはどれか。", "opts": ["コプリック斑　 −　ジフテリア", "ハンター（Hunter）舌炎　−　悪性貧血", "イチゴ舌　       −　猩紅熱", "再発性アフタ　−　ベーチェット（Behcet）病"], "ans": 0, "essential": false}, {"q": "前頚部の腫脹をきたす疾患はどれか。", "opts": ["バセドウ（Basedow）病", "副甲状腺機能亢進症", "流行性耳下腺炎", "ターナー（Turner）症候群"], "ans": 0, "essential": false}, {"q": "腹部が板状硬を呈するのはどれか。", "opts": ["急性汎発性腹膜炎", "腸閉塞", "腹水貯留", "卵巣嚢腫"], "ans": 0, "essential": false}, {"q": "打診で鼓音を呈するのはどれか。", "opts": ["肺気腫", "肺　炎", "無気肺", "肺水腫"], "ans": 0, "essential": false}, {"q": "大脈を呈するのはどれか。", "opts": ["大動脈弁閉鎖不全症", "甲状腺機能低下症", "貧血", "心筋梗塞"], "ans": 0, "essential": false}, {"q": "右季肋部に強い圧痛があるのはどれか。", "opts": ["胆嚢炎", "脂肪肝", "虫垂炎", "尿管結石"], "ans": 0, "essential": false}, {"q": "低体温になるのはどれか。", "opts": ["甲状腺機能低下症", "虫垂炎", "マラリア", "悪性リンパ腫"], "ans": 0, "essential": false}, {"q": "障害されると深部腱反射が亢進するのはどれか。", "opts": ["錐体路", "末梢神経", "脊髄前核", "神経根"], "ans": 0, "essential": false}, {"q": "下肢の病的反射でないのはどれか。", "opts": ["ワルテンベルグ反射", "オッペンハイム反射", "バビンスキー反射", "チャドック反射"], "ans": 0, "essential": false}, {"q": "心筋梗塞を起こす危険因子（リスクファクター）でないのはどれか。", "opts": ["やせ", "喫煙", "高血圧", "高脂血症"], "ans": 0, "essential": false}, {"q": "42歳の女性。3日前から両側の下肢に赤い点状出血斑が出現している。今朝、歯肉から出血するようになり、止血しないため来院した。これまでに出血しやすかったことはない。除外できるのはどれか。", "opts": ["血友病", "再生不良性貧血", "急性骨髄性白血病", "特発性血小板減少性紫斑病"], "ans": 0, "essential": false}, {"q": "慢性膵炎で高値を示すのはどれか。", "opts": ["尿中アミラーゼ", "血清アルカリホスファターゼ", "血清クレアチニン", "尿中C−ペプチド"], "ans": 0, "essential": false}, {"q": "疾患と血中に増加するホルモンとの組合せで誤っているのはどれか。", "opts": ["先端巨大症　−　チロキシン", "クッシング（Cushing）症候群　−　コルチゾール", "乏尿　−　バゾプレシン", "アジソン（Addison）病　−　ACTH"], "ans": 0, "essential": false}, {"q": "疾患と血中に増加するホルモンとの組合せで誤っているのはどれか。", "opts": ["尿崩症　−　バゾプレシン", "先端巨大症　−　成長ホルモンGH", "クッシング（Cushing）症候群　−　コルチゾール", "アジソン（Addison）病　−　ACTH"], "ans": 0, "essential": false}, {"q": "ネフローゼ症候群の所見で誤っているのはどれか。", "opts": ["低コレステロール血症", "下腿浮腫", "血清総蛋白低下", "尿蛋白陽性"], "ans": 0, "essential": false}, {"q": "20歳の女性。2週前から38℃台の発熱、両膝と両手の関節痛が持続し、抗菌薬投与でも下熱せず、頬部に対称性の発疹が出現してきた。また、以前から日光に当たると全身に発疹が出ることがあり、直射日光は避けていた。考えられる疾患はどれか。", "opts": ["全身性エリテマトーデス", "細菌性肺炎", "結核", "リウマチ熱"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["重症筋無力症　−　眼瞼下垂", "パーキンソン（Parkinson）病　−　顔面筋麻痺", "筋萎縮性側索硬化症　−　外眼筋麻痺", "多発性硬化症　−　眼球突出"], "ans": 0, "essential": false}, {"q": "後天性免疫不全症候群（AIDS）について誤っているのはどれか。", "opts": ["飛沫感染を起こす。", "HIVウイルスによって感染する。", "CD4リンパ球の機能を低下させる。", "日和見感染を起こす。"], "ans": 0, "essential": false}, {"q": "小歩症をきたすのはどれか。", "opts": ["パーキンソン（Parkinson）病", "ギランバレー（Guillain&#8722;Barre）症候群", "進行性筋ジストロフィー", "閉塞性血栓血管炎"], "ans": 0, "essential": true}, {"q": "心筋梗塞の危険因子でないのはどれか。", "opts": ["高HDLコレステロール血症", "糖尿病", "肥　満", "喫　煙"], "ans": 0, "essential": true}, {"q": "意識障害で正しいのはどれか。", "opts": ["昏睡ではいかなる刺激にも反応しない。", "昏迷では強い痛み刺激に反応しない。", "失神では意識障害が持続する。", "せん妄では外からの刺激に反応する。"], "ans": 0, "essential": false}, {"q": "意識障害を伴う不随意運動はどれか。", "opts": ["羽ばたき振戦", "安静時振戦", "舞踏病様運動", "アテトーゼ運動"], "ans": 0, "essential": false}, {"q": "紫斑をきたさない疾患はどれか。", "opts": ["鉄欠乏性貧血", "再生不良性貧血", "急性骨髄性白血病", "播種性血管内凝固"], "ans": 0, "essential": false}, {"q": "胸部の聴診で正しいのはどれか。", "opts": ["機能性雑音は臨床的意義が少ない。", "肺の聴診は静かな呼吸状態で行う。", "気胸では声音が増強して聴かれる。", "右心不全の診断には呼吸音の聴診が重要である。"], "ans": 0, "essential": false}, {"q": "関節の熱感を伴わないのはどれか。", "opts": ["変形性関節症", "関節リウマチ", "感染性関節炎", "痛風性関節炎"], "ans": 0, "essential": false}, {"q": "血圧で誤っているのはどれか。", "opts": ["触診法で拡張期血圧を測定できる。", "スワンの第1音を聞き始めた点が収縮期血圧である。", "心臓の収縮期に最大血圧となる。", "日内変動がある。"], "ans": 0, "essential": false}, {"q": "足クローヌスはどこの障害で生じるか。", "opts": ["錐体路", "錐体外路", "自律神経", "末梢神経"], "ans": 0, "essential": false}, {"q": "食道癌で正しいのはどれか。", "opts": ["喫煙は重要な要因である。", "初発症状は胸痛である。", "早期に発見されやすい。", "食道上部が好発部位である。"], "ans": 0, "essential": false}, {"q": "肝硬変で正しいのはどれか。", "opts": ["女性化乳房", "血　尿", "高尿酸血症", "蝶形紅斑"], "ans": 0, "essential": false}, {"q": "気管支喘息で正しいのはどれか。", "opts": ["自律神経失調は発作を誘発する。", "喘息発作は日中に増強する。", "重積発作では側臥位姿勢をとる。", "吸気性の呼吸困難がみられる。"], "ans": 0, "essential": false}, {"q": "肺気腫で誤っているのはどれか。", "opts": ["肺野の打診で濁音を呈する。", "労作時の呼吸困難がみられる。", "進行するとビール樽状胸郭がみられる。", "喫煙は重要な要因である。"], "ans": 0, "essential": false}, {"q": "62歳の男性。食事中に突然、胸部に激痛を訴え、徐々に意識が低下した。血圧は測定不能でショック状態である。考えられるのはどれか。", "opts": ["解離性大動脈瘤", "狭心症", "大動脈弁狭窄症", "うっ血性心不全"], "ans": 0, "essential": false}, {"q": "バージャー（Buerger）病の症状はどれか。", "opts": ["間欠性跛行", "腰　痛", "下肢の腫脹", "呼吸困難"], "ans": 0, "essential": false}, {"q": "鉄欠乏性貧血の原因とならないのはどれか。", "opts": ["内因子欠乏", "消化管出血", "過多月経", "栄養不足"], "ans": 0, "essential": false}, {"q": "成人Ｔ細胞白血病の原因はどれか。", "opts": ["ウイルス", "放射線", "紫外線", "化学物質"], "ans": 0, "essential": false}, {"q": "過剰摂取が痛風の原因とならないのはどれか。", "opts": ["タバコ", "炭水化物", "脂　肪", "アルコール"], "ans": 0, "essential": false}, {"q": "関節リウマチの関節外症状で正しいのはどれか。", "opts": ["間質性肺炎", "くも膜下出血", "肝硬変", "心臓弁膜症"], "ans": 0, "essential": false}, {"q": "糸球体腎炎でみられないのはどれか。", "opts": ["低カリウム血症", "腎機能不全", "高血圧", "下腿浮腫"], "ans": 0, "essential": false}, {"q": "膀胱炎の症状で誤っているのはどれか。", "opts": ["高　熱", "頻　尿", "排尿痛", "残尿感"], "ans": 0, "essential": false}, {"q": "60歳の男性。心房細動があり抗不整脈薬を服用している。施術中に突然失語となった。最も考えられるのはどれか。", "opts": ["脳塞栓症", "アテローム血栓性脳梗塞", "ラクナ梗塞", "くも膜下出血"], "ans": 0, "essential": false}, {"q": "パーキンソン（Parkinson）病の症状はどれか。", "opts": ["安静時振戦", "視力障害", "小脳性運動失調", "弛緩性麻痺"], "ans": 0, "essential": false}, {"q": "後天性免疫不全症侯群（AIDS）で正しいのはどれか。", "opts": ["わが国では感染者が増加している。", "潜伏期間は約1週間である。", "予防接種で感染の予防が可能である。", "CD4陽性Ｔ細胞が増加する。"], "ans": 0, "essential": false}, {"q": "生命徴候（バイタルサイン）はどれか。", "opts": ["血圧", "身長", "体重", "年齢"], "ans": 0, "essential": true}, {"q": "冠動脈硬化の危険因子でないのはどれか。", "opts": ["低血圧", "喫煙", "肥満", "脂質代謝異常"], "ans": 0, "essential": true}, {"q": "腸閉塞の症状でないのはどれか。", "opts": ["下痢", "嘔吐", "腹痛", "腹部膨満"], "ans": 0, "essential": false}, {"q": "表在感覚に含まれないのはどれか。", "opts": ["振動覚", "触覚", "痛覚", "温度覚"], "ans": 0, "essential": false}, {"q": "パーキンソン（Parkinson）病に特有なのはどれか。", "opts": ["前かがみ姿勢", "マン・ウェルニッケ姿勢", "脊柱前弯姿勢", "エビ姿勢"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["悪液質は予後不良の徴候である。", "アジソン（Addison）病では浮腫性肥満がみられる。", "甲状腺機能低下症では著しいやせがみられる。", "単純性肥満は肥満全体に占める割合が低い。"], "ans": 0, "essential": false}, {"q": "欠乏によって脚気をきたすのはどれか。", "opts": ["ビタミンＢ1", "ビタミンＡ", "ビタミンＣ", "ビタミンＤ"], "ans": 0, "essential": false}, {"q": "間欠性跛行をきたすのはどれか。", "opts": ["腰部脊柱菅狭窄症", "パーキンソン（Parkinson）病", "脳血管障害", "先天性股関節脱臼"], "ans": 0, "essential": false}, {"q": "チアノーゼを起こすのはどれか。", "opts": ["左心不全", "貧血", "アレルギー性紫斑病", "肝硬変"], "ans": 0, "essential": false}, {"q": "ばち指を起こすのはどれか。", "opts": ["肺気腫", "鉄欠乏性貧血", "慢性腎不全", "変形性関節症"], "ans": 0, "essential": false}, {"q": "表在リンパ節でないのはどれか。", "opts": ["腸骨リンパ節", "頸部リンパ節", "腋窩リンパ節", "鼠径リンパ節"], "ans": 0, "essential": false}, {"q": "体温で正しいのはどれか。", "opts": ["甲状腺機能低下症では低体温を認める。", "正常体温は夕方が最も低い。", "マラリアでは弛張熱が特徴的である。", "腋窩温と直腸温はほぼ等しい。"], "ans": 0, "essential": false}, {"q": "脳波検査が診断に有用なのはどれか。", "opts": ["てんかん", "パーキンソン（Parkinson）病", "筋萎縮性側索硬化症", "重症筋無力症"], "ans": 0, "essential": false}, {"q": "空腹時に上腹部痛を起こすのはどれか。", "opts": ["十二指腸潰瘍", "胃癌", "胃ポリ&#8212;プ", "潰瘍性大腸炎"], "ans": 0, "essential": false}, {"q": "劇症肝炎を起こしやすいのはどれか。", "opts": ["Ｂ型肝炎", "Ａ型肝炎", "Ｃ型肝炎", "自己免疫性肝炎"], "ans": 0, "essential": false}, {"q": "呼吸器疾患で正しいのはどれか。", "opts": ["漏出性胸水は心不全で生じる。", "下部気道系からの出血を吐血という。", "湿性咳では鎮咳剤が有効である。", "泡沫状痰は肺気腫でみられる。"], "ans": 0, "essential": false}, {"q": "呼吸器疾患で誤っているのはどれか。", "opts": ["肺気腫では胸部の打診で濁音を認める。", "気管支喘息発作では起坐呼吸を認める。", "肺血栓塞栓症では突然の呼吸困難を認める。", "気胸では胸部の聴診で声音減弱を認める。"], "ans": 0, "essential": false}, {"q": "心筋梗塞で正しいのはどれか。", "opts": ["血中クレアチンキナーゼ（CK）が上昇する。", "右肩に放散する痛みがみられる。", "心電図でST低下がみられる。", "我が国での発生頻度は減少傾向にある。"], "ans": 0, "essential": false}, {"q": "甲状腺機能低下症の症状で正しいのはどれか。", "opts": ["意欲低下", "眼球突出", "心拍増加", "発汗過多"], "ans": 0, "essential": false}, {"q": "関節リウマチで侵されやすいのはどれか。", "opts": ["環軸椎関節", "遠位指節間（DIP）関節", "仙腸関節", "中足足根間（リスフラン）関節"], "ans": 0, "essential": false}, {"q": "関節リウマチで侵されやすいのはどれか。", "opts": ["中足指節間（MTP）関節", "側頭下顎関節", "遠位指節間（DIP）関節", "仙腸関節"], "ans": 0, "essential": false}, {"q": "急性糸球体腎炎で正しいのはどれか。", "opts": ["浮腫は顔面に好発する。", "多尿が初発症状である。", "血清補体価は上昇する。", "慢性腎不全に移行しやすい。"], "ans": 0, "essential": false}, {"q": "ネフローゼ症候群の主徴で誤っているのはどれか。", "opts": ["高蛋白血症", "浮腫", "高脂血症", "蛋白尿"], "ans": 0, "essential": false}, {"q": "20歳の女性．午前中は特に症状はない．夕方から夜にかけて疲れやすく脱力感がある．眼瞼下垂や複視を生じやすく、食べていると顎が疲れてくるという．最も考えられるのはどれか。", "opts": ["重症筋無力症", "筋萎縮性側索硬化症", "関節リウマチ", "筋緊張性ジストロフィー"], "ans": 0, "essential": false}, {"q": "20歳の女性．4月頃から両手関節が痛み、軽い腫れと熱感があった．単純エックス線検査を受けたが異常は認められなかった．7月に海水浴に行った後、顔面紅斑と38.5℃の熱が出現し来院した．白血球数3,200／mm3（リンパ球12％）、蛋白尿（＋＋＋）、抗核抗体1：640などの異常所見があった．最も考えられるのはどれか。", "opts": ["全身性エリテマトーデス", "関節リウマチ", "リウマチ熱", "結節性紅斑"], "ans": 0, "essential": false}, {"q": "患者に対して開放型の質問はどれか。〔必〕", "opts": ["今日はどのようなことで受診されましたか。", "朝ごはんは食べましたか。", "今日は骨折で来たのですか。", "右足と左足とどちらが痛いのですか。"], "ans": 0, "essential": false}, {"q": "脊柱側弯姿勢の原因となる疾患はどれか。〔必〕疑義削除", "opts": ["腰椎椎間板ヘルニア", "くる病", "破傷風", "強直性脊椎炎"], "ans": 0, "essential": false}, {"q": "バージャー（Buerger）病の特徴的な歩行はどれか。", "opts": ["間欠性跛行", "はさみ歩行", "突進歩行", "失調性歩行"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["ファロー（Fallot）四徴症　−　紫　斑", "アジソン（Addison）病　  −　色素沈着", "神経血管症候群　　　　　 −　レイノー症状", "全身性エリテマトーデス    −　紅　斑"], "ans": 0, "essential": false}, {"q": "小児の感染症で皮疹が出る前に口腔内に白い小斑点がみられるのはどれか。", "opts": ["麻　疹", "水　痘", "風　疹", "猩紅熱"], "ans": 0, "essential": false}, {"q": "門脈圧亢進症の症状でないのはどれか。", "opts": ["多血症", "脾　腫", "腹水貯留", "食道静脈瘤"], "ans": 0, "essential": false}, {"q": "打診で正しい組合せはどれか。", "opts": ["心膜炎　&#8722;　心濁音界拡大", "胸水貯留　&#8722;　清　音", "肺気腫　&#8722;　肺肝境界の上昇", "無気肺　&#8722;　過共鳴音"], "ans": 0, "essential": false}, {"q": "聴診所見で誤っている組合せはどれか。", "opts": ["気　胸　　　　　&#8722;　声音増強", "肺線維症　　　　&#8722;　異常呼吸音", "大動脈炎症候群　&#8722;　血管雑音", "急性腹膜炎　　　&#8722;　ぐる音消失"], "ans": 0, "essential": false}, {"q": "触診で正しいのはどれか。", "opts": ["良性の皮下腫瘤は一般的に可動性がよい。", "三叉神経の圧痛点は頚部に認める。", "胃潰瘍では上腹部触診の意義は低い。", "触診は疼痛部位から始めると診断時間が短縮できる。"], "ans": 0, "essential": false}, {"q": "触診で関節腫脹の評価が困難な部位はどれか。", "opts": ["股関節", "肘関節", "手関節", "膝関節"], "ans": 0, "essential": false}, {"q": "血圧測定で正しいのはどれか。", "opts": ["拍動音が聞こえ始めた点が収縮期血圧である。", "血圧は静脈の血管内圧をさす。", "触診法は聴診法より高く測定される。", "触診法でも拡張期血圧の測定ができる。"], "ans": 0, "essential": false}, {"q": "深部感覚の低下を示唆する症状はどれか。", "opts": ["暗所では足もとがふらつく。", "入浴してもお湯の熱さがわからない。", "四肢にケガをしても気付かない。", "物を触っても形や材質がわからない。"], "ans": 0, "essential": false}, {"q": "表在反射はどれか。", "opts": ["角膜反射", "アキレス腱反射", "下顎反射", "瞳孔反射"], "ans": 0, "essential": false}, {"q": "ウィルス性肝炎で誤っているのはどれか。", "opts": ["B型肝炎の急性期にHBs抗体を認める。", "A型肝炎は経口的に感染する。", "C型肝炎は血液を介して感染する。", "劇症肝炎の予後は不良である。"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["心室中隔欠損症　−　先天性心疾患", "僧帽弁狭窄症　　−　ウィルス感染", "バージャー（Buerger）病　−　梅　毒", "肝硬変　　　　　−　アテローム動脈硬化症"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["大動脈瘤　　　−　アテローム動脈硬化症", "冠状動脈狭窄　−　先天性心疾患", "僧帽弁狭窄症　−　ウィルス感染", "バージャー（Buerger）病　−　梅　毒"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["褐色細胞腫は二次性高血圧症である。", "収縮期圧が高くても拡張期圧が正常なら高血圧ではない。", "クッシング（Cushing）症候群では血圧が低下する。", "単純レントゲン所見は高血圧症の病態診断に有用である。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["眼底所見は高血圧症の病態診断に有用である。", "褐色細胞腫は本態性高血圧症である。", "収縮期圧が高くても拡張期圧が正常なら高血圧ではない。", "クッシング（Cushing）症候群では血圧が低下する。"], "ans": 0, "essential": false}, {"q": "鉄欠乏性貧血でみられないのはどれか。", "opts": ["チアノーゼ", "舌　炎", "動　悸", "易疲労感"], "ans": 0, "essential": false}, {"q": "血糖値を下げる作用をもつのはどれか。", "opts": ["インスリン", "成長ホルモン", "副腎皮質ステロイド", "カテコールアミン"], "ans": 0, "essential": false}, {"q": "膠原病の臨床症状で正しい組合せはどれか。", "opts": ["強皮症　&#8722;　嚥下障害", "ベーチェット（Behcet）病　&#8722;　眼球突出", "皮膚筋炎　&#8722;　外陰部潰瘍", "関節リウマチ　&#8722;　くも状指"], "ans": 0, "essential": false}, {"q": "眼裂開大を生じるのはどれか。", "opts": ["ベル麻痺", "動眼神経麻痺", "重症筋無力症", "筋緊張性ジストロフィー"], "ans": 0, "essential": false}, {"q": "糖尿病性ニューロパチーによるしびれが最初に現れる部位はどれか。", "opts": ["足 指", "体 幹", "手 指", "顔 面"], "ans": 0, "essential": false}, {"q": "認知症で正しいのはどれか。", "opts": ["一度発達した知能が記銘力を中心に低下した状態", "一過性に意識が短時間失われる状態", "意識が完全に消失し、いかなる刺激にも反応しない状態", "知能の発育が生まれつき遅滞した状態"], "ans": 0, "essential": false}, {"q": "40歳の男性．5日前から感冒症状があり、37℃台の発熱とのどの痛み、咳、痰があった。症状がよくわからないまま、今日になって40.3℃の発熱、強い呼吸困難、右胸の痛みと咳を訴えて来院した。尿の検査で肺炎球菌抗原陽性であった。低値を示すのはどれか。", "opts": ["血中酸素飽和度", "呼吸数", "CRP", "白血球数"], "ans": 0, "essential": false}, {"q": "23歳の男性．1週間前に下痢があった。昨日から両下肢の脱力と足先にしびれ感を自覚し、今日になって歩行が不自由になり、両手筋力も弱くなった。病歴から考えられる診断はどれか。", "opts": ["ギランバレー(Guillan-Barre)症候群", "脳血管障害", "多発性筋炎", "パーキンソン（Parkinson）病"], "ans": 0, "essential": false}, {"q": "黄疸が出現しやすい部位はどれか。〔必〕", "opts": ["眼　球", "舌", "爪", "毛　髪"], "ans": 0, "essential": false}, {"q": "肝性昏睡でみられる不随意運動はどれか。", "opts": ["羽ばたき振戦", "チック", "舞踏病様振戦", "アテトーゼ様運動"], "ans": 0, "essential": false}, {"q": "突進歩行がみられるのはどれか。", "opts": ["パーキンソン（Parkinson）病", "バージャー（Buerger）病", "先天性股関節脱臼", "進行性筋ジストロフィー"], "ans": 0, "essential": false}, {"q": "満月様顔貌がみられるのはどれか。", "opts": ["クッシング（Cushing）症候群", "敗血症", "先端肥大症", "パーキンソン（Parkinson）病"], "ans": 0, "essential": false}, {"q": "患児の頬粘膜に境界鮮明な青白色の隆起した小さな斑点とその周囲の小紅暈がみられるのはどれか。", "opts": ["コプリック斑", "偽膜形成", "扁桃腺窩滲出", "ベル現象"], "ans": 0, "essential": false}, {"q": "半月弁の閉鎖によって生じる心音はどれか。", "opts": ["II 音", "I 音", "III 音", "IV 音"], "ans": 0, "essential": false}, {"q": "筋の仮性肥大を生じるのはどれか。", "opts": ["デュシェンヌ（Duchenne）型筋ジストロフィー", "筋萎縮性側索硬化症", "多発性筋炎", "筋緊張性ジストロフィー"], "ans": 0, "essential": false}, {"q": "頻脈がみられるのはどれか。", "opts": ["甲状腺機能亢進", "黄　疸", "脳圧亢進", "房室ブロック"], "ans": 0, "essential": false}, {"q": "検者の指をあててその上をハンマーで叩く手技でみるのはどれか。", "opts": ["下顎反射", "上腕三頭筋反射", "アキレス腱反射", "角膜反射"], "ans": 0, "essential": false}, {"q": "検者の指をあててその上をハンマーで叩く手技でみるのはどれか。", "opts": ["上腕二頭筋反射", "上腕三頭筋反射", "アキレス腱反射", "バビンスキー反射"], "ans": 0, "essential": false}, {"q": "肝硬変の症状でないのはどれか。", "opts": ["輪状紅斑", "女性化乳房", "腹　水", "メズサの頭"], "ans": 0, "essential": false}, {"q": "急性胆嚢炎で疼痛がみられる部位はどれか。", "opts": ["右季肋部", "右下腹部", "左季肋部", "左下腹部"], "ans": 0, "essential": false}, {"q": "かぜ症候群の原因病原体で最も多いのはどれか。", "opts": ["ウイルス", "細　菌", "クラミジア", "マイコプラズマ"], "ans": 0, "essential": false}, {"q": "特発性血小板減少性紫斑病の原因はどれか。", "opts": ["自己抗体産生", "骨髄巨核球減少", "遺伝子異常", "ビタミンC欠乏"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["尿崩症　−　アルドステロン", "痛　風　−　プリン体", "アジソン（Addison）病　−　コルチゾール", "褐色細胞腫　−　カテコラミン"], "ans": 0, "essential": false}, {"q": "糖尿病で正しいのはどれか。", "opts": ["HbA1cは糖尿病の診断に有意義である。", "インスリンは膵臓から胆嚢に放出される。", "1型糖尿病はインスリン非依存型である。", "1型糖尿病は2型糖尿病より多い。"], "ans": 0, "essential": false}, {"q": "関節リウマチでみられないのはどれか。", "opts": ["ヘバーデン結節", "リウマトイド結節", "ボタン穴変形", "環軸椎亜脱臼"], "ans": 0, "essential": false}, {"q": "男性に多いのはどれか。", "opts": ["強直性脊椎炎", "関節リウマチ", "全身性エリテマトーデス", "強皮症"], "ans": 0, "essential": false}, {"q": "ネフローゼ症候群でみられないのはどれか。", "opts": ["高蛋白血症", "蛋白尿", "脂質異常症", "浮　腫"], "ans": 0, "essential": false}, {"q": "パーキンソン（Parkinson）病でみられるのはどれか。", "opts": ["姿勢調節障害", "痙性対麻痺", "体幹失調", "平衡障害"], "ans": 0, "essential": false}, {"q": "アルツハイマー（Alzheimer）病で正しいのはどれか。", "opts": ["近時記憶の障害が強い。", "遺伝性が多い。", "反社会的行動をとりやすい。", "失語が初発症状であることが多い。"], "ans": 0, "essential": false}, {"q": "後天性免疫不全症候群（AIDS）で正しいのはどれか。", "opts": ["レトロウイルスによって起こる疾患である。", "感染経路は主として空気感染である。", "Bリンパ球が減少する。", "予防対策としてワクチンが用いられる。"], "ans": 0, "essential": false}, {"q": "23歳の女性。突然、下腹部に排尿時痛が現れ、排尿後もすっきりせず尿が残っている感じがするため来院した。頻尿であるが尿量は少なく発熱はみられない。検尿により尿の混濁がみられた。最も考えられるのはどれか。", "opts": ["急性膀胱炎", "急性腎孟腎炎", "子宮筋腫", "腎結石"], "ans": 0, "essential": false}, {"q": "64歳の男性。4年前に早期胃癌で胃全摘術を受けた。3か月前から舌炎が現れ白髪が増えてきたため来院した。初診時の検査所見では大球性貧血をみとめた。ビタミンB12を投与後、症状の改善がみられた。疑われるのはどれか。", "opts": ["悪性貧血", "溶血性貧血", "再生不良性貧血", "鉄欠乏性貧血"], "ans": 0, "essential": false}, {"q": "胸水で聴取される打診音はどれか。〔必〕", "opts": ["濁　音", "清　音", "鼓　音", "過共鳴音"], "ans": 0, "essential": false}, {"q": "パーキンソン（Parkinson）病にみられる歩行異常はどれか。〔必〕", "opts": ["突進歩行", "はさみ状歩行", "失調性歩行", "間欠性跛行"], "ans": 0, "essential": false}, {"q": "体表から触知できない関節はどれか。〔必〕", "opts": ["環軸関節", "胸鎖関節", "手根中手関節", "仙腸関節"], "ans": 0, "essential": false}, {"q": "マン-ウェルニッケ姿勢で正しいのはどれか。", "opts": ["麻痺側肘関節屈曲", "麻痺側前腕回外", "麻痺側膝関節屈曲", "麻痺側足関節背屈"], "ans": 0, "essential": false}, {"q": "心臓性失神はどれか。", "opts": ["アダムス-ストークス（Adams-Stokes）症候群", "ネフローゼ症候群", "クッシング（Cushing）症候群", "シェーグレン（Sjogren）症候群"], "ans": 0, "essential": false}, {"q": "ミオクローヌスはどれか。", "opts": ["一部の筋肉の突発的なすばやい収縮", "単一または複数の筋肉の目的のない反復する運動", "ゆっくりと持続性のある運動", "リズミカルに動くふるえ"], "ans": 0, "essential": false}, {"q": "レイノー現象をきたす疾患はどれか。", "opts": ["全身性硬化症（強皮症）", "気管支喘息", "肝硬変", "多発性骨髄腫"], "ans": 0, "essential": false}, {"q": "スプーン状爪をきたす疾患はどれか。", "opts": ["鉄欠乏性貧血", "肺気腫", "皮膚筋炎", "感染性心内膜炎"], "ans": 0, "essential": false}, {"q": "感染症とその口腔内所見との組合せで誤っているのはどれか。", "opts": ["風 疹　―――――　ハンター（Hunter）舌炎", "猩紅熱　――――　イチゴ舌", "ジフテリア　――　咽頭偽膜形成", "麻 疹　―――――　コプリック斑"], "ans": 0, "essential": false}, {"q": "肺気腫でみられるのはどれか。", "opts": ["樽状胸", "鳩　胸", "漏斗胸", "扁平胸"], "ans": 0, "essential": false}, {"q": "打診で濁音を呈するのはどれか。", "opts": ["胸 水", "肺気腫", "気 胸", "鼓 腸"], "ans": 0, "essential": false}, {"q": "心臓の聴診部位で大動脈領域に相当するのはどれか。", "opts": ["胸骨右縁第2肋間", "胸骨左縁第2肋間", "胸骨左縁第4・5肋間", "心尖部"], "ans": 0, "essential": false}, {"q": "気管支喘息発作時にみられる呼吸はどれか。", "opts": ["起坐呼吸", "チェーン-ストークス呼吸", "クスマウル呼吸", "ビオー呼吸"], "ans": 0, "essential": false}, {"q": "深部感覚で正しいのはどれか。", "opts": ["ロンベルグ試験が有用な検査である。", "位置覚は音叉を骨の突起部にあてて検査する。", "深部痛覚は脊髄癆で過敏になる。", "位置覚と振動覚はともに脊髄の側索を伝わる。"], "ans": 0, "essential": false}, {"q": "角膜反射の求心性神経はどれか。", "opts": ["三叉神経", "視神経", "動眼神経", "顔面神経"], "ans": 0, "essential": false}, {"q": "足外果の後ろから下を回って足背外側をこすると出現する病的反射はどれか。", "opts": ["チャドック反射", "オッペンハイム反射", "バビンスキー反射", "ゴードン反射"], "ans": 0, "essential": false}, {"q": "急性虫垂炎の圧痛点で、右上前腸骨棘と臍を結ぶ線上で前者から約5cm内方に位置する点はどれか。", "opts": ["マックバーネ点", "キュンメル点", "ランツ点", "ムンロー点"], "ans": 0, "essential": false}, {"q": "ウイルス性肝炎で正しいのはどれか。", "opts": ["Ｂ型は劇症化しやすい。", "Ａ型は慢性化しやすい。", "Ｃ型は経口感染しやすい。", "Ｅ型は血液感染しやすい。"], "ans": 0, "essential": false}, {"q": "悪性貧血の原因となるのはどれか。", "opts": ["ビタミンＢ12欠乏症", "ビタミンＡ欠乏症", "ビタミンＢ2欠乏症", "ビタミンＣ欠乏症"], "ans": 0, "essential": false}, {"q": "血友病Ｂで正しいのはどれか。", "opts": ["血液凝固第IX因子の欠乏による。", "女性患者が多い。", "後天性の疾患である。", "血液凝固第VIII因子の欠乏による。"], "ans": 0, "essential": false}, {"q": "ＨＴＬＶ-1ウイルス感染が原因で発症するのはどれか。", "opts": ["成人Ｔ細胞白血病", "急性骨髄性白血病", "急性リンパ性白血病", "慢性骨髄性白血病"], "ans": 0, "essential": false}, {"q": "悪性腫瘍を最も合併しやすいのはどれか。", "opts": ["皮膚筋炎", "全身性硬化症（強皮症）", "全身性エリテマトーデス", "関節リウマチ"], "ans": 0, "essential": false}, {"q": "疾患と尿所見との組合せで誤っているのはどれか。", "opts": ["前立腺肥大症　――――　乏尿", "尿管結石　　―――――　血尿", "急性腎盂腎炎　――――　膿尿", "ネフローゼ症候群　――　蛋白尿"], "ans": 0, "essential": false}, {"q": "65歳の男性。40年以上、毎日2合程度の飲酒歴と1日20本の喫煙習慣がある。健康診断で高血圧、脂質異常症、肥満を指摘されている。以前から時々数分の胸痛発作を起こしていたが放置していた。今朝、急に30分以上持続する激しい前胸部痛と冷汗が出現したため救急車で来院した。来院時の心拍数は100/分、心電図上でII、III、ａＶＦ誘導でＳＴ-Ｔ上昇が認められた。この患者で正しいのはどれか。", "opts": ["胸痛に対し麻薬を用いる。", "電気的除細動を行う。", "喫煙歴はこの疾患の危険因子ではない。", "この患者のＢＭＩは20以下と推測できる。"], "ans": 0, "essential": false}, {"q": "32歳の男性。以前から口腔内のアフタ性潰瘍や毛嚢炎が繰り返しみられていた。半年前から陰嚢の潰瘍もみられるようになった。3か月前から両眼に交互に霧視を自覚するようになり、眼科でブドウ膜炎と診断された。足関節や膝関節など3〜4か所に関節痛をきたしているが、リウマトイド因子や抗核抗体は陰性とのことである。考えられる疾患はどれか。", "opts": ["ベーチェット（Behcet）病", "関節リウマチ", "全身性エリテマトーデス", "結節性多発動脈炎"], "ans": 0, "essential": false}, {"q": "パーキンソン病に特徴的な姿勢はどれか。〔必〕", "opts": ["前かがみ姿勢", "マンーウエルニッケ姿勢", "脊柱前弯姿勢", "後弓反張"], "ans": 0, "essential": false}, {"q": "腹部の分画を図に示す。季肋部はどれか。図〔必〕", "opts": ["b", "a", "c", "d"], "ans": 0, "essential": false}, {"q": "皮膚症状と疾患との組合せで正しいのはどれか。", "opts": ["紫　斑　&#8722;　血友病", "ヘリオトロープ疹　&#8722;　肝硬変", "蝶形紅斑　&#8722;　感染性心内膜炎", "手掌紅斑　&#8722;　アジソン（Addison）病"], "ans": 0, "essential": false}, {"q": "副腎皮質ステロイド薬を大量に長期間服用したときや、クッシング症候群でみられる特徴的な顔貌はどれか。", "opts": ["満月様顔貌", "苦悶様顔貌", "ヒポクラテス顔貌", "仮面様（マスク様）顔貌"], "ans": 0, "essential": false}, {"q": "健常者の打診で清音を聴取するのはどれか。", "opts": ["肺", "心　臓", "肝　臓", "腸　管"], "ans": 0, "essential": false}, {"q": "健常者の聴診所見はどれか。", "opts": ["肺胞呼吸音", "連続性ラ音", "断続性ラ音", "胸膜摩擦音"], "ans": 0, "essential": false}, {"q": "体表から触れないのはどれか。", "opts": ["小転子", "肩　峰", "烏口突起", "坐骨結節"], "ans": 0, "essential": false}, {"q": "虫垂炎の圧痛点でないのはどれか。", "opts": ["ボアス点", "ランツ点", "ムンロー点", "マックバーネ点"], "ans": 0, "essential": false}, {"q": "複合感覚はどれか。", "opts": ["立体覚", "温度覚", "位置覚", "振動覚"], "ans": 0, "essential": false}, {"q": "尺骨神経の固有感覚支配域に含まれるのはどれか。", "opts": ["小　指", "母　指", "示　指", "中　指"], "ans": 0, "essential": false}, {"q": "腱反射が亢進するのはどれか。", "opts": ["上位運動ニューロン障害", "末梢神経障害", "脊髄前角障害", "脊髄後索障害"], "ans": 0, "essential": false}, {"q": "ヘリコバクター･ピロリ菌が発症に関与する疾患はどれか。", "opts": ["胃　癌", "食道癌", "胆嚢炎", "大腸癌"], "ans": 0, "essential": false}, {"q": "結核菌はどれか。", "opts": ["抗酸菌", "マイコプラズマ", "リケッチア", "真　菌"], "ans": 0, "essential": false}, {"q": "心疾患と所見との組合せで誤っているのはどれか。", "opts": ["心房中隔欠損症　−　左心系負荷増大", "ファロー（Fallot）四徴症　−　ばち状指", "僧帽弁狭窄症　　−　拡張期雑音", "狭心症　　　　　−　心電図のST低下"], "ans": 0, "essential": false}, {"q": "心筋梗塞で誤っているのはどれか。", "opts": ["白血球減少がみられる。", "脂質異常症は危険因子である。", "胸痛の持続時間が長い。", "心筋の壊死を伴う。"], "ans": 0, "essential": false}, {"q": "チアノーゼがみられるのはどれか。", "opts": ["ファロー（Fallot）四徴症", "心房中隔欠損症", "大動脈弁狭窄症", "僧帽弁閉鎖不全症"], "ans": 0, "essential": false}, {"q": "１型糖尿病で正しいのはどれか。", "opts": ["自己免疫機序によって起こる。", "経口血糖降下薬で治療する。", "２型糖尿病よりも多い。", "やせ型よりも肥満型に多い。"], "ans": 0, "essential": false}, {"q": "関節リウマチで正しいのはどれか。", "opts": ["リウマトイド因子が診断に有用である。", "男性に多い。", "ブシャール(Bouchard)結節をきたす。", "遠位指節間関節が好発部位である。"], "ans": 0, "essential": false}, {"q": "羽ばたき振戦を呈するのはどれか。", "opts": ["肝性脳症", "パーキンソン（Parkinson）病", "甲状腺機能亢進症", "低カルシウム血症"], "ans": 0, "essential": false}, {"q": "アキレス腱反射が減弱もしくは消失するのはどれか。", "opts": ["糖尿病性神経障害", "変形性頚椎症", "脳出血", "多発性硬化症"], "ans": 0, "essential": false}, {"q": "後天性免疫不全症候群（AIDS）で正しいのはどれか。", "opts": ["日和見感染症を合併する。", "ヘルペスウイルス感染が原因である。", "CD8陽性T細胞が減少する。", "異性間性交渉では感染しない。"], "ans": 0, "essential": false}, {"q": "45歳の女性。健康診断で貧血を指摘されて来院した。小球性低色素性貧血を認め、鉄欠乏性貧血と診断された。黒色タール便を認める。貧血の原因はどれか。", "opts": ["消化性潰瘍", "子宮筋腫", "自己免疫性溶血性貧血", "ビタミンB12欠乏"], "ans": 0, "essential": false}, {"q": "46歳の男性。ゴルフのスイングで首を右にひねり、後頭部痛と回転性めまいが出現し、立位保持不能となった。血圧と脈拍は正常。左眼裂狭小、左上下肢小脳性運動失調、左顔面と顔面を除く右半身の感覚障害を認めた。考えられるのはどれか。", "opts": ["椎骨動脈解離", "内頚動脈解離", "前大脳動脈解離", "中大脳動脈解離"], "ans": 0, "essential": false}, {"q": "意識障害を表す用語でないのはどれか。〔必〕", "opts": ["抑うつ", "傾　眠", "せん妄", "昏　迷"], "ans": 0, "essential": false}, {"q": "眼球突出がみられるのはどれか。〔必〕", "opts": ["バセドウ（Basedow）病", "アジソン（Addison）病", "クッシング（Cushing）病", "橋本病"], "ans": 0, "essential": false}, {"q": "腹壁の視診で正しい組合せはどれか。", "opts": ["腹部陥凹　　　−　悪液質", "皮膚赤色線条　−　経産婦", "皮膚白色線条　−　クッシング(Cushing)症候群", "メズサの頭　　−　卵巣嚢胞"], "ans": 0, "essential": false}, {"q": "胸腹部の打診で正しいのはどれか。", "opts": ["腹水が貯留すると体位変換を伴って範囲が変化する濁音となる。", "健常者の肺野では濁音が聞かれる。", "右鎖骨中線において肺気腫では肺肝境界は正常よりも上がる。", "心濁音界の左界が左鎖骨中線やや内側であった場合は心肥大を疑う。"], "ans": 0, "essential": false}, {"q": "癌腫瘤を触診したときの特徴はどれか。", "opts": ["可動性が乏しい。", "痛みを伴う。", "表面皮膚に熱感がある。", "表面が平滑である。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["筋緊張の低下は片麻痺の初期にみられる。", "筋肉に力を入れると硬くなる場合に筋萎縮があると判断できる。", "仮性肥大した筋肉は軟らかい。", "痙縮は錐体外路障害によって出現する。"], "ans": 0, "essential": false}, {"q": "女性化乳房をきたすのはどれか。", "opts": ["肝不全", "呼吸不全", "心不全", "腎不全"], "ans": 0, "essential": false}, {"q": "体幹の左側のみにある臓器はどれか。", "opts": ["脾　臓", "肝　臓", "胆　嚢", "腎　臓"], "ans": 0, "essential": false}, {"q": "ウィルヒョウリンパ節転移で正しいのはどれか。", "opts": ["胃癌の転移によることが多い。", "発赤を伴う。", "右鎖骨上窩リンパ節が腫脹する。", "軟らかく可動性のあるリンパ節病変である。"], "ans": 0, "essential": false}, {"q": "ヘリコバクター・ピロリ菌感染との関連がないのはどれか。", "opts": ["潰瘍性大腸炎", "胃　癌", "慢性胃炎", "消化性潰瘍"], "ans": 0, "essential": false}, {"q": "腸疾患で正しいのはどれか。", "opts": ["家族性大腸ポリポーシスは癌化率が高い。", "クローン病の病変は直腸から連続的に全大腸に広がる。", "潰瘍性大腸炎は回腸末端に好発する。", "大腸癌の好発部位は横行結腸である。"], "ans": 0, "essential": false}, {"q": "経口感染するのはどれか。", "opts": ["Ａ型肝炎", "B型肝炎", "C型肝炎", "D型肝炎"], "ans": 0, "essential": false}, {"q": "右下肋部の疝痛発作を特徴とする疾患はどれか。", "opts": ["胆石症", "膵　炎", "肝硬変", "虫垂炎"], "ans": 0, "essential": false}, {"q": "狭心症で誤っているのはどれか。", "opts": ["血液検査でCKが著しく上昇する。", "運動時に胸痛が生じる。", "心電図でST低下を認める。", "ニトログリセリンが有効である。"], "ans": 0, "essential": false}, {"q": "本態性高血圧症のリスクとならないのはどれか。", "opts": ["や　せ（るいそう）", "ストレス", "塩分過剰摂取", "アルコール過飲"], "ans": 0, "essential": false}, {"q": "急性白血病でみられないのはどれか。", "opts": ["多血症", "発　熱", "出血斑", "骨髄中の芽球"], "ans": 0, "essential": false}, {"q": "疾患とホルモンとの組合せで正しいのはどれか。", "opts": ["尿崩症　　　−　抗利尿ホルモン", "クレチン症　−　成長ホルモン", "アジソン病　−　甲状腺ホルモン", "粘液水腫　　−　上皮小体ホルモン"], "ans": 0, "essential": false}, {"q": "糖尿病の細小血管障害でないのはどれか。", "opts": ["昏　睡", "腎　症", "網膜症", "末梢神経障害"], "ans": 0, "essential": false}, {"q": "ネフローゼ症候群の診断で誤っているのはどれか。", "opts": ["血清総蛋白量6.0g/100mL以上", "一日尿蛋白量3.5g以上", "血清総コレステロール値250mg/100mL以上", "浮　腫"], "ans": 0, "essential": false}, {"q": "急性腎盂腎炎で認めないのはどれか。", "opts": ["黄　疸", "発　熱", "頻　尿", "肋骨・脊椎角部（CVA）の叩打痛"], "ans": 0, "essential": false}, {"q": "デュシェンヌ(Duchenne)型筋ジストロフィーの遺伝形式はどれか。", "opts": ["伴性劣性遺伝", "常染色体優性遺伝", "常染色体劣性遺伝", "伴性優性遺伝"], "ans": 0, "essential": false}, {"q": "筋萎縮性側索硬化症の症状はどれか。", "opts": ["構音障害", "筋固縮", "膀胱直腸障害", "手袋・靴下型感覚障害"], "ans": 0, "essential": false}, {"q": "65歳の男性。6か月前に脳出血のため右片麻痺となった。杖歩行可能だが、右前腕は強く屈曲し、右下肢は痙性となって足が足底側に屈曲し、内反した肢位をとっている。この肢位はどれか。", "opts": ["マン−ウェルニッケ姿勢", "エビ姿勢", "脊柱側弯姿勢", "前かがみの姿勢"], "ans": 0, "essential": false}, {"q": "45歳の女性。3か月前から朝の手のこわばりと全身の関節痛が持続するために来院した。両側手指関節と両側手関節に腫脹と両側手関節に腫脹と圧痛、両膝関節に圧痛を認める。血液検査で、抗CCP（環状シトルリン化ペプチド）抗体が陽性であった。考えられる疾患はどれか。", "opts": ["関節リウマチ", "痛　風", "結節性多発動脈炎", "全身性エリテマトーデス"], "ans": 0, "essential": false}, {"q": "疾患と所見との組合せで正しいのはどれか。", "opts": ["肺気腫　　　　　　−　樽状胸", "甲状腺機能亢進症　−　女性化乳房", "くる病　　　　　　−　扁平胸", "マルファン症候群　−　翼状頚"], "ans": 0, "essential": false}, {"q": "痛風で正しいのはどれか。〔必〕", "opts": ["高尿酸血症を伴う。", "女性に多い。", "近位指節間（PIP）関節に好発する。", "食事療法ではプリン体の摂取を勧める。"], "ans": 0, "essential": false}, {"q": "生命徴候（バイタルサイン）に含まれないのはどれか。〔必〕", "opts": ["顔　色", "体　温", "脈　拍", "呼　吸"], "ans": 0, "essential": false}, {"q": "腰椎椎間板ヘルニアでみられる坐骨神経痛による姿勢の特徴はどれか。", "opts": ["健側に体幹を曲げ軽く股関節を屈曲した姿勢", "身体をエビのように折り曲げた姿勢", "下肢は痙性となり足が足底側に屈曲した姿勢", "患側に体幹を曲げ脊柱が弓状に背屈した姿勢"], "ans": 0, "essential": false}, {"q": "水疱疹がみられるのはどれか。", "opts": ["帯状疱疹", "感染性心内膜炎", "クインケ(Quincke)浮腫", "ベーチェット(Behcet)病"], "ans": 0, "essential": false}, {"q": "ベル現象の原因となる脳神経はどれか。", "opts": ["顔面神経", "動眼神経", "滑車神経", "外転神経"], "ans": 0, "essential": false}, {"q": "マルファン(Marfan)症候群でみられるのはどれか。", "opts": ["漏斗胸", "樽状胸", "鳩　胸", "扁平胸"], "ans": 0, "essential": false}, {"q": "胸部の打診で鼓音を呈するのはどれか。", "opts": ["肺気腫", "無気肺", "肺　炎", "胸膜炎"], "ans": 0, "essential": false}, {"q": "マクバーニー圧痛点はどれか。図", "opts": ["ｂ", "ａ", "ｃ", "ｄ"], "ans": 0, "essential": false}, {"q": "ウィルヒョウリンパ節転移がみられるのはどれか。", "opts": ["左鎖骨上窩リンパ節", "腋窩リンパ節", "腸骨リンパ節", "鼡径リンパ節"], "ans": 0, "essential": false}, {"q": "異常な呼吸と疾患の組合せで正しいのはどれか。", "opts": ["起坐呼吸　　　　　　　　　─　うっ血性心不全", "チェーン・ストークス呼吸　─　気管支喘息", "クスマウル呼吸　　　　　　─　過換気症候群", "ビオー呼吸　　　　　　　　─　糖尿病性アシドーシス"], "ans": 0, "essential": false}, {"q": "複合感覚はどれか。", "opts": ["２点識別覚", "触　覚", "位置覚", "振動覚"], "ans": 0, "essential": false}, {"q": "反射検査で正しいのはどれか。", "opts": ["乳児では健常児でもバビンスキー反射がみられる。", "末梢神経障害では腱反射が亢進する。", "バビンスキー反射では足底を足の内縁に沿うようにこする。", "下顎反射は口を閉じてオトガイ部に指を当てその上をハンマーで叩く。"], "ans": 0, "essential": false}, {"q": "甲状腺機能低下症にみられるのはどれか。", "opts": ["甲状腺腫", "眼球突出", "手指振戦", "発汗過多"], "ans": 0, "essential": false}, {"q": "血清アミラーゼが上昇する疾患はどれか。", "opts": ["急性膵炎", "胃　炎", "肝硬変", "逆流性食道炎"], "ans": 0, "essential": false}, {"q": "慢性閉塞性肺疾患の特徴はどれか。", "opts": ["病因の多くはたばこ煙である。", "初発症状は胸痛である。", "マイコプラズマ肺炎に引き続いて起こる。", "ツベルクリン反応が強陽性に出る。"], "ans": 0, "essential": false}, {"q": "大動脈弁狭窄症で正しいのはどれか。", "opts": ["動脈硬化による弁の石灰化により起こることが多い。", "胸痛が起こることはない。", "聴診で収縮期逆流性雑音を聴取する。", "心エコー検査で大動脈弁に逆流を認める。"], "ans": 0, "essential": false}, {"q": "バージャー(Buerger)病で正しいのはどれか。", "opts": ["喫煙者に多い。", "女性に多い。", "高齢者に多い。", "上肢に多い。"], "ans": 0, "essential": false}, {"q": "特発性血小板減少性紫斑病で誤っているのはどれか。", "opts": ["骨髄中の巨核球数が減少する。", "急性型と慢性型がある。", "血小板に対して自己抗体が産生される。", "ヘリコバクター・ピロリ菌が関係する。"], "ans": 0, "essential": false}, {"q": "慢性骨髄性白血病の原因はどれか。", "opts": ["遺伝子異常", "ウイルス感染", "免疫異常", "代謝異常"], "ans": 0, "essential": false}, {"q": "医療面接の方法で誤っているのはどれか。", "opts": ["患者には厳格な態度で接する。", "最初に互いに自己紹介を行う。", "聴き取りは主訴から始める。", "患者の話について共感の態度をとる。"], "ans": 0, "essential": false}, {"q": "慢性腎不全患者の血清中で低下するのはどれか。", "opts": ["カルシウム", "リ　ン", "カリウム", "クレアチニン"], "ans": 0, "essential": false}, {"q": "後天性免疫不全症候群(AIDS)で誤っているのはどれか。", "opts": ["悪性腫瘍の合併はまれである。", "日和見感染を起こす。", "母子間感染でも起こりうる。", "ヒト免疫不全ウィルス(HIV)による感染症である。"], "ans": 0, "essential": false}, {"q": "75歳の男性。2か月前から前立腺癌で治療中。その頃から排尿時の不快感を呈し、頻尿となった。今回、排尿時痛を訴えて受診し、複雑性膀胱炎と診断された。この疾患で正しいのはどれか。", "opts": ["再発を繰り返すことが多い。", "尿路の腫瘍に伴うことはまれである。", "起因菌はほとんどが大腸菌である。", "水分の大量摂取で数日で回復する。"], "ans": 0, "essential": false}, {"q": "65歳の女性。歩行障害を主訴に来院し、パーキンソン(Parkinson)病が疑われた。診断根拠となる症状はどれか。", "opts": ["手足の振戦がみられる。", "筋トーヌスが減弱し手足が使いにくい。", "手足の感覚低下がある。", "後傾姿勢がみられる。"], "ans": 0, "essential": false}, {"q": "医療面接で開かれた質問（open question）はどれか。〔必〕", "opts": ["どうなさいましたか。", "痒いのはどこですか。", "どのようなしびれですか。", "発熱はいつからですか。"], "ans": 0, "essential": false}, {"q": "マン・ウェルニッケ姿勢をとるのはどれか。〔必〕", "opts": ["脳梗塞", "パーキンソン（Parkinson）病", "進行性筋ジストロフィー", "破傷風"], "ans": 0, "essential": false}, {"q": "意識障害でジャパン･コーマ･スケールの10はどれか。", "opts": ["閉眼しているが呼びかけると開眼する。", "開眼しているが自分の名前がいえない。", "痛み刺激を与えても全く反応せず閉眼したままである。", "痛み刺激でも開眼しないが払いのけるような動作をする。"], "ans": 0, "essential": false}, {"q": "疾患と異常歩行の組合せで正しいのはどれか。", "opts": ["パーキンソン（Parkinson）病　−　突進性歩行", "下肢の動脈硬化症 　　　　　　−　失調性歩行", "筋ジストロフィー 　　　　　　−　間欠性跛行", "脳梗塞 　　　　　　　　　　 　−　アヒル歩行"], "ans": 0, "essential": false}, {"q": "口腔粘膜の視診でコプリック斑がみられるのはどれか。", "opts": ["麻　疹", "猩紅熱", "悪性貧血", "ビタミンＢ2欠乏症"], "ans": 0, "essential": false}, {"q": "頚部正中付近に硬い腫瘤を触れるのはどれか。", "opts": ["甲状腺癌", "バセドウ（Basedow）病", "慢性甲状腺炎", "悪性リンパ腫"], "ans": 0, "essential": false}, {"q": "腹部に赤色の皮膚線条を認めるのはどれか。", "opts": ["クッシング（Cushing）症候群", "妊　娠", "肝硬変", "下大静脈血栓症"], "ans": 0, "essential": false}, {"q": "腹部の打診で腸管に空気が充満しているときに聴取されるのはどれか。", "opts": ["鼓　音", "清　音", "濁　音", "グル音"], "ans": 0, "essential": false}, {"q": "触診で正しいのはどれか。", "opts": ["下腿の浮腫は脛骨部を指で押すと圧痕が生じる。", "三叉神経第３枝神経痛の圧痛点は上眼窩点である。", "皮下の良性腫瘍では可動性が悪い。", "皮膚の触診では始めに局所を触れる。"], "ans": 0, "essential": false}, {"q": "筋肉の診察･所見で正しいのはどれか。", "opts": ["小脳疾患では四肢の筋トーヌスが低下することが多い。", "脊髄神経根症による筋萎縮は全身性に均一である。", "痙縮では他動的運動に対して最初から最後まで抵抗がある。", "筋力測定にはＲＯＭが有効である。"], "ans": 0, "essential": false}, {"q": "筋肉の診察･所見で正しいのはどれか。", "opts": ["左右の同部位を比較する。", "小脳疾患では四肢の筋トーヌスが増強することが多い。", "脊髄神経根症による筋萎縮は全身性に均一である。", "痙縮では他動的運動に対して最初から最後まで抵抗がある。"], "ans": 0, "essential": false}, {"q": "正常な腹部所見はどれか。", "opts": ["平坦軟", "反跳痛", "板状硬", "筋性防御"], "ans": 0, "essential": false}, {"q": "圧痛を伴うリンパ節腫脹をきたすのはどれか。", "opts": ["化膿性リンパ節炎", "悪性リンパ腫", "リンパ性白血病", "癌のリンパ節転移"], "ans": 0, "essential": false}, {"q": "脈拍で正しいのはどれか。", "opts": ["発熱時には速脈となる。", "貧血では徐脈となる。", "大動脈弁閉鎖不全症では遅脈となる。", "甲状腺機能低下症では頻脈となる。"], "ans": 0, "essential": false}, {"q": "障害部位と障害される感覚の組合せで正しいのはどれか。", "opts": ["脊髄後索　-　振動覚", "顔面神経　-　顔面の触覚", "後頭葉  　-　２点識別覚", "三叉神経　-　味　覚"], "ans": 0, "essential": false}, {"q": "反射や筋トーヌスの検査で誤っているのはどれか。", "opts": ["上腕二頭筋反射では肘関節が伸展する。", "橈骨反射では前腕が回外する。", "アキレス腱反射では足関節が底屈する。", "足クローヌスでは足関節が底屈･背屈を繰り返す。"], "ans": 0, "essential": false}, {"q": "筋電図検査が診断に有用なのはどれか。", "opts": ["筋萎縮性側索硬化症", "髄膜炎", "くも膜下出血", "アルツハイマー型認知症"], "ans": 0, "essential": false}, {"q": "潰瘍性大腸炎の症状で多いのはどれか。", "opts": ["粘血便", "嘔　吐", "吐　血", "便　秘"], "ans": 0, "essential": false}, {"q": "食道静脈瘤をきたす疾患はどれか。", "opts": ["肝硬変", "膵　炎", "胆石症", "逆流性食道炎"], "ans": 0, "essential": false}, {"q": "僧帽弁閉鎖不全症で正しいのはどれか。", "opts": ["心不全の原因となる。", "弁置換術は禁忌である。", "聴診で拡張期雑音を聴取する。", "先天性によるものが多い。"], "ans": 0, "essential": false}, {"q": "脊椎圧迫骨折を起こしやすいのはどれか。", "opts": ["多発性骨髄腫", "慢性骨髄性白血病", "突発性血小板減少性紫斑病", "血友病"], "ans": 0, "essential": false}, {"q": "リウマチ熱と関連性が高いのはどれか。", "opts": ["心臓弁膜症", "関節破壊", "蝶形紅斑", "口腔内潰瘍"], "ans": 0, "essential": false}, {"q": "腎･尿路疾患で正しいのはどれか。", "opts": ["前立腺肥大では尿意切迫感を訴えることがある。", "腎不全では血漿交換が必要となる。", "尿路結石では下肢放散痛を突然発症することが多い。", "単純性膀胱炎の原因菌は表皮ブドウ球菌が多い。"], "ans": 0, "essential": false}, {"q": "腎･尿路疾患で正しいのはどれか。", "opts": ["尿路結石では下腹部痛を突然発症することが多い。", "前立腺肥大では腹圧性尿失禁を訴える。", "腎不全では血漿交換が必要となる。", "単純性膀胱炎の原因菌は表皮ブドウ球菌が多い。"], "ans": 0, "essential": false}, {"q": "70歳の女性。5日前から右背部に違和感があり、今朝から火照るような痛みになった。衣服を着替える時に、右胸から側胸部を通って背中まで身体の右半周に赤い発疹と水疱が出ていることに気付いた。考えられる疾患はどれか。", "opts": ["帯状疱疹", "肝硬変", "単純性疱疹", "全身性エリテマトーデス"], "ans": 0, "essential": false}, {"q": "78歳の男性。高血圧を指摘されていた。脳出血を発症し、3か月のリハビリテーション後に在宅療養を開始した。右上下肢の完全麻痺を呈している。正しい組合せはどれか。", "opts": ["再発予防 　　　　−　血圧の管理", "バビンスキー反射 −　母趾は足底側に屈曲", "右上肢の姿勢 　　−　バレー肢位", "画像所見 　　　　−　右大脳半球に病変"], "ans": 0, "essential": false}, {"q": "医療面接で誤っているのはどれか。［必］", "opts": ["患者の訴えを主観的に判断する。", "大ざっぱな質問で患者に自由に話してもらう。", "症状について焦点を絞って聞くこともある。", "診療録に要点を整理して記載する。"], "ans": 0, "essential": false}, {"q": "体温が持続的に高く日内変動が１℃以内なのはどれか。［必］", "opts": ["稽留熱", "弛張熱", "間欠熱", "波状熱"], "ans": 0, "essential": false}, {"q": "生理的な脊柱の弯曲はどれか。", "opts": ["頸椎前弯", "胸椎前弯", "胸椎側弯", "腰椎後弯"], "ans": 0, "essential": false}, {"q": "関節リウマチでみられる手の変形はどれか。", "opts": ["手指尺側偏位", "猿　手", "鷲　手", "太鼓ばち指"], "ans": 0, "essential": false}, {"q": "意識障害の評価に用いられるのはどれか。", "opts": ["Japan Coma Scale(3−3−9度方式)", "Mini−mental state examination(MMSE)", "長谷川式簡易知能評価スケール（HDS −R）", "前頭葉機能バッテリー（FAB）"], "ans": 0, "essential": false}, {"q": "下肢の閉塞性動脈硬化症で認められるのはどれか。", "opts": ["間欠性跛行", "アヒル歩行", "トレンデレンブルグ歩行", "失調性歩行"], "ans": 0, "essential": false}, {"q": "皮膚の状態で誤っている組合せはどれか。", "opts": ["くも状血管腫 −　腎不全", "陰部潰瘍 −　ベーチェット（Behcet）病", "紫　斑 −　 再生不良性貧血", "黄　疸 −　 肝硬変"], "ans": 0, "essential": false}, {"q": "頸部の状態で正しい組合せはどれか。", "opts": ["頸部リンパ節腫脹  −　 伝染性単核球症", "痙性斜頸  −　 バセドウ（Basedow）病", "翼状頚  　−　 クラインフェルター（Klinefelter）症候群", "項部硬直  −　パーキンソン(Parkinson)病"], "ans": 0, "essential": false}, {"q": "胸郭の変形と原因の組合せで正しいのはどれか。", "opts": ["樽状胸 −  慢性閉塞性肺疾患", "鳩　胸 −  マルファン（Marfan）症候群", "扁平胸 −  心臓弁膜症", "漏斗胸 −  胃癌術後"], "ans": 0, "essential": false}, {"q": "肺肝境界の位置を決めるのに用いられる身体診察法はどれか。", "opts": ["打　診", "聴　診", "触　診", "視　診"], "ans": 0, "essential": false}, {"q": "聴診で正しいのはどれか。", "opts": ["II音は半月弁によって発生する。", "聴診では直接法を用いることが一般的である。", "高周波数の音を聴く時にはベル型を用いる。", "胸郭の異常呼吸音ではグル音に注意する。"], "ans": 0, "essential": false}, {"q": "臓器と触診位置の組合せで正しいのはどれか。", "opts": ["胆　嚢  −  右季肋部", "脾　臓  −  右側腹部", "心　臓  −  心窩部", "肝　臓  −  臍　部"], "ans": 0, "essential": false}, {"q": "マックバーニー点に圧痛を認めるのはどれか。", "opts": ["虫垂炎", "腎結石", "胃潰瘍", "胆嚢炎"], "ans": 0, "essential": false}, {"q": "C5レベルの脊髄を含む腱反射はどれか。", "opts": ["上腕二頭筋反射", "上腕三頭筋反射", "橈骨反射", "下顎反射"], "ans": 0, "essential": false}, {"q": "消化器系症状と疾患の組合せで正しいのはどれか。", "opts": ["胸やけ − 逆流性食道炎", "腹　痛   − アルコール性肝障害", "黄　疸   − 腸閉塞", "下　痢   − 胃　癌"], "ans": 0, "essential": false}, {"q": "肺気腫で正しいのはどれか。", "opts": ["禁煙が重要である。", "在宅酸素療法は行わない。", "横隔膜は挙上する。", "1秒率は低下しない。"], "ans": 0, "essential": false}, {"q": "うっ血性心不全の患者で歩行時に呼吸困難や動悸を生じるNYHA分類はどれか。", "opts": ["III 度", "V 度", "I  度", "ＩＶ  度"], "ans": 0, "essential": false}, {"q": "うっ血性心不全の患者で歩行時に呼吸困難や動悸を生じるNYHA分類はどれか。", "opts": ["II  度", "V  度", "Ｉ 度", "ＩＶ 度"], "ans": 0, "essential": false}, {"q": "神経障害が出現するのはどれか。", "opts": ["ビタミンB12欠乏性貧血", "溶血性貧血", "鉄欠乏性貧血", "再生不良性貧血"], "ans": 0, "essential": false}, {"q": "慢性腎不全の原因とならないのはどれか。", "opts": ["尿崩症", "糸球体腎炎", "高血圧", "糖尿病"], "ans": 0, "essential": false}, {"q": "膀胱炎の症状はどれか。", "opts": ["頻　尿", "浮　腫", "背部叩打痛", "高　熱"], "ans": 0, "essential": false}, {"q": "発汗過多、眼球突出、頻脈および手指振戦を示すのはどれか。", "opts": ["バセドウ（Basedow）病", "クッシング（Cushing）病", "アジソン（Addison）病", "クレチン病"], "ans": 0, "essential": false}, {"q": "性行為感染症でないのはどれか。", "opts": ["破傷風", "梅　毒", "淋　病", "後天性免疫不全症候群（AIDS）"], "ans": 0, "essential": false}, {"q": "50歳の女性。2か月前から四肢近位筋に対称性の筋力低下と筋肉痛があり、しゃがむと立ち上がることができない。両上眼瞼部に紫紅色の紅斑があり、手指関節、肘関節および膝関節の伸側に落屑を伴う紅斑を認める。関節腫脹はない。考えられる疾患はどれか。", "opts": ["皮膚筋炎", "関節リウマチ", "変形性関節症", "痛　風"], "ans": 0, "essential": false}, {"q": "65歳の男性。3年前からの歩行障害を主訴に来院した。四肢の振戦、固縮、体の動きにくさ及び姿勢反射障害を認めた。考えられる診断はどれか。", "opts": ["パーキンソン（Parkinson）病", "アルツハイマー(Alzheimer)病", "クロイツフェルト・ヤコブ（Creutzfeldt−Jakob）病", "ハンチントン（Huntington）病"], "ans": 0, "essential": false}, {"q": "低血圧を起こすのはどれか。〔必〕", "opts": ["ショック", "急性糸球体腎炎", "褐色細胞腫", "原発性アルドステロン症"], "ans": 0, "essential": false}, {"q": "肘関節の屈曲と頭部前屈による前かがみ姿勢を特徴とするのはどれか。", "opts": ["パーキンソン（Parkinson）病", "破傷風", "被殻出血", "クッシング（Cushing）病"], "ans": 0, "essential": false}, {"q": "栄養状態で正しいのはどれか。", "opts": ["肥満はBMI25以上である。", "標準体重は身長×身長×23である。", "悪体質は極端にやせが進行した状態である。", "肥満度は（実測体重 − 標準体重）÷実測体重×100である。"], "ans": 0, "essential": false}, {"q": "意識状態で皮膚をつねるなどの強い刺激のみに反応するのはどれか。", "opts": ["昏　迷", "傾　眠", "昏　睡", "せん妄"], "ans": 0, "essential": false}, {"q": "不随意運動で誤っている組合せはどれか。", "opts": ["甲状腺機能低下症 −−−−− 振幅の小さな手指の振戦", "脳性麻痺 　　　　−−−−− 手関節のアテトーゼ", "重症な肝疾患 　　−−−−−− 羽ばたくような振戦", "ハンチントン（Huntington）病 −− 踊るような動作"], "ans": 0, "essential": false}, {"q": "一側性の錐体路障害でみられる歩行はどれか。", "opts": ["分回し歩行", "鶏　歩", "突進歩行", "間欠性跛行"], "ans": 0, "essential": false}, {"q": "爪が薄く弱くなり陥凹している場合に欠乏していると考えられるのはどれか。", "opts": ["鉄", "リ　ン", "亜　鉛", "蛋白質"], "ans": 0, "essential": false}, {"q": "特徴的な顔貌について正しい組合せはどれか。", "opts": ["重症筋無力症  −−−−−− 一見すると眠たそうである。", "顔面神経麻痺  −−−−−− 眼瞼を開けられない。", "大量のステロイド投与  −− 三日月のような顔貌である。", "バセドウ（Basedow）病 −− 仮面のような顔貌である。"], "ans": 0, "essential": false}, {"q": "胸水が貯留した胸部の打診音はどれか。", "opts": ["濁　音", "清　音", "鼓　音", "グル音"], "ans": 0, "essential": false}, {"q": "胃潰瘍の圧痛点はどれか。", "opts": ["ボアス点", "オトガイ点", "ランツ点", "ムンロー点"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["筋萎縮性側索硬化症 −−− 筋の仮性肥大", "髄膜炎 　　　　−−−−−− 項部硬直", "小脳疾患 　　　−−−−−− 筋トーヌスの低下", "膝関節液貯留 　−−−−−− 膝蓋骨跳動"], "ans": 0, "essential": false}, {"q": "生命徴候で異常値はどれか。", "opts": ["血圧124／90mmHg", "脈拍90／分", "腋窩体温36.0℃", "安静時呼吸数16／分"], "ans": 0, "essential": false}, {"q": "脳波検査が必要なのはどれか。", "opts": ["突然、体の動きが止まり回復後もその間の記憶がない。", "糖尿病治療中の患者が顔面蒼白となり意識を失った。", "足関節を急激に背屈させると間代性に底屈、背屈を繰り返す。", "何もしていないときに丸薬をこねるような手指の運動が続く。"], "ans": 0, "essential": false}, {"q": "肝細胞癌の原因で最も多いのはどれか。", "opts": ["Ｃ型肝炎", "Ａ型肝炎", "Ｂ型肝炎", "Ｅ型肝炎"], "ans": 0, "essential": false}, {"q": "急性膵炎で誤っているのはどれか。", "opts": ["疼痛は仰臥位で軽減する。", "アルコール多飲が誘因となる。", "血液検査でアミラーゼ値が上昇する。", "腹部エコーで膵臓の腫大がみられる。"], "ans": 0, "essential": false}, {"q": "気管支喘息の治療薬で誤っているのはどれか。", "opts": ["β2遮断剤", "アドレナリン", "抗アレルギー薬", "吸入ステロイド薬"], "ans": 0, "essential": false}, {"q": "肺癌で正しいのはどれか。", "opts": ["末梢に発生すると多くは無症状である。", "女性に多い。", "好発年齢は40〜50歳代である。", "腫瘍マーカー検査で診断を確定する。"], "ans": 0, "essential": false}, {"q": "心不全の症状で誤っているのはどれか。", "opts": ["発　熱", "下腿浮腫", "起座呼吸", "労作時の息切れ"], "ans": 0, "essential": false}, {"q": "糖尿病の合併症でないのはどれか。", "opts": ["くも膜下出血", "眼底出血", "慢性腎臓病", "閉塞性動脈硬化症"], "ans": 0, "essential": false}, {"q": "腎前性腎障害の原因となるのはどれか。", "opts": ["脱　水", "腎梗塞", "尿管結石", "糸球体腎炎"], "ans": 0, "essential": false}, {"q": "認知症を生じるのはどれか。", "opts": ["正常圧水頭症", "褐色細胞腫", "ネフローゼ症候群", "マロリー・ワイス（Mallory-Weiss）症候群"], "ans": 0, "essential": false}, {"q": "喫煙が危険因子でない疾患はどれか。〔必〕", "opts": ["肝硬変", "肺気腫", "心筋梗塞", "バージャー(Buerger)病"], "ans": 0, "essential": false}, {"q": "33歳の女性。5年前から日光過敏を自覚していた。1年前から口内炎を繰り返し、6か月前から両側の手関節の関節痛と脱毛を認めた。1か月前から発熱が持続したため来院した。体温38.2℃。尿所見では、タンパク陽性、潜血陽性。血液検査では、血小板減少、抗二本鎖DNA抗体陽性を認めた。最も考えられる疾患はどれか。", "opts": ["全身性エリテマトーデス", "皮膚筋炎", "全身性強皮症", "ベーチェット（Behcet）病"], "ans": 0, "essential": false}, {"q": "75歳の女性。道ばたで転倒しているのが発見された。症状を尋ねたところ、右手足が動きにくいと訴えたため救急車を要請した。誤っているのはどれか。", "opts": ["右被殻部の脳出血", "頸髄損傷", "橋左側の脳出血", "パーキンソン（Parkinson）症候群"], "ans": 0, "essential": false}, {"q": "重症うっ血性心不全患者の姿勢はどれか。", "opts": ["起坐位", "仰臥位", "側臥位", "腹臥位"], "ans": 0, "essential": false}, {"q": "失調性歩行の症状はどれか。", "opts": ["足もとを目で確かめながら歩く。", "足を足底側に屈曲したまま歩く。", "ちょこちょこと小刻みに歩く。", "脚を大きく外側に振り回して歩く。"], "ans": 0, "essential": false}, {"q": "失調性歩行の症状はどれか。", "opts": ["動揺しながら歩く。", "臀部を後方に突き出して歩く。", "足を足底側に屈曲したまま歩く。", "ちょこちょこと小刻みに歩く。"], "ans": 0, "essential": false}, {"q": "長期の気管支喘息患者でみられる胸郭変形はどれか。", "opts": ["樽状胸", "扁平胸", "鳩　胸", "漏斗胸"], "ans": 0, "essential": false}, {"q": "聴診所見で正しいのはどれか。", "opts": ["急性心膜炎では心膜摩擦音を聴取する。", "胸水貯留では声音が増強する。", "心膜液貯留では心音が増強する。", "甲状腺機能亢進症では心音が減弱する。"], "ans": 0, "essential": false}, {"q": "筋肉の所見で誤っているのはどれか。", "opts": ["パーキンソン (Parkinson) 病では、関節を屈曲させると、ある時点で急に抵抗がなくなる。", "小脳の疾患では、筋肉に特有な抵抗が減弱している。", "シャルコー・マリー・トゥース (Charcot−Marie−Tooth) 病では、四肢遠位の筋萎縮がある。", "デュシェンヌ (Duchenne) 型筋ジストロフィーでは、四肢近位の筋萎縮がある。"], "ans": 0, "essential": false}, {"q": "腹部の触診で正しいのはどれか。", "opts": ["汎発性腹膜炎では腹壁全体が板のように硬くなる。", "胃癌では手で圧迫した時より放した瞬間に強い痛みを訴える。", "健常者ではわずかに肝臓の上縁を触知できる。", "胆嚢炎では左季肋部に強い圧痛がある。"], "ans": 0, "essential": false}, {"q": "体温が持続的に高く1 ℃ 以上の日内変動があるのはどれか。", "opts": ["弛張熱", "稽留熱", "波状熱", "間欠熱"], "ans": 0, "essential": false}, {"q": "表在感覚はどれか。", "opts": ["温度覚", "位置覚", "振動覚", "2点識別覚"], "ans": 0, "essential": false}, {"q": "診断へのプロセスとして最初に行うのはどれか。", "opts": ["自覚症状を聞く。", "鑑別診断を行う。", "臨床検査を行う。", "他覚的所見を診察する。"], "ans": 0, "essential": false}, {"q": "顔面神経が関与するのはどれか。", "opts": ["角膜反射", "咽頭反射", "下顎反射", "瞳孔反射"], "ans": 0, "essential": false}, {"q": "突然の腹痛とともに下血（鮮血便）がみられるのはどれか。", "opts": ["虚血性大腸炎", "クローン (Crohn) 病", "過敏性腸症候群", "潰瘍性大腸炎"], "ans": 0, "essential": false}, {"q": "逆流性食道炎で正しいのはどれか。", "opts": ["胃酸の分泌を抑える治療を行う。", "繰り返す嘔吐が原因である。", "日常の注意として臥床前に飲食するようにする。", "ヘリコバクター・ピロリ菌の感染によって生じる。"], "ans": 0, "essential": false}, {"q": "肺結核で正しいのはどれか。", "opts": ["結核菌は空気感染する。", "結核菌 PCR検査で陰性となる。", "ツベルクリン反応は陰性となる。", "インターフェロンγ遊離試験は BCG 接種で陽性となる。"], "ans": 0, "essential": false}, {"q": "急性心筋梗塞で誤っているのはどれか。", "opts": ["血液検査でトロポニンの低下を認める。", "心電図検査でST上昇を認める。", "冠動脈造影検査で冠動脈の閉塞を認める。", "心エコー検査で心室の壁運動の低下を認める。"], "ans": 0, "essential": false}, {"q": "鉄欠乏性貧血の症状でないのはどれか。", "opts": ["ばち指", "頻　脈", "異食症", "易疲労感"], "ans": 0, "essential": false}, {"q": "糖尿病の合併症として生じる神経障害でないのはどれか。", "opts": ["手指振戦", "振動覚低下", "起立性低血圧", "膝蓋腱反射消失"], "ans": 0, "essential": false}, {"q": "関節リウマチで障害されやすいのはどれか。", "opts": ["頸椎環軸関節", "遠位指節間関節", "仙腸関節", "胸鎖関節"], "ans": 0, "essential": false}, {"q": "腎糸球体を病変の主体とするのはどれか。", "opts": ["ネフローゼ症候群", "間質性腎炎", "腎孟腎炎", "複雑性膀胱炎"], "ans": 0, "essential": false}, {"q": "筋力低下が数日から数週間で進行するのはどれか。", "opts": ["ギラン・バレー (Guillain−Barre) 症候群", "ハンチントン (Huntington) 病", "メニエール(Meniere) 病", "レヴィ(Lewy) 小体病"], "ans": 0, "essential": false}, {"q": "後天性免疫不全症候群(AIDS) で正しいのはどれか。", "opts": ["進行すると日和見感染症を合併する。", "ヒト免疫不全ウィルス (HIV) 感染後、数日で発症する。", "CD8 陽性Ｔ細胞数が著しく減少する。", "母子間感染は起こらない。"], "ans": 0, "essential": false}, {"q": "65 歳の男性。50 歳時に高血圧を指摘されたが放置していた。他に特記すべき既往歴はなく、下肢静脈瘤もない。30分前 に突然、前胸部および背部の冷汗を伴う激しい疼痛が出現し、その後も持続している。右橈骨動脈で強く脈拍を触れるが、左橈骨動脈では脈拍を触知しない。可能性が高いのはどれか。", "opts": ["急性大動脈解離", "自然気胸", "急性心筋梗塞", "肺血栓塞栓症"], "ans": 0, "essential": false}, {"q": "56 歳の女性。 8か月前から徐々に歩行時の疲れやすさを自覚し、1 か月前から階段を昇れなくなり、洗髪時に腕を挙げるのが難しくなった。胸腹部に異常を認めない。上眼瞼部に浮腫性の淡い紫色の紅斑を認める。血液検査でクレアチンキナーゼ(CK) が1870 U/L (基準 30〜140)であった。最も考えられるのはどれか。", "opts": ["皮膚筋炎", "結節性多発動脈炎", "強皮症", "ベーチェット (Behcet) 病"], "ans": 0, "essential": false}, {"q": "診察で誤っているのはどれか。", "opts": ["医療面接では他覚所見を確認する。", "患者は客観的に診察する。", "診断した疾患に対して治療する。", "治療後の経過は診療録に記載する。"], "ans": 0, "essential": false}, {"q": "高身長を呈するのはどれか。", "opts": ["マルファン(Marfan)症候群", "クレチン病", "先端巨大症", "ターナー(Turner)症候群"], "ans": 0, "essential": false}, {"q": "突進歩行がみられるのはどれか。", "opts": ["パーキンソン(Parkinson)病", "腓骨神経麻痺", "腰部脊柱管狭窄症", "進行性筋ジストロフィー"], "ans": 0, "essential": false}, {"q": "身体所見と疾患の組合せで正しいのはどれか。", "opts": ["くも状血管腫 −−−− 肝硬変", "仮面様顔貌  −−−−− 鉄欠乏性貧血", "スプーン状爪 −−−− クッシング(Cushing)症候群", "赤色皮膚線条 −−−− パーキンソン(Parkinson)病"], "ans": 0, "essential": false}, {"q": "腹水が貯留している時、臥位で側腹部の打診で聴かれるのはどれか。", "opts": ["濁　音", "清　音", "鼓　音", "グル音"], "ans": 0, "essential": false}, {"q": "筋の仮性肥大を生ずるのはどれか。", "opts": ["デュシェンヌ (Duchenne)型筋ジストロフィー", "重症筋無力症", "筋萎縮性側索硬化症", "ギラン・バレー(Guillain-Barre)症候群"], "ans": 0, "essential": false}, {"q": "圧痛のあるリンパ節腫脹がみられるのはどれか。", "opts": ["リンパ節炎", "悪性リンパ腫", "リンパ性白血病", "癌のリンパ節転移"], "ans": 0, "essential": false}, {"q": "検脈部位で適さないのはどれか。", "opts": ["腕頭動脈", "橈骨動脈", "大腿動脈", "足背動脈"], "ans": 0, "essential": false}, {"q": "感覚で正しいのはどれか。", "opts": ["温度覚は表在感覚である。", "振動覚は脊髄の前索を伝わる。", "舌下神経に障害があると味覚が消失する。", "足踏み検査で大脳の障害を検出する。"], "ans": 0, "essential": false}, {"q": "Ｔ１レベルの脊髄を含む腱反射はどれか。", "opts": ["回内筋反射", "上腕二頭筋反射", "腕橈骨筋反射", "膝蓋腱反射"], "ans": 0, "essential": false}, {"q": "病的反射はどれか。", "opts": ["チャドック反射", "角膜反射", "腹壁反射", "アシュネル反射"], "ans": 0, "essential": false}, {"q": "虫垂炎で正しいのはどれか。", "opts": ["初期に上腹部痛を認める。", "発熱を認めない。", "白血球数は正常である。", "右季肋部に圧痛を認める。"], "ans": 0, "essential": false}, {"q": "ウイルス性肝炎で正しいのはどれか。", "opts": ["Ｃ型肝炎は感染血液への暴露で感染する。", "Ａ型肝炎は慢性肝炎に移行しやすい。", "Ｂ型肝炎は生ガキの摂取で起こる。", "Ａ型肝炎は近年では性行為感染が多い。"], "ans": 0, "essential": false}, {"q": "血友病で正しいのはどれか。", "opts": ["重症例では関節内出血を起こす。", "血小板が減少する。", "女性に発症することが多い。", "ヘリコバクター・ピロリ菌感染が発症に関与する。"], "ans": 0, "essential": false}, {"q": "関節リウマチの骨エックス線写真でみられる所見はどれか。", "opts": ["骨びらん", "骨　棘", "骨硬化", "骨抜き打ち像"], "ans": 0, "essential": false}, {"q": "全身性エリテマトーデス(SLE)でみられるのはどれか。", "opts": ["顔面紅斑", "筋力低下", "皮膚硬化", "ゴットロン徴候"], "ans": 0, "essential": false}, {"q": "口腔内潰瘍、ニキビ様皮疹、外陰部潰瘍、眼虹彩炎を呈するのはどれか。", "opts": ["ベーチェット(Behcet) 病", "皮膚筋炎", "リウマチ熱", "結節性多発動脈炎"], "ans": 0, "essential": false}, {"q": "血尿の原因とならないのはどれか。", "opts": ["前立腺肥大症", "IgＡ腎症", "尿路結石症", "急性糸球体腎炎"], "ans": 0, "essential": false}, {"q": "腎前性急性腎障害の原因となるのはどれか。", "opts": ["脱　水", "腎梗塞", "前立腺癌", "急性糸球体腎炎"], "ans": 0, "essential": false}, {"q": "筋萎縮性側索硬化症で正しいのはどれか。", "opts": ["呼吸筋麻痺を呈する。", "運動失調を呈する。", "再発・寛解を繰り返す。", "複視・眼瞼下垂を呈する。"], "ans": 0, "essential": false}, {"q": "70歳の男性。建築業で現在も喫煙している。左上肢痛を訴えている。 整形外科では、頸椎症や肩関節症はないと診断されている。可能性が低いのはどれか。", "opts": ["胸髄腫瘍", "肺癌の腕神経叢浸潤", "帯状疱疹後神経痛", "筋肉痛"], "ans": 0, "essential": false}, {"q": "26歳の女性。3日前から排尿時痛に気づいていたが、悪寒、発熱が 出現したため受診した。体温 39.4℃で右肋骨脊柱角に叩打痛が認められた。血液検査で白血球数増多とCRP 高値が認められ、尿は混濁しており、鏡検で多数の白血球が認められた。考えられるのはどれか。", "opts": ["腎盂腎炎", "胆嚢炎", "虫垂炎", "慢性糸球体腎炎"], "ans": 0, "essential": false}, {"q": "頭痛を主訴に来院した患者で現病歴に記載されるのはどれか。", "opts": ["「ギザギザした光が見えてから頭が痛くなる」", "「10歳時に上腕骨を骨折した」", "「父親がくも膜下出血で亡くなった」", "「コレステロールを下げる薬を飲んでいる」"], "ans": 0, "essential": false}, {"q": "翼状頸をきたす疾患はどれか。", "opts": ["ターナー(Turner)症候群", "クッシング(Cushing)症候群", "バセドウ(Basedow)病", "パーキンソン(Parkinson)病"], "ans": 0, "essential": false}, {"q": "腹壁静脈の怒張をきたす疾患はどれか。", "opts": ["肝硬変", "胆嚢炎", "虫垂炎", "膀胱炎"], "ans": 0, "essential": false}, {"q": "体幹・四肢の視診の組合せで正しいのはどれか。", "opts": ["腹部皮膚線条 −−−−−− 妊娠を経験した女性", "扁平胸 −−−−−−−−−−− マルファン(Marfan)症候群", "内反膝 −−−−−−−−−−− 腓骨神経麻痺", "くも状指 −−−−−−−−− 尺骨神経麻痺"], "ans": 0, "essential": false}, {"q": "圧痛点と疾患の組合せで正しいのはどれか。", "opts": ["ボアス点 −−−−−−−−−−−− 胃潰瘍", "ムンロー点 −−−−−−−−−− 三叉神経痛", "オトガイ点 −−−−−−−−−− 虫垂炎", "マックバーネ点 −−−−−−− 胆嚢炎"], "ans": 0, "essential": false}, {"q": "血圧測定で正しいのはどれか。", "opts": ["拍動音が聞こえ始めた点が収縮期血圧である。", "血圧は静脈の血管内圧を指す。", "触診法は聴診法より高く測定される。", "触診法でも拡張期血圧の測定ができる。"], "ans": 0, "essential": false}, {"q": "脊髄後索の病変で障害されるのはどれか。", "opts": ["振動覚", "味　覚", "痛　覚", "温度覚"], "ans": 0, "essential": false}, {"q": "陽性のとき錐体路障害を示唆するのはどれか。", "opts": ["チャドック(Chaddock)反射", "腹壁反射", "足底反射", "アシュネル(Aschner)反射"], "ans": 0, "essential": false}, {"q": "羽ばたき振戦を呈する疾患はどれか。", "opts": ["肝性脳症", "神経症", "低カルシウム血症", "甲状腺機能亢進症"], "ans": 0, "essential": false}, {"q": "気管支喘息で正しいのはどれか。", "opts": ["発作時には呼気延長がある。", "IgA抗体が上昇する。", "気道狭窄は不可逆性である。", "日中に発作を起こしやすい。"], "ans": 0, "essential": false}, {"q": "肺血栓塞栓症で誤っているのはどれか。", "opts": ["肺静脈に血栓を認める。", "悪性腫瘍に合併しやすい。", "突然の呼吸困難で発症する。", "下肢深部静脈の血栓が原因となる。"], "ans": 0, "essential": false}, {"q": "心房細動で誤っているのはどれか。", "opts": ["脈は規則的である。", "左房内血栓を生じやすい。", "脳梗塞を起こしやすい。", "高齢者に多い。"], "ans": 0, "essential": false}, {"q": "頭蓋骨の骨打ち抜き像がみられるのはどれか。", "opts": ["多発性骨髄腫", "血友病", "悪性リンパ腫", "再生不良性貧血"], "ans": 0, "essential": false}, {"q": "皮膚・粘膜の色素沈着が認められるのはどれか。", "opts": ["アジソン(Addison)病", "橋本病", "バセドウ (Basedow)病", "クッシング(Cushing)症候群"], "ans": 0, "essential": false}, {"q": "関節リウマチで正しいのはどれか。", "opts": ["近位指節間関節に好発する。", "男性に多い。", "関節以外には症状はみられない。", "リウマトイド因子陽性ならば関節リウマチである。"], "ans": 0, "essential": false}, {"q": "皮膚筋炎の症状で誤っているのはどれか。", "opts": ["蝶形紅斑", "近位筋の筋力低下", "ヘリオトロープ疹", "筋肉痛"], "ans": 0, "essential": false}, {"q": "急性腎盂腎炎でみられないのはどれか。", "opts": ["黄　疸", "発　熱", "頻　尿", "肋骨・脊椎角部(CVA)の叩打痛"], "ans": 0, "essential": false}, {"q": "パーキンソン(Parkinson)病に特徴的にみられるのはどれか。", "opts": ["姿勢反射障害", "痙性対麻痺", "体幹失調", "平衡障害"], "ans": 0, "essential": false}, {"q": "病変部位と神経症状の組合せで正しいのはどれか。", "opts": ["錐体路系   −−−−−− 麻　痺", "後頭葉 　  −−−−−− ふらつき", "錐体外路系 −−−−− 感覚低下", "小脳系 　   −−−−−− 失　語"], "ans": 0, "essential": false}, {"q": "梅毒の症状で正しいのはどれか。", "opts": ["ゴム腫", "子宮頸管炎", "尿道分泌物", "免疫不全"], "ans": 0, "essential": false}, {"q": "35歳の男性。7月の日曜日に会社の野球チームの練習に参加していた。当日は晴天で気温 32 ℃、湿度 80 %であった。守備中に頭痛と倦怠感を訴えて倒れ、救護室に運ばれた。意識はあるが、体は熱く、多量の発汗を認めた。正しい対応はどれか。", "opts": ["ナトリウムを含んだ水分を補給する。", "酸素吸入を行う。", "身体を毛布で温める。", "ブドウ糖を補給する。"], "ans": 0, "essential": false}, {"q": "60歳の男性。糖尿病で1日4回インスリン注射を行っている。施術中に眠気を訴え生あくびをするようになった。皮膚は湿潤し、頻脈が認められた。まず行うべきことはどれか。", "opts": ["砂糖服用", "昼　寝", "飲　水", "インスリン自己注射"], "ans": 0, "essential": false}, {"q": "診察で正しいのはどれか。", "opts": ["治療者と患者との信頼関係の構築は治療効果に影響する。", "診療録は記載しなくてもよい。", "主観的情報より客観的情報が重要である。", "個人情報を保護するために診療録は速やかに破棄することが望ましい。"], "ans": 0, "essential": false}, {"q": "医療面接で正しいのはどれか。", "opts": ["患者像を始めに確認することが重要である。", "閉ざされた質問が開かれた質問より優れている。", "緊張をほぐすために敬語は用いないほうがよい。", "治療者が必要だと思う情報を聞くことが重要である。"], "ans": 0, "essential": false}, {"q": "マン・ウェルニッケ姿勢を呈するのはどれか。", "opts": ["脳血管障害", "パーキンソン (Parkinson) 病", "特発性側弯", "くる病"], "ans": 0, "essential": false}, {"q": "舞踏運動がみられるのはどれか。", "opts": ["ハンチントン (Huntington) 病", "肝硬変", "バセドウ (Basedow) 病", "パーキンソン (Parkinson) 病"], "ans": 0, "essential": false}, {"q": "麻痺すると下垂手を生じるのはどれか。", "opts": ["橈骨神経", "尺骨神経", "正中神経", "筋皮神経"], "ans": 0, "essential": false}, {"q": "健常者で聴取されない心音はどれか。", "opts": ["IV 音", "I 音", "II 音", "III音"], "ans": 0, "essential": false}, {"q": "悪性の皮下腫瘤を触診したときの特徴はどれか。", "opts": ["表面が凹凸不整である。", "圧痛がある。", "可動性がある。", "表面皮膚に熱感がある。"], "ans": 0, "essential": false}, {"q": "下肢の深部腱反射が亢進するのはどれか。", "opts": ["頸髄損傷", "重症筋無力症", "筋ジストロフィー", "ギラン・バレー (Guillain-Barre) 症候群"], "ans": 0, "essential": false}, {"q": "肝細胞癌の原因とならないのはどれか。", "opts": ["Ａ型肝炎", "非アルコール性脂肪肝炎 (NASH)", "Ｂ型肝炎", "Ｃ型肝炎"], "ans": 0, "essential": false}, {"q": "空気感染するのはどれか。", "opts": ["肺結核", "誤嚥性肺炎", "慢性気管支炎", "インフルエンザ"], "ans": 0, "essential": false}, {"q": "慢性閉塞性肺疾患(COPD)で正しいのはどれか。", "opts": ["呼気が延長する。", "漏斗胸を呈する。", "肺肝境界が上昇する。", "肺野の打診で濁音を呈する。"], "ans": 0, "essential": false}, {"q": "高血圧に対する生活習慣の改善で適切でないのはどれか。", "opts": ["1日あたりの食塩摂取量は10ｇを目標にする。", "BMIは 25未満に維持する。", "野菜、果物、低脂肪乳製品を積極的に摂取する。", "ややきつい程度の有酸素運動を1日30分以上行う。"], "ans": 0, "essential": false}, {"q": "悪性リンパ腫で正しいのはどれか。", "opts": ["無痛性リンパ節腫大を呈する。", "異型リンパ球が増加する。", "遺伝性疾患である。", "抗菌薬が著効する。"], "ans": 0, "essential": false}, {"q": "多発性骨髄腫の所見で誤っているのはどれか。", "opts": ["舌乳頭萎縮", "貧　血", "腎機能障害", "脊椎圧迫骨折"], "ans": 0, "essential": false}, {"q": "糖尿病の診断基準で正しいのはどれか。", "opts": ["HbA1c 6.5％以上", "随時血糖値 126 mg/dL以上", "空腹時血糖値110mg/dL以上", "75g経口ブドウ糖負荷試験で1時間後血糖値200mg/dL以上"], "ans": 0, "essential": false}, {"q": "関節リウマチで誤っているのはどれか。", "opts": ["背部痛が朝方に生じる。", "女性に多い。", "中手指節関節に好発する。", "関節炎は左右対称に起きる。"], "ans": 0, "essential": false}, {"q": "ネフローゼ症候群の所見で誤っているのはどれか。", "opts": ["低コレステロール血症", "浮　腫", "尿蛋白陽性", "血清総蛋白低下"], "ans": 0, "essential": false}, {"q": "腎前性急性腎障害(AKI)の原因となるのはどれか。", "opts": ["脱　水", "尿管結石", "急速進行性糸球体腎炎", "非ステロイド性抗炎症薬"], "ans": 0, "essential": false}, {"q": "心房細動と診断されている患者が施術中に突然失語となった。最も考えられるのはどれか。", "opts": ["脳塞栓", "アテローム血栓性脳梗塞", "くも膜下出血", "ラクナ梗塞"], "ans": 0, "essential": false}, {"q": "熱中症の治療で補給するのに適切なのはどれか。", "opts": ["水分と塩分", "塩分のみ", "糖分のみ", "水分と糖分"], "ans": 0, "essential": false}, {"q": "40歳の女性。1か月前から動悸と手の震えがあり、10日前からしゃがんだときに手すりをつかまないと立ち上がりにくくなった。脈拍 112 拍/分・整、頸部の腫大と眼球突出がある。考えられる診断はどれか。", "opts": ["バセドウ (Basedow) 病", "橋本病", "原発性アルドステロン症", "パーキンソン (Parkinson)病"], "ans": 0, "essential": false}, {"q": "76歳の男性。1年前から、直前の食事の内容が思い出せないことや物をよく失くしてしまうこと、慣れていない道で迷ってしまうようになったことを家族から指摘されている。物取られ妄想もみられた。この患者でみられるのはどれか。", "opts": ["質問に答えるときに、一緒にいる家族のほうをその都度振り返って確認する。", "動作が緩慢で転倒しやすい。", "他人に対して遠慮ができず暴力をふるう。", "自分の部屋に黒い服を着た人が立って、じっと自分を見ていると訴える。"], "ans": 0, "essential": false}, {"q": "スポーツ心臟にみられるのはどれか。", "opts": ["徐　脈", "頻　脈", "速　脈", "遅　脈"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["振動覚─────脊髄後索", "顔面痛覚────顔面神経", "小指痛覚────正中神経", "2点識別覚────前頭葉"], "ans": 0, "essential": false}, {"q": "食道癌の危険因子でないのはどれか。", "opts": ["ノロウイルス感染", "喫　煙", "アルコール摂取", "熱い食物の摂取"], "ans": 0, "essential": false}, {"q": "ウイルス性肝炎で正しいのはどれか。", "opts": ["HBs抗体陽性はＢ型肝炎の既往を示す。", "Ａ型肝炎の60〜70％は慢性化する。", "HBe 抗原陽性は感染性が弱い。", "Ｃ型肝炎は慢性化することはない。"], "ans": 0, "essential": false}, {"q": "気管支喘息で正しいのはどれか。", "opts": ["気道感染は発作を誘発する。", "喘息発作は日中に多い。", "吸気性の呼吸困難がみられる。", "重症発作では腹臥位姿勢をとる。"], "ans": 0, "essential": false}, {"q": "急性心筋梗塞の合併症で誤っているのはどれか。", "opts": ["心肥大", "心室中隔穿孔", "心室細動", "心不全"], "ans": 0, "essential": false}, {"q": "貧血で正しいのはどれか。", "opts": ["単位容積当たりのヘモグロビン量が減少した状態をさす。", "成人女性でヘモグロビン濃度 13g/dLであれば貧血である。", "易感染性を示す。", "徐脈をきたす。"], "ans": 0, "essential": false}, {"q": "尿崩症で分泌異常がみられるのはどれか。", "opts": ["バソプレッシン", "エストロゲン", "コルチゾール", "テストステロン"], "ans": 0, "essential": false}, {"q": "関節リウマチで正しいのはどれか。", "opts": ["滑膜に炎症が起こる。", "男性に多い。", "高熱をきたす。", "遠位指節間関節に好発する。"], "ans": 0, "essential": false}, {"q": "強皮症で誤っているのはどれか。", "opts": ["蝶形紅斑がみられる。", "嚥下障害がみられる。", "手指の浮腫がみられる。", "喀痰を伴わない咳嗽がみられる。"], "ans": 0, "essential": false}, {"q": "パーキンソン(Parkinson)病の症状はどれか。", "opts": ["姿勢反射障害", "痙　縮", "企図振戦", "線維束収縮"], "ans": 0, "essential": false}, {"q": "筋萎縮性側索硬化症で現れるのはどれか。", "opts": ["呼吸筋麻痺", "褥　瘡", "感覚障害", "直腸膀胱障害"], "ans": 0, "essential": false}, {"q": "熱中症の症状でないのはどれか。", "opts": ["項部硬直", "頭　痛", "めまい", "意識障害"], "ans": 0, "essential": false}, {"q": "梅毒で正しいのはどれか。", "opts": ["晩期梅毒では中枢神経症状を呈する。", "クラミジア感染症である。", "飛沫感染によって伝播する。", "硬性下疳が消退すれば治療の必要はない。"], "ans": 0, "essential": false}, {"q": "76歳の女性。大腿骨頸部骨折の手術後、離床を開始した直後に突然の胸痛と呼吸困難を訴えた。経皮的酸素飽和度は88％と低下し、頻脈、頻呼吸がみられた。最も考えられるのはどれか。", "opts": ["肺血栓塞栓症", "気管支喘息", "心房細動", "肺　炎"], "ans": 0, "essential": false}, {"q": "66歳の男性。3か月前から四肢脱力を生じ、階段昇降や座位から立ち上がることが困難となった。手指関節伸側に落屑を伴う紅斑を認める。血液検査で筋原性酵素の上昇と炎症反応の陽性がみられた。この患者で注意すべき合併症はどれか。", "opts": ["悪性腫瘍", "貧　血", "前立腺肥大", "甲状腺機能亢進"], "ans": 0, "essential": false}, {"q": "頭痛で受診した患者の医療面接で開かれた質問はどれか。", "opts": ["どんな頭痛ですか。", "いつからですか。", "ズキンズキンしますか。", "音がうるさく感じませんか。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["悪液質は予後不良の徴候である。", "アジソン (Addison) 病では浮腫性肥満がみられる。", "甲状腺機能低下症では著しいやせがみられる。", "単純性肥満は肥満全体に占める割合が低い。"], "ans": 0, "essential": false}, {"q": "小脳疾患による失調性歩行の症状はどれか。", "opts": ["不安定で動揺しながら足を広げて歩く。", "すり足で歩く。", "足を高く上げて足先を引きずるように歩く。", "下肢は伸展したままで外方へ円を描くようにして前進する。"], "ans": 0, "essential": false}, {"q": "打診時に清音が開こえるのはどれか。", "opts": ["肺", "心　臟", "肝　臓", "腸"], "ans": 0, "essential": false}, {"q": "リンパ節腫脹をきたさないのはどれか。", "opts": ["心筋梗塞", "結　核", "悪性腫瘍", "伝染性単核症"], "ans": 0, "essential": false}, {"q": "身体の診察で最初に行うのはどれか。", "opts": ["視　診", "触　診", "打　診", "聴　診"], "ans": 0, "essential": false}, {"q": "原因と姿勢の組合せで正しいのはどれか。", "opts": ["破傷風────────────後弓反張", "髄膜炎────────────前かがみ姿勢", "脳血管障害──────────脊柱後弯姿勢", "パーキンソン(Parkinson)病 ──マン・ウェルニッケ姿勢"], "ans": 0, "essential": false}, {"q": "Japan Coma Scale で10と記載される状態はどれか。", "opts": ["普通の呼びかけで容易に開眼する。", "見当識障害がある。", "自分の名前、生年月日が言えない。", "大きな声または体の揺さぶりで開眼する。"], "ans": 0, "essential": false}, {"q": "腸管にガスが貯留しているときの打診音はどれか。", "opts": ["鼓　音", "清　音", "濁　音", "摩擦音"], "ans": 0, "essential": false}, {"q": "体温が最も高い部位はどれか。", "opts": ["直腸内", "腋　窩", "口腔内", "前額部"], "ans": 0, "essential": false}, {"q": "アキレス腱反射が減弱するのはどれか。", "opts": ["ギラン・バレー (Guillain-Barre)症候群", "脳梗塞", "多発性硬化症", "変形性頸椎症"], "ans": 0, "essential": false}, {"q": "十二指腸潰瘍でみられるのはどれか。", "opts": ["ヘリコバクター・ピロリ菌感染", "嚥下困難", "食後の上腹部痛", "鮮血を伴う下痢便"], "ans": 0, "essential": false}, {"q": "肺癌で誤っているのはどれか。", "opts": ["好発年齢は40〜50歳代である。", "男性に多い。", "腫瘍マーカーは診断の補助として用いる。", "治療に免疫チェックポイント阻害薬が使われる。"], "ans": 0, "essential": false}, {"q": "肥満を呈するのはどれか。", "opts": ["クッシング (Cushing)症候群", "アジソン(Addison)病", "褐色細胞腫", "先端巨大症"], "ans": 0, "essential": false}, {"q": "高血圧症で正しいのはどれか。", "opts": ["拡張期血圧が90mmHg以上は高血圧である。", "収縮期血圧が120mmHg以上は高血圧である。", "家庭血圧は診察室血圧よりも高くなりやすい。", "本態性高血圧症は高血圧患者の40％以下である。"], "ans": 0, "essential": false}, {"q": "閉塞性動脈硬化症でみられるのはどれか。", "opts": ["間欠性跛行", "アヒル歩行", "失調性歩行", "分回し歩行"], "ans": 0, "essential": false}, {"q": "出血傾向がみられないのはどれか。", "opts": ["鉄欠乏性貧血", "血友病", "再生不良性貧血", "特発性血小板減少性紫斑病"], "ans": 0, "essential": false}, {"q": "巨赤芽球性貧血の原因になるのはどれか。", "opts": ["胃全摘出術", "胆嚢摘出術", "虫垂切除術", "結腸切除術"], "ans": 0, "essential": false}, {"q": "2型糖尿病の治療で合併症予防のためのHbA1cの目標値はどれか。", "opts": ["7.0％未満", "6.0％未満", "8.0％未満", "6.5％未満"], "ans": 0, "essential": false}, {"q": "関節リウマチで正しいのはどれか。", "opts": ["朝方に関節のこわばりが強い。", "腰痛をきたす。", "骨棘形成がみられる。", "遠位指節関節に好発する。"], "ans": 0, "essential": false}, {"q": "全身性エリテマトーデスで誤っているのはどれか。", "opts": ["60代の女性に好発する。", "高熱をきたす。", "顔面の紅斑がみられる。", "臓器障害は腎臓に多い。"], "ans": 0, "essential": false}, {"q": "デュシェンヌ (Duchenne) 型筋ジストロフィー患者が歩行不能となる年齢はどれか。", "opts": ["10歳", "3歳", "20歳", "30歳"], "ans": 0, "essential": false}, {"q": "日本神経救急学会の熱中症新分類 (1998年)でII度に分類されるのはどれか。", "opts": ["頭　痛", "筋肉痛", "めまい", "けいれん発作"], "ans": 0, "essential": false}, {"q": "梅毒で正しいのはどれか。", "opts": ["硬性下疳は無治療でも自然消退する。", "扁平コンジローマは口腔周囲に好発する。", "バラ疹は晩期梅毒の症状である。", "母親から垂直感染はしない。"], "ans": 0, "essential": false}, {"q": "40歳の男性。40.3℃の発熱、強い呼吸困難、右胸の痛みと咳を訴えて来院した。5日前から感冒症状があり、発熱とのどの痛み、咳、痰が続いている。尿検査で肺炎球菌抗原陽性であった。低値を示すのはどれか。", "opts": ["血中酸素飽和度", "赤　沈", "呼吸数", "末梢血好中球数"], "ans": 0, "essential": false}, {"q": "70歳の男性。30分前から続く激しい胸の痛みと冷や汗を訴えている。2週前から歩くときに胸の痛みを感じたが、休むと治るので放置していた。高血圧症、糖尿病、脂質異常症にて近医に通院中である。喫煙歴がある。皮膚に異常はない。疑われるのはどれか。", "opts": ["心筋梗塞", "胆嚢炎", "帯状疱疹", "尿路結石"], "ans": 0, "essential": false},{"q": "急性の意識障害患者にまず行うのはどれか。", "opts": ["生命徴候観察","触　診","打　診","腱反射"], "ans": 0, "essential": false},{"q": "重症うっ血性心不全でみられる姿勢はどれか。", "opts": ["起坐位","仰臥位","エビ姿勢","後弓反張"], "ans": 0, "essential": false},{"q": "ジャパン・コーマ・スケール(JCS)で100に相当するのはどれか。", "opts": ["痛み刺激に対し、払いのけるような動作をする。","だいたい意識清明だが、もうひとつはっきりしない。","普通の呼びかけで容易に開眼する。","痛み刺激に全く反応しない。"], "ans": 0, "essential": false},{"q": "進行性筋ジストロフィーでみられるのはどれか。", "opts": ["アヒル歩行","突進歩行","間欠性跛行","失調性歩行"], "ans": 0, "essential": false},{"q": "脛骨神経麻痺でみられる変形はどれか。", "opts": ["踵　足","尖　足","外反足","内反足"], "ans": 0, "essential": false},{"q": "肺胞呼吸音が生ずる部位はどれか。", "opts": ["細気管支 ","声　帯 ","気　管 ","気管支 "], "ans": 0, "essential": false},{"q": "皮膚や皮下の腫瘤の触診で悪性を疑う所見はどれか。", "opts": ["表面が不整である。","柔らかい。","圧痛がある。","可動性がある。"], "ans": 0, "essential": false},{"q": "糖尿病性ケトアシドーシスによる昏睡でみられるのはどれか。", "opts": ["クスマウル呼吸","チェーン・ストークス呼吸","ビオー呼吸","奇異呼吸"], "ans": 0, "essential": false},{"q": "深部感覚はどれか。", "opts": ["振動覚","触　覚","温度覚","2点識別覚"], "ans": 0, "essential": false},{"q": "食道静脈瘤をきたすのはどれか。", "opts": ["肝硬変","食道炎","食道癌","胃・十二指腸潰瘍"], "ans": 0, "essential": false},{"q": "急性膵炎の原因とならないのはどれか。", "opts": ["胆嚢ポリープ","自己免疫","アルコール多飲","胆石・総胆管結石"], "ans": 0, "essential": false},{"q": "慢性閉塞性肺疾患(COPD)で正しいのはどれか。", "opts": ["喫煙が原因となる。","漏斗胸を呈する。","吸気が延長する。","聴診で呼吸音が増強する。"], "ans": 0, "essential": false},{"q": "自然気胸で正しいのはどれか。", "opts": ["突然の胸痛で発症する。","喘鳴を伴う。","呼吸音が増強する。","胸水が貯留する。"], "ans": 0, "essential": false},{"q": "閉塞性動脈硬化症で誤っているのはどれか。", "opts": ["下肢の血圧が上昇する。","下肢の動脈に狭窄を生じる。","歩行時に下肢痛が生じる。","フォンテイン分類を用いる。"], "ans": 0, "essential": false},{"q": "鉄欠乏性貧血に特徴的なのはどれか。", "opts": ["異食症 ","振動覚異常 ","舌乳頭萎縮 ","皮下粘膜出血 "], "ans": 0, "essential": false},{"q": "慢性骨髄性白血病の原因はどれか。", "opts": ["遺伝子異常 ","代謝異常 ","免疫異常 ","ウイルス感染 "], "ans": 0, "essential": false},{"q": "痛風発作の好発部位はどれか。", "opts": ["第1中足趾節関節 ","足関節 ","膝関節 ","第1中手指節関節 "], "ans": 0, "essential": false},{"q": "疾患と症状の組合せで正しいのはどれか。", "opts": ["強皮症──────────嚥下障害","ベーチェット(Behçet)病──筋　痛","関節リウマチ───────外陰部潰瘍","多発性筋炎────────皮膚硬化"], "ans": 0, "essential": false},{"q": "尿路結石で最も多いのはどれか。", "opts": ["カルシウム結石","アンモニウム結石","シスチン結石","尿酸結石"], "ans": 0, "essential": false},{"q": "パーキンソン(Parkinson)病に特徴的なのはどれか。", "opts": ["安静時振戦 ","姿勢時振戦 ","睡眠時振戦 ","動作時振戦 "], "ans": 0, "essential": false},{"q": "40歳の女性。頸椎捻挫の施術中に前頸部の腫れに気が付いた。本人から話を聞いたところ、半年ほど前から仕事をする気力がなくなり、3か月ほど前から皮膚の乾燥と便秘が続いており、寒がりになっているとのことであった。脈拍は46/分・整。下腿前面に指圧痕の残らない浮腫がみられる。考えられるのはどれか。", "opts": ["橋本病 ","うつ病 ","心不全 ","バセドウ(Basedow)病 "], "ans": 0, "essential": false},{"q": "28歳の女性。3か月前から夕方になると瞼が重く、開けづらく感じた。1か月前から疲れると物が二重に見えるようになった。硬いものを噛んでいると顎が疲れて動かなくなるので、休みながら食事をしている。 この患者でみられるのはどれか。", "opts": ["反復運動での症状の増悪 ","振　戦 ","ロンベルグ徴候 ","バビンスキー反射 "], "ans": 0, "essential": false}];
+
+let questions = [], current = 0, selected = null, results = [], optMap = [], shuffleOpts = true;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const numVal = parseInt(document.getElementById('selectNum').value);
+  const isRandom = document.getElementById('selectOrder').value === '1';
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  let pool = [...ALL_DATA];
+  if (isRandom) pool = shuffle(pool);
+  questions = numVal === 0 ? pool : pool.slice(0, numVal);
+  current = 0; results = [];
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current];
+  const total = questions.length;
+  document.getElementById('progressBar').style.width = (current / total * 100) + '%';
+  document.getElementById('headerSub').textContent = `${current + 1} / ${total} 問`;
+  document.getElementById('qNum').textContent = `問${current + 1}`;
+  document.getElementById('qText').textContent = q.q;
+  const badge = document.getElementById('qBadge');
+  badge.style.display = q.essential ? 'inline-block' : 'none';
+
+  let indices = [0, 1, 2, 3];
+  if (shuffleOpts) indices = shuffle(indices);
+  optMap = indices;
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  const labels = ['ア', 'イ', 'ウ', 'エ'];
+  indices.forEach((origIdx, dispIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[dispIdx]}</span><span class="opt-text">${q.opts[origIdx]}</span>`;
+    btn.onclick = () => selectOption(dispIdx, origIdx, q.ans);
+    grid.appendChild(btn);
+  });
+
+  selected = null;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('btnNext').disabled = true;
+  document.getElementById('btnNext').textContent = current < questions.length - 1 ? '次の問題 →' : '結果を見る';
+}
+
+function selectOption(dispIdx, origIdx, ans) {
+  if (selected !== null) return;
+  selected = origIdx;
+  const btns = document.querySelectorAll('.opt-btn');
+  const isCorrect = origIdx === ans;
+  btns.forEach((btn, i) => {
+    btn.onclick = null;
+    if (optMap[i] === ans) btn.classList.add('correct');
+    if (i === dispIdx && !isCorrect) btn.classList.add('wrong');
+    if (i === dispIdx && isCorrect) btn.classList.add('correct');
+  });
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'ng');
+  fb.innerHTML = isCorrect ? '✅ 正解！' : `❌ 不正解　正解：${questions[current].opts[ans]}`;
+  results.push({ q: questions[current], chosen: origIdx, correct: isCorrect });
+  recordAnswer(questions[current], isCorrect);
+  document.getElementById('btnNext').disabled = false;
+  if (navigator.vibrate) navigator.vibrate(isCorrect ? 30 : [50, 30, 50]);
+}
+
+function nextQuestion() {
+  if (selected === null) return;
+  current++;
+  if (current >= questions.length) { showResult(); } else { showQuestion(); }
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  document.getElementById('progressBar').style.width = '100%';
+  const total = results.length;
+  const correct = results.filter(r => r.correct).length;
+  const score = Math.round(correct / total * 100);
+  saveSession(total, correct, score);
+  setTimeout(refreshWeakBtn, 100);
+  document.getElementById('resultScore').innerHTML = `${score}<span>点</span>`;
+  document.getElementById('resultDetail').textContent = `${total}問中 ${correct}問正解`;
+  document.getElementById('headerSub').textContent = '結果';
+  let emoji = '😢', msg = 'もう少し頑張りましょう！';
+  if (score >= 60) { emoji = '🙂'; msg = '合格ライン到達！'; }
+  if (score >= 80) { emoji = '😊'; msg = 'よくできました！'; }
+  if (score === 100) { emoji = '🎉'; msg = 'Perfect!! おめでとう！'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultMsg').textContent = msg;
+  setTimeout(() => { document.getElementById('scoreBar').style.width = score + '%'; }, 100);
+  const wrongCount = results.filter(r => !r.correct).length;
+  const btnRetry = document.getElementById('btnRetry');
+  btnRetry.style.display = wrongCount > 0 ? 'block' : 'none';
+  btnRetry.textContent = `間違えた${wrongCount}問をやり直す`;
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (r.correct ? 'correct-item' : 'wrong-item');
+    div.innerHTML = `
+      <div class="review-q">問${i+1}：${r.q.q}</div>
+      <div class="review-ans">
+        ${r.correct
+          ? `<span class="label-correct">✅ 正解：${r.q.opts[r.q.ans]}</span>`
+          : `<span class="label-wrong">❌ あなた：${r.q.opts[r.chosen]}</span>　正解：<span class="label-correct">${r.q.opts[r.q.ans]}</span>`
+        }
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function retryWrong() {
+  const wrongItems = results.filter(r => !r.correct).map(r => r.q);
+  if (wrongItems.length === 0) return;
+  questions = wrongItems; current = 0; results = [];
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function backToStart() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('headerSub').textContent = '第14回〜第33回 国家試験問題';
+}
+
+
+
+// ===== 苦手問題・成績履歴機能 =====
+var SKEY = (document.title || '').replace(/（第\d+回〜第\d+回）/, '').trim();
+var sessionStart = null;
+var weakData = {};
+var historyData = [];
+
+function loadData() {
+  try {
+    var w = localStorage.getItem('wk_' + SKEY);
+    var h = localStorage.getItem('hs_' + SKEY);
+    weakData    = w ? JSON.parse(w) : {};
+    historyData = h ? JSON.parse(h) : [];
+  } catch(e) { weakData = {}; historyData = []; }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('wk_' + SKEY, JSON.stringify(weakData));
+    localStorage.setItem('hs_' + SKEY, JSON.stringify(historyData));
+  } catch(e) {}
+}
+
+function getWeakList() {
+  return ALL_DATA.filter(function(q, i) {
+    var d = weakData[String(i)];
+    if (!d) return false;
+    var t = d.c + d.w;
+    return t >= 2 && (d.c / t) < 0.5;
+  });
+}
+
+function refreshWeakBtn() {
+  var btn = document.getElementById('btnWeak');
+  if (!btn) return;
+  var wl = getWeakList();
+  if (wl.length === 0) {
+    btn.textContent = '⚡ 苦手問題なし（まず通常クイズを解いてください）';
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+  } else {
+    btn.textContent = '⚡ 苦手問題だけ出題する（' + wl.length + '問）';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+}
+
+function doStartQuiz() {
+  sessionStart = Date.now();
+  startQuiz();
+}
+
+function doStartWeak() {
+  var wl = getWeakList();
+  if (wl.length === 0) { alert('苦手問題がありません。まず通常クイズを解いてください。'); return; }
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  questions = wl;
+  current = 0; results = [];
+  sessionStart = Date.now();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function recordAnswer(qObj, isCorrect) {
+  var i = String(ALL_DATA.indexOf(qObj));
+  if (i === '-1') return;
+  if (!weakData[i]) weakData[i] = { c: 0, w: 0 };
+  if (isCorrect) weakData[i].c++; else weakData[i].w++;
+  saveData();
+}
+
+function saveSession(total, correct, score) {
+  var mins = sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart) / 60000)) : 0;
+  var now = new Date();
+  var d = now.getFullYear() + '/' +
+    String(now.getMonth()+1).padStart(2,'0') + '/' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  historyData.unshift({ date: d, score: score, total: total, correct: correct, mins: mins });
+  if (historyData.length > 50) historyData.length = 50;
+  saveData();
+  sessionStart = null;
+}
+
+function openHistory() {
+  loadData();
+  var n  = historyData.length;
+  var tq = historyData.reduce(function(a,b){ return a+b.total; }, 0);
+  var as = n ? Math.round(historyData.reduce(function(a,b){ return a+b.score; }, 0) / n) : 0;
+  var tt = historyData.reduce(function(a,b){ return a+(b.mins||0); }, 0);
+  var wl = getWeakList();
+  document.getElementById('hSessions').textContent   = n;
+  document.getElementById('hQuestions').textContent  = tq;
+  document.getElementById('hAvgScore').textContent   = as + '%';
+  document.getElementById('hTime').textContent       = tt + '分';
+  document.getElementById('hWeakCount').textContent  = wl.length + '問';
+  var list = document.getElementById('hSessionList');
+  list.innerHTML = n === 0
+    ? '<div style="color:#718096;font-size:13px;text-align:center;padding:20px">まだ履歴がありません</div>'
+    : historyData.map(function(h){
+        return '<div class="hist-row"><div>' +
+          '<div style="font-weight:600">' + h.correct + '/' + h.total + '問正解　' + (h.mins||0) + '分</div>' +
+          '<div class="hist-date">' + h.date + '</div></div>' +
+          '<div class="hist-score">' + h.score + '点</div></div>';
+      }).join('');
+  document.getElementById('historyPanel').classList.add('show');
+}
+
+// ===== イベント登録（iOS Safari対応）=====
+window.addEventListener('load', function() {
+  loadData();
+  refreshWeakBtn();
+
+  function tap(id, fn) {
+    var el = typeof id === 'string' ? document.getElementById(id) : id;
+    if (!el) return;
+    el.addEventListener('click', fn);
+    el.addEventListener('touchend', function(e){ e.preventDefault(); fn(); });
+  }
+
+  tap('btnStart',    doStartQuiz);
+  tap('btnWeak',     doStartWeak);
+  tap('btnNext',     nextQuestion);
+  tap('btnRetry',    function(){ sessionStart = Date.now(); retryWrong(); });
+  tap('btnRestart', backToStart);
+  tap('historyBtn',  openHistory);
+  tap('historyClose', function(){ document.getElementById('historyPanel').classList.remove('show'); });
+  tap('btnClear', function(){
+    if (confirm('履歴と苦手データをすべてリセットしますか？')) {
+      weakData = {}; historyData = [];
+      saveData(); openHistory(); refreshWeakBtn();
+    }
+  });
+  var panel = document.getElementById('historyPanel');
+  if (panel) panel.addEventListener('click', function(e){ if(e.target===panel) panel.classList.remove('show'); });
+});
+</script>
+
+<button class="history-btn" id="historyBtn">📊</button>
+<div class="history-panel" id="historyPanel">
+  <div class="history-inner">
+    <div class="history-header">
+      <h2>📊 成績・履歴</h2>
+      <button class="history-close" id="historyClose">✕</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="hSessions">0</div><div class="stat-label">総セッション数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hQuestions">0</div><div class="stat-label">総解答問題数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hAvgScore">0%</div><div class="stat-label">平均正答率</div></div>
+      <div class="stat-card"><div class="stat-val" id="hTime">0分</div><div class="stat-label">総学習時間</div></div>
+    </div>
+    <div class="weak-stat">
+      <div class="weak-count" id="hWeakCount">0問</div>
+      <div style="font-size:13px;color:#e65100;margin-top:4px;">苦手問題数（正答率50%未満・2回以上解いた問題）</div>
+    </div>
+    <div class="hist-section-title">📅 セッション履歴（最新50件）</div>
+    <div id="hSessionList"></div>
+    <button class="btn-clear" id="btnClear">🗑 履歴・苦手データをリセット</button>
+  </div>
+</div>
+</body>
+</html>
