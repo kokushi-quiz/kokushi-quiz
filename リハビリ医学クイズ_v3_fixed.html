@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>リハビリ医学クイズ（第14回〜第34回）</title>
+<style>
+  :root {
+    --primary: #d4720a;
+    --primary-light: #fef4e8;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --bg: #fdf6ee;
+    --card: #ffffff;
+    --text: #1a202c;
+    --text-sub: #718096;
+    --border: #e2e8f0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 14px;
+    --option-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; color: var(--text); }
+
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 14px 16px 10px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .progress-bar-wrap { height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin-top: 10px; }
+  .progress-bar { height: 100%; background: #ffd700; border-radius: 2px; transition: width 0.4s ease; }
+
+  #startScreen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 80px); padding: 24px;
+  }
+  .start-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 32px 24px; width: 100%; max-width: 420px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .start-icon { font-size: 56px; margin-bottom: 16px; }
+  .start-card h2 { font-size: 22px; color: var(--primary); margin-bottom: 8px; }
+  .start-card p { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px 14px; background: var(--bg); border-radius: 10px; }
+  .setting-label { font-size: 14px; font-weight: 600; }
+  .setting-row select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--border); background: white; color: var(--text); appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+  .btn-start {
+    width: 100%; padding: 16px; font-size: 18px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; letter-spacing: 1px; margin-top: 8px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 14px rgba(212,114,10,0.4);
+  }
+  .btn-start:active { transform: scale(0.97); }
+
+  #quizScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .q-num { background: var(--primary); color: white; font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .q-badge-hissu { background: #ff9500; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .q-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .q-text { font-size: 17px; line-height: 1.65; font-weight: 600; }
+  .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .opt-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; cursor: pointer;
+    font-size: 15px; line-height: 1.4; text-align: left;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    min-height: var(--option-h);
+    box-shadow: var(--shadow);
+    -webkit-user-select: none; user-select: none;
+  }
+  .opt-btn:active { transform: scale(0.98); }
+  .opt-btn.selected { border-color: var(--primary); background: var(--primary-light); }
+  .opt-btn.correct { border-color: var(--correct); background: #eafaf1; }
+  .opt-btn.wrong { border-color: var(--wrong); background: #fdecea; }
+  .opt-label {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%; background: var(--border); font-weight: 700; font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .opt-btn.selected .opt-label { background: var(--primary); color: white; }
+  .opt-btn.correct .opt-label { background: var(--correct); color: white; }
+  .opt-btn.wrong .opt-label { background: var(--wrong); color: white; }
+  .opt-text { flex: 1; }
+
+  .feedback { display: none; padding: 14px 16px; border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 15px; align-items: center; gap: 10px; }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: #eafaf1; color: var(--correct); border: 1.5px solid var(--correct); }
+  .feedback.ng { background: #fdecea; color: var(--wrong); border: 1.5px solid var(--wrong); }
+
+  .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .btn-next {
+    flex: 1; padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; transition: transform 0.1s;
+    box-shadow: 0 4px 14px rgba(212,114,10,0.35);
+  }
+  .btn-next:active { transform: scale(0.97); }
+  .btn-next:disabled { background: var(--border); color: var(--text-sub); box-shadow: none; }
+
+  #resultScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .result-hero {
+    background: var(--card); border-radius: var(--radius); padding: 32px 24px;
+    text-align: center; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 12px; }
+  .result-score { font-size: 56px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .result-score span { font-size: 24px; font-weight: 400; }
+  .result-msg { font-size: 17px; font-weight: 600; color: var(--text); margin: 10px 0; }
+  .result-detail { font-size: 14px; color: var(--text-sub); margin-bottom: 4px; }
+  .score-bar-wrap { background: var(--bg); border-radius: 8px; height: 12px; margin: 14px 0; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--primary), #f0a44a); transition: width 0.8s ease; }
+  .btn-retry, .btn-restart {
+    width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px;
+    transition: transform 0.1s;
+  }
+  .btn-retry { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(212,114,10,0.35); }
+  .btn-restart { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-retry:active, .btn-restart:active { transform: scale(0.97); }
+  .review-section { margin-top: 8px; }
+  .review-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
+  .review-item { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid var(--border); }
+  .review-item.wrong-item { border-left-color: var(--wrong); }
+  .review-item.correct-item { border-left-color: var(--correct); }
+  .review-q { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .review-ans { font-size: 13px; color: var(--text-sub); }
+  .review-ans .label-correct { color: var(--correct); font-weight: 700; }
+  .review-ans .label-wrong { color: var(--wrong); font-weight: 700; }
+
+  .btn-weak {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
+    background: #fff3e0; color: #e65100; border: 2px solid #ffb74d;
+    border-radius: 12px; cursor: pointer; margin-top: 10px;
+    -webkit-user-select: none; user-select: none; display: block; text-align: center;
+  }
+  .btn-weak:active { transform: scale(0.97); }
+  .history-btn {
+    position: fixed; bottom: 24px; right: 20px; z-index: 200;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--primary); color: white; border: none;
+    font-size: 22px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .history-panel {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.55); overflow-y: auto;
+  }
+  .history-panel.show { display: block; }
+  .history-inner {
+    background: white; border-radius: 16px 16px 0 0;
+    padding: 24px 16px 60px; margin-top: 60px;
+    min-height: calc(100vh - 60px);
+  }
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .history-header h2 { font-size: 18px; font-weight: 700; }
+  .history-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f0f0f0; border: none; font-size: 18px; cursor: pointer;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: #f8f9fa; border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+  .stat-label { font-size: 11px; color: #718096; margin-top: 2px; }
+  .weak-stat { background: #fff3e0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .weak-count { font-size: 24px; font-weight: 800; color: #e65100; }
+  .hist-section-title { font-size: 13px; font-weight: 700; color: #718096; margin: 16px 0 10px; }
+  .hist-row {
+    background: #f8f9fa; border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 8px; font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .hist-score { font-weight: 800; font-size: 18px; color: var(--primary); }
+  .hist-date { color: #718096; font-size: 12px; }
+  .btn-clear {
+    width: 100%; padding: 12px; font-size: 13px;
+    background: white; color: #e74c3c; border: 1.5px solid #e74c3c;
+    border-radius: 10px; cursor: pointer; margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>♿ リハビリ医学クイズ</h1>
+  <div class="header-sub" id="headerSub">第14回〜第33回 国家試験問題</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+</div>
+
+<div id="startScreen">
+  <div class="start-card">
+    <div class="start-icon">♿</div>
+    <h2>リハビリ医学クイズ</h2>
+    <p>国家試験（第14回〜第34回）から<br>出題されたリハビリ医学問題を学習しましょう。<br>全<strong>254問</strong>収録</p>
+    <div class="setting-row">
+      <span class="setting-label">出題数</span>
+      <select id="selectNum">
+        <option value="10">10問</option>
+        <option value="20">20問</option>
+        <option value="30" selected>30問</option>
+        <option value="50">50問</option>
+        <option value="100">100問</option>
+        <option value="0">全問（254問）</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">出題順</span>
+      <select id="selectOrder">
+        <option value="1" selected>ランダム</option>
+        <option value="0">番号順</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">選択肢順</span>
+      <select id="selectShuffle">
+        <option value="1" selected>ランダム</option>
+        <option value="0">固定</option>
+      </select>
+    </div>
+    <button class="btn-start" id="btnStart">スタート ▶</button>
+    <button class="btn-weak" id="btnWeak">⚡ 苦手問題だけ出題する</button>
+  </div>
+</div>
+
+<div id="quizScreen">
+  <div class="q-meta">
+    <span class="q-num" id="qNum">問1</span>
+    <span class="q-badge-hissu" id="qBadge" style="display:none">必修</span>
+  </div>
+  <div class="q-card">
+    <p class="q-text" id="qText"></p>
+  </div>
+  <div class="options-grid" id="optionsGrid"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="action-row">
+    <button class="btn-next" id="btnNext" disabled>次の問題 →</button>
+  </div>
+</div>
+
+<div id="resultScreen">
+  <div class="result-hero">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-score" id="resultScore">0<span>点</span></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="score-bar-wrap"><div class="score-bar" id="scoreBar" style="width:0%"></div></div>
+  </div>
+  <button class="btn-retry" id="btnRetry">間違えた問題をやり直す</button>
+  <button class="btn-restart" id="btnRestart">トップへ戻る</button>
+  <div class="review-section">
+    <div class="review-title">📝 解答一覧</div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<script>
+const ALL_DATA = [{"q": "補助具の目的で適切でないのはどれか。", "opts": ["麻痺の回復", "変形の矯正", "局所の免荷", "機能の補助"], "ans": 0, "essential": true}, {"q": "リハビリテーションの考え方で適切でないのはどれか。", "opts": ["疾病が治癒してから開始する。", "障害の原因となる疾病を防ぐ。", "障害を予想し、その軽減を図る。", "生活の質の向上をめざす。"], "ans": 0, "essential": false}, {"q": "職種とその役割との組合せで誤っているのはどれか。", "opts": ["義肢装具士　&#8722;　装具処方", "理学療法士　&#8722;　運動療法", "作業療法士　&#8722;　日常生活活動訓練", "言語聴覚士　&#8722;　嚥下訓練"], "ans": 0, "essential": false}, {"q": "障害の３つのレベルで能力低下に分類されるのはどれか。", "opts": ["歩行困難", "関節拘縮", "失語症", "就労困難"], "ans": 0, "essential": false}, {"q": "肩関節の関節可動域測定で正しいのはどれか。", "opts": ["屈曲は肘関節伸展位で測定する。", "伸展は腹臥位で測定する。", "内外旋の移動軸は上腕骨に一致させる。", "水平屈曲の参考可動域は90度である。"], "ans": 0, "essential": false}, {"q": "温熱療法の局所作用で誤っているのはどれか。", "opts": ["疼痛閾値の低下", "代謝亢進", "血流増加", "筋緊張の緩和"], "ans": 0, "essential": false}, {"q": "間欠牽引療法で誤っているのはどれか。", "opts": ["頸椎牽引の重量の目安は体重の1/2である。", "軟部組織の伸張を目的とする。", "転移性脊椎腫瘍には禁忌である。", "１回の治療時間は10〜20分とする。"], "ans": 0, "essential": false}, {"q": "作業療法の内容で適切でないのはどれか。", "opts": ["職業訓練", "義手訓練", "精神の活性化", "身体機能低下の改善"], "ans": 0, "essential": false}, {"q": "歩行補助具でないのはどれか。", "opts": ["車椅子", "T字つえ", "ロフストランドクラッチ", "歩行器"], "ans": 0, "essential": false}, {"q": "脳卒中片麻痺患者の合併症で生命予後に影響するのはどれか。", "opts": ["深部静脈血栓症", "視床痛", "肩手症候群", "異所性骨化"], "ans": 0, "essential": false}, {"q": "35歳の男性。オートバイ事故により頸髄損傷、完全四肢麻痺となった。頚椎固定術後に早期リハビリテーションを開始したが、座位訓練を行ったところ意識が混濁し、臥位に戻すと回復した。考えられるのはどれか。", "opts": ["起立性低血圧", "自律神経過反射", "不整脈", "痙攣発作"], "ans": 0, "essential": false}, {"q": "アテトーゼ型脳性麻痺の特徴はどれか。", "opts": ["不随意運動", "痙縮", "運動失調", "感覚障害"], "ans": 0, "essential": false}, {"q": "筋力増強訓練について正しいのはどれか。", "opts": ["心肺機能の低下した患者には上肢の等尺性運動は避ける。", "筋持久力を高めるには最大筋力の80％程度の負荷を用いる。", "徒手筋力テストで2の筋には抗重力肢位で自動運動を行わせる。", "等張性筋力増強訓練には特別の訓練機器が必要である。"], "ans": 0, "essential": true}, {"q": "リハビリテーション医学の考え方で正しいのはどれか。", "opts": ["障害を治療対象とする。", "疾病の治癒を治療目標とする。", "安静を治療の基本とする。", "医師が主に治療を行う。"], "ans": 0, "essential": false}, {"q": "能力低下に対するアプローチはどれか。", "opts": ["車いす駆動訓練", "合併症の予防", "住環境整備", "ファシリテーション"], "ans": 0, "essential": false}, {"q": "身体障害者福祉法による身体障害の対象に含まれないのはどれか。", "opts": ["アルツハイマー（Alzheimer）病", "脊髄損傷による対麻痺。", "脳梗塞による失語症。", "ヒト免疫不全ウイルス（ＨＩＶ）による免疫機能障害。"], "ans": 0, "essential": false}, {"q": "身体計測で正しいのはどれか。", "opts": ["前腕長は肘頭から尺骨茎状突起までの距離を測る。", "上肢長は上腕骨大結節から橈骨茎状突起までの距離を測る。", "下肢長は大転子から足関節内果までの距離を測る。", "下肢長は脛骨外側顆から足関節外果までの距離を測る。"], "ans": 0, "essential": false}, {"q": "バーセル指数に含まれない項目はどれか。", "opts": ["コミュニケーション", "食事", "整容", "階段昇降"], "ans": 0, "essential": false}, {"q": "局所への物理療法と適応との組合せで正しいのはどれか。", "opts": ["超音波　　　　　&#8722;　金属内固定部位", "コールドパック　&#8722;　レイノー（Raynaud）病", "極超短波　　　　&#8722;　急性炎症", "ホットパック　　&#8722;　高度血行障害"], "ans": 0, "essential": false}, {"q": "片麻痺患者の上肢機能訓練に用いる作業種目で適切でないものはどれか。", "opts": ["園芸作業", "積み木", "ペグボード", "サンディング"], "ans": 0, "essential": false}, {"q": "78歳の男性。突然の左半身の脱力により救急外来を受診し頭部ＭＲＩ検査にて脳梗塞と診断され、脳卒中ユニットに入院となった。入院後3日目の診察では、意識は清明だが視線は右を向き、左上下肢を動かすよう指示しても自動運動はみられず、痛み刺激でわずかな運動がみられた。正しいのはどれか。", "opts": ["坐位訓練では三角巾で左肩関節亜脱臼を防ぐ。", "出現した運動は共同運動である。", "患者の右側から声をかけ、注意を促す。", "ベッド上では左側臥位を多くとらせる。"], "ans": 0, "essential": false}, {"q": "脊髄損傷患者の褥瘡予防対策として適切でないのはどれか。", "opts": ["夜間副子", "プッシュアップ", "車いすの座クッション", "エアマット"], "ans": 0, "essential": false}, {"q": "Ｃ6頚髄損傷（第6頚髄節機能残存）患者で使える筋はどれか。", "opts": ["三角筋", "上腕三頭筋", "手内筋", "橈側手根屈筋"], "ans": 0, "essential": false}, {"q": "徒手筋力テストの筋力3で正しいのはどれか。", "opts": ["重力に抗して完全に運動できる。", "若干の抵抗に打ち勝って完全に運動できる。", "重力を除くと完全に運動できる。", "わずかな筋収縮はあるが関節は動かない。"], "ans": 0, "essential": true}, {"q": "自立生活の考え方で誤っているのはどれか。", "opts": ["他者に依存せずに生活ができる。", "一定の範囲で社会的役割を果たす。", "自分で意思決定をする。", "自らの生活をコントロールする。"], "ans": 0, "essential": false}, {"q": "下位運動ニューロン障害でみられるのはどれか。", "opts": ["腱反射消失", "連合反応", "共同運動", "痙縮"], "ans": 0, "essential": false}, {"q": "機能障害に対するアプローチはどれか。", "opts": ["関節拘縮に対する関節可動域訓練", "前腕切断に対する能動義手装着", "片麻痺に対する利き手交換", "障害児に対する就学支援"], "ans": 0, "essential": false}, {"q": "関節可動域の測定法で正しいのはどれか。", "opts": ["股関節伸展は腹臥位で行う。", "肩関節屈曲は前腕回外位で行う。", "手関節屈曲は前腕回内位で行う。", "足関節伸展は膝関節伸展位で行う。"], "ans": 0, "essential": false}, {"q": "フレンケル体操が適応となる病態はどれか。", "opts": ["深部感覚障害", "体力低下", "運動麻痺", "関節拘縮"], "ans": 0, "essential": false}, {"q": "熱到達度が最も深いのはどれか。", "opts": ["極超短波", "赤外線", "ホットパック", "パラフィン浴"], "ans": 0, "essential": false}, {"q": "装具の目的で誤っているのはどれか。", "opts": ["麻痺の回復", "体重の支持", "変形の予防", "変形の矯正"], "ans": 0, "essential": false}, {"q": "多発性脳梗塞による仮性球麻痺の症状はどれか。", "opts": ["嚥下障害", "筋固縮", "認知症", "排尿障害"], "ans": 0, "essential": false}, {"q": "脳卒中左片麻痺患者を診たときに留意する症状はどれか。", "opts": ["着衣失行", "失語症", "失読", "観念失行"], "ans": 0, "essential": false}, {"q": "脳卒中左片麻痺患者を診たときに留意する症状はどれか。", "opts": ["半側空間失認", "構成障害", "失語症", "観念失行"], "ans": 0, "essential": false}, {"q": "25歳の男性。4か月前にオートバイ走行中転倒し、頚髄を損傷した。自宅復帰を目指してリハビリテーション専門病院に入院中である。訓練を開始しようとしたところ、頭痛・悪寒を訴えており、顔面には発汗がみられ、徐脈を呈している。数日来便秘が続いていた。考えられる病態はどれか。", "opts": ["自律神経過反射", "起立性低血圧", "脊髄ショック", "うつ熱"], "ans": 0, "essential": false}, {"q": "周産期における脳性麻痺の危険因子でないのはどれか。", "opts": ["バビンスキー反射陽性", "痙攣", "新生児仮死", "哺乳力不足"], "ans": 0, "essential": false}, {"q": "マッサージが禁忌なのはどれか。", "opts": ["深部静脈の血栓", "関節水腫", "皮下組織の癒着", "麻痺筋"], "ans": 0, "essential": false}, {"q": "リハビリテーションの4分野にないのはどれか。", "opts": ["予防的リハビリテーション", "職業的リハビリテーション", "医学的リハビリテーション", "教育的リハビリテーション"], "ans": 0, "essential": false}, {"q": "内部障害はどれか。", "opts": ["呼吸障害", "精神障害", "聴覚障害", "言語障害"], "ans": 0, "essential": false}, {"q": "中枢神経麻痺の特徴はどれか。", "opts": ["表在反射の消失", "腱反射の消失", "筋萎縮が著明", "筋緊張の減退"], "ans": 0, "essential": false}, {"q": "関節可動域測定時の関節運動と基本軸との組合せで誤っているのはどれか。", "opts": ["股屈曲　&#8722;　大転子を通る床への垂直線", "肩屈曲　&#8722;　肩峰を通る床への垂直線", "肘屈曲　&#8722;　上腕骨", "膝屈曲　&#8722;　大腿骨"], "ans": 0, "essential": false}, {"q": "関節可動域測定法で正しいのはどれか。", "opts": ["足関節の伸展は膝関節を屈曲位で行う。", "肘関節の屈曲は前腕を中間位で行う。", "手関節の伸展は前腕を回内位で行う。", "股関節の屈曲は背臥位、膝伸展位で行う。"], "ans": 0, "essential": false}, {"q": "小脳性運動失調の特徴で誤っているのはどれか。", "opts": ["ロンベルグ徴候陽性", "片脚起立困難", "筋トーヌス低下", "反復変換運動障害"], "ans": 0, "essential": false}, {"q": "障害を受容するうえで望ましくないのはどれか。", "opts": ["機能改善をあきらめること。", "現実を認めること。", "患者自身で考えること。", "治療者との信頼関係を築くこと。"], "ans": 0, "essential": false}, {"q": "片麻痺患者の更衣動作訓練で誤っているのはどれか。", "opts": ["健側から袖に手を通す。", "ゆったりした服を用意する。", "服の前後左右の確認を反復訓練する。", "ボタンエイドを利用する。"], "ans": 0, "essential": false}, {"q": "短下肢装具の適応で誤っているのはどれか。", "opts": ["損傷レベルがTh12の脊髄損傷", "総腓骨神経麻痺による下垂足", "脳卒中片麻痺による内反尖足", "下腿以下の手術後の免荷"], "ans": 0, "essential": false}, {"q": "65歳の男性。糖尿病と高血圧の既往がある。2か月前に左被殻出血発症。中等度の右片麻痺と右半身の感覚障害とを認めるが、Ｔ字杖と短下肢装具とで平地介助歩行が可能になっている。3日前から右手指のむくみ、熱感および右肩の痛みが出現している。考えられるのはどれか。", "opts": ["肩手症候群", "視床痛", "深部静脈血栓症", "異所性骨化"], "ans": 0, "essential": false}, {"q": "頚髄損傷の自律神経過反射で誤っているのはどれか。", "opts": ["頻　脈", "高血圧", "頭　痛", "顔面紅潮"], "ans": 0, "essential": false}, {"q": "ADLの評価法はどれか。", "opts": ["バーセル指数", "ヤーの分類", "ブルンストロームのステージ分類", "ランズバリーの評価法"], "ans": 0, "essential": true}, {"q": "総合的リハビリテーションの概念で適切でないのはどれか。", "opts": ["理学療法・作業療法・言語聴覚療法による機能改善プログラム", "医学的・職業的・自立的生活の全領域を含むプログラム", "多専門職による多元的なプログラム", "各年齢の全障害者に対する拡大されたリハビリテーションサービス"], "ans": 0, "essential": false}, {"q": "リハビリテーションにおけるチームアプローチで正しいのはどれか。", "opts": ["評価会議は必要に応じて何回でも開催する。", "個々のメンバーがそれぞれの目標を達成すればよい。", "家族はチームの一員とみなされない。", "最初に決定したゴールは最後まで継続する。"], "ans": 0, "essential": false}, {"q": "疾病・障害レベルとアプローチとの組合せで正しいのはどれか。", "opts": ["能力低下　　　　&#8722;　自助具の作製", "疾病　　　　　　&#8722;　ファシリテーションテクニック", "機能・形態障害　&#8722;　歩行訓練", "社会的不利　　　&#8722;　車いすの操作訓練"], "ans": 0, "essential": false}, {"q": "歩行時のエネルギー消費を少なくする要素で誤っているのはどれか。", "opts": ["遊脚相での膝屈曲", "骨盤の回旋・傾斜", "骨盤の側方移動", "足関節と膝関節の連携"], "ans": 0, "essential": false}, {"q": "上肢筋力増強訓練で高血圧患者への注意が必要なのはどれか。", "opts": ["等尺性訓練", "等張性訓練", "等運動性訓練", "求心性収縮訓練"], "ans": 0, "essential": false}, {"q": "病態と対応との組合せで正しいのはどれか。", "opts": ["拘縮　&#8722;　伸張法", "痙縮　&#8722;　筋力増強訓練", "失調　&#8722;　関節可動域訓練", "褥瘡　&#8722;　良肢位保持"], "ans": 0, "essential": false}, {"q": "物理療法と禁忌との組合せで正しいのはどれか。", "opts": ["極超短波　&#8722;　眼球", "超音波　　&#8722;　体内金属", "渦流浴　　&#8722;　レイノー（Raynaud）病", "紫外線　　&#8722;　褥瘡"], "ans": 0, "essential": false}, {"q": "一般病院の作業療法で実施することが難しいのはどれか。", "opts": ["職業技能の向上", "手指巧緻動作の改善", "自助具の作製", "日常生活機能の向上"], "ans": 0, "essential": false}, {"q": "つえで正しいのはどれか。", "opts": ["松葉づえの長さは身長の3／4程度とする。", "原則として患側下肢と同側の手で持つ。", "長さは接地時に肘が屈曲45°となるようにする。", "ロフストランドつえは上腕支えがある。"], "ans": 0, "essential": false}, {"q": "第7頸髄損傷（第7頸髄節機能残存）の可能な動作で誤っているのはどれか。", "opts": ["長下肢装具での起立保持", "ベッド上での起き上がり", "屋外での車いす走行", "自動車の運転"], "ans": 0, "essential": false}, {"q": "70歳の女性．夫と二人暮らしである．3年前に脳梗塞を発症し、右片麻痺と失語症を呈している．短下肢装具とつえで室内移動は可能であり、日常生活上は夫の介助を必要とすることは少ない．日中はソファーに腰掛け、テレビを見て過ごしていることが多いが、病院への通院やデイサービスへの通所は常に夫が付き添っている．この患者の日常生活自立度はどれか．〔高齢障害者の日常生活自立度表〕", "opts": ["Ａ1", "Ｊ1", "Ｂ2", "Ｃ2"], "ans": 0, "essential": false}, {"q": "脳卒中発症後2週以内に行うことが少ないリハビリテーションプログラムはどれか。〔必〕", "opts": ["高次脳機能訓練", "座位訓練", "機能肢位保持", "他動的関節可動域訓練"], "ans": 0, "essential": false}, {"q": "18歳以上の身体障害者の更生を援助する目的で作られたのはどれか。採点除外", "opts": ["知的障害者福祉法", "身体障害者福祉法", "身体障害者対策基本法", "障害者自立支援法"], "ans": 0, "essential": false}, {"q": "機能障害はどれか。", "opts": ["不随意運動", "歩行障害", "対人関係障害", "復職困難"], "ans": 0, "essential": false}, {"q": "機能障害はどれか。", "opts": ["感覚低下", "歩行障害", "復職困難", "日常生活動作困難"], "ans": 0, "essential": false}, {"q": "胸腰部の関節可動域測定法で屈曲・伸展の基本軸はどれか。", "opts": ["仙骨後面", "肩峰を通る床への垂直線", "第7頸椎棘突起と第1仙椎棘突起を結ぶ線", "ヤコビー線の中点に立てた垂直線"], "ans": 0, "essential": false}, {"q": "小脳性運動失調の症候で誤っているのはどれか。", "opts": ["ロンベルグ徴候陽性", "言語障害", "測定異常", "筋トーヌス低下"], "ans": 0, "essential": false}, {"q": "筋力増強訓練中止の判断で適切でないのはどれか。", "opts": ["訓練中の一過性の筋痛", "心肺機能低下のある場合の心不全", "神経筋疾患のある場合の筋力低下", "骨粗鬆症のある場合の疲労骨折"], "ans": 0, "essential": false}, {"q": "極超短波療法の特異的禁忌はどれか。", "opts": ["体内金属", "感覚脱失", "光線過敏症", "末梢循環障害"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["機能的把持装具　　&#8722;　第6頸髄損傷", "手背屈装具　　　　&#8722;　正中神経麻痺", "対立装具　　　　　&#8722;　橈骨神経麻痺", "ナックルベンダー　&#8722;　MP関節屈曲拘縮"], "ans": 0, "essential": false}, {"q": "失語症の治療に適しているのはどれか。", "opts": ["言語刺激を反復して与える。", "言葉の誤りを矯正する。", "50音文字盤を活用する。", "舌や口唇の動きを強化する。"], "ans": 0, "essential": false}, {"q": "失語症を伴うことが多い病態はどれか。", "opts": ["右片麻痺", "嚥下障害", "失調症", "不随意運動"], "ans": 0, "essential": false}, {"q": "脳性麻痺の定義で正しいのはどれか。", "opts": ["運動の異常は永続的である。", "知的障害を伴う。", "生後3ヶ月以内に生じたものである。", "脳の進行性病変によるものである。"], "ans": 0, "essential": false}, {"q": "23歳の男性．交通事故による頸髄損傷完全四肢麻痺。第7頸髄節まで機能残存であり、車いすで移動は自立していた。受傷後6ヶ月頃より不随意に下肢の筋収縮を認めるようになり、一度伸展した下肢が容易に元に戻らないということで受診した。股関節・膝関節周囲筋の筋緊張は亢進し、他動運動は困難であり、足クローヌスを認めた。この病態の治療法で適切でないのはどれか。", "opts": ["下肢圧迫包帯", "ホットパック", "持続ストレッチ", "神経ブロック"], "ans": 0, "essential": false}, {"q": "前腕支持部がある歩行補助具はどれか。〔必〕", "opts": ["ロフストランドつえ", "T字つえ", "4脚つえ", "松葉つえ"], "ans": 0, "essential": false}, {"q": "自立生活で正しいのはどれか。", "opts": ["自分自身で意思決定する生活である。", "他人からの介助を受けない生活である。", "介助者の働きかけが重要である。", "リハビリテーションに固有の考えである。"], "ans": 0, "essential": false}, {"q": "病期に関わらず弛緩性麻痺を呈する疾患はどれか。", "opts": ["ギラン・バレー（Guillain―Barre）症候群", "脳出血", "パーキンソン（Parkinson）症候群", "頚髄症"], "ans": 0, "essential": false}, {"q": "関節可動域の測定肢位で正しい組合せはどれか。", "opts": ["手関節伸展　―　前腕中間位", "肩関節屈曲　―　前腕回内位", "肘関節屈曲　―　前腕中間位", "前腕回内　　―　肘伸展位"], "ans": 0, "essential": false}, {"q": "日常生活動作（ADL）はどれか。", "opts": ["整容動作", "書字動作", "家事動作", "コミュニケーション"], "ans": 0, "essential": false}, {"q": "日常生活動作（ADL）はどれか。", "opts": ["入浴動作", "書字動作", "家事動作", "社会的認知"], "ans": 0, "essential": false}, {"q": "徒手筋力テストの表示と筋力増強法との組合せで正しいのはどれか。", "opts": ["MMT 4　―　抵抗自動運動", "MMT 0　―　筋電図バイオフィードバック", "MMT 2　―　低周波刺激", "MMT 3　―　介助自動運動"], "ans": 0, "essential": false}, {"q": "腰痛体操はどれか。", "opts": ["ウィリアムズ体操", "コッドマン体操", "フレンケル体操", "ベーラー体操"], "ans": 0, "essential": false}, {"q": "脳卒中発症早期から実施すべき作業療法はどれか。", "opts": ["トイレ動作訓練", "入浴動作訓練", "自助具の作製", "職業前評価"], "ans": 0, "essential": false}, {"q": "脳卒中のリハビリテーションで作業療法士が多職種と協同で行うのはどれか。", "opts": ["家屋改造指導", "コックアップスプリント作製", "麻痺上肢回復訓練", "利き手交換訓練"], "ans": 0, "essential": false}, {"q": "Ｃ5頚髄損傷（第5頚髄節機能残存）で筋収縮がみられるのはどれか。", "opts": ["上腕二頭筋", "深指屈筋", "上腕三頭筋", "橈側手根伸筋"], "ans": 0, "essential": false}, {"q": "脳性麻痺の病型とその特徴との組合せで正しいのはどれか。", "opts": ["痙直型　―　連合反応", "痙直型　―　不随意運動", "アテトーゼ型　―　小脳症状", "失調型　―　四肢麻痺"], "ans": 0, "essential": false}, {"q": "42歳の男性。右利き。事務職。会社近くのアパート2階に独り暮らしをしている。脳出血を発症し、2か月経過した現在、右片麻痺があるため回復期リハビリテーション病院に入院し在宅復帰にむけトレーニング中である。ブルンストロームステージは上肢3、手指2、下肢5であり、杖での屋内歩行は可能となっており階段昇降訓練中である。感覚障害、高次脳機能障害は認めない。現在の状況で適切なのはどれか。", "opts": ["利き手交換訓練が必要である。", "屋外の歩行は難しいと判断する。", "介護保険の対象外である。", "将来的にも職場復帰は困難である。"], "ans": 0, "essential": false}, {"q": "徒手筋力テストで若干の抵抗に打ち勝って完全に運動できる筋力の表示はどれか。〔必〕", "opts": ["Ｇ・優", "Ｎ・正常", "Ｆ・良", "Ｐ・可"], "ans": 0, "essential": false}, {"q": "リハビリテーションの説明で正しいのはどれか。", "opts": ["身体的能力の回復は目的の一つである。", "疾病の治癒を目標とする。", "基本的な意思の決定は医療者側が行う。", "個人の経済的問題には介入しない。"], "ans": 0, "essential": false}, {"q": "呼吸器障害のうち拘束性障害はどれか。", "opts": ["％肺活量低下", "気道狭窄", "肺気腫", "1秒率低下"], "ans": 0, "essential": false}, {"q": "機能形態障害に対するアプローチでないのはどれか。", "opts": ["義肢装着訓練", "排尿訓練", "呼吸訓練", "筋力増強訓練"], "ans": 0, "essential": false}, {"q": "身体計測で正しいのはどれか。採点除外", "opts": ["下腿長は内側膝関節裂隙から内果までの距離である。", "前腕長は肘頭から橈骨茎状突起までの距離である。", "前腕長は前腕回内位で計測する。", "下肢長は上前腸骨棘から足底までの距離である。"], "ans": 0, "essential": false}, {"q": "日常生活動作評価でＦＩＭにあって、バーセル指数にない項目はどれか。", "opts": ["記 憶", "整 容", "排 便", "階段昇降"], "ans": 0, "essential": false}, {"q": "マッサージの効果でないのはどれか。", "opts": ["リンパ流の減少", "組織血液量の増加", "疼痛閾値の上昇", "筋緊張の緩和"], "ans": 0, "essential": false}, {"q": "物理療法で正しいのはどれか。", "opts": ["関節可動域訓練の前に渦流浴を行った。", "関節リウマチ患者の腫脹関節にホットパックを行った。", "観血的整復固定術後の骨折部位にジアテルミーを行った。", "高度の血行障害により安静時痛がある足部にホットパックを行った。"], "ans": 0, "essential": false}, {"q": "片麻痺患者のＡＤＬ指導で正しいのはどれか。", "opts": ["更衣は麻痺側から着て非麻痺側から脱ぐ。", "車いすからべッドに移るときは麻痺側がべッドに接する方向で近づく。", "階段を昇るときは麻痺側下肢から上げる。", "浴槽に入るときは麻痺側下肢から入る。"], "ans": 0, "essential": false}, {"q": "脊椎側弯症に対する装具はどれか。", "opts": ["ミルウォーキーブレース", "ナイト型装具", "テイラー型装具", "ウィリアムズ型装具"], "ans": 0, "essential": false}, {"q": "二次的に血管れん縮を生じる危険が高い疾患はどれか。", "opts": ["くも膜下出血", "アテローム血栓性脳梗塞", "心原性脳塞栓症", "ラクナ梗塞"], "ans": 0, "essential": false}, {"q": "72歳の男性。前立腺癌の既往がある。3か月前から背部痛があったが我慢していた。2週前から右足のしびれが出現し施術を受けていたところ、昨日から下肢に力が入らず歩行困難になったと訴えている。診察では左下肢の運動は可能だが、右膝関節の伸展および足関節の自動運動が困難で、胸部以下に感覚障害を認めた。正しいのはどれか。", "opts": ["圧迫性脊髄障害が疑われる。", "完全麻痺の状態である。", "下位腰椎の病変が疑われる。", "腰椎の間欠牽引を実施する。"], "ans": 0, "essential": false}, {"q": "温熱療法で深達度が最も高いのはどれか。〔必〕", "opts": ["超音波", "赤外線", "ホットパック", "パラフィン浴"], "ans": 0, "essential": false}, {"q": "国際生活機能分類（International Classification of Functioning, Disability and Health:ICF）で正しいのはどれか。", "opts": ["背景因子に環境因子と個人因子を設定している。", "疾病と障害は原因と結果の関係にある。", "障害を負の面をとらえている。", "社会的不利という用語を用いる。"], "ans": 0, "essential": false}, {"q": "関節と起こりにくい拘縮との組合せで正しいのはどれか。", "opts": ["手関節　&#8722;　伸展（背屈）", "肩関節　&#8722;　内転・内旋", "股関節　&#8722;　屈曲・外旋", "膝関節　&#8722;　屈　曲"], "ans": 0, "essential": false}, {"q": "機能的自立度評価法（FIM）の尺度で介助の程度が修正自立のレベルはどれか。", "opts": ["採点基準   ６", "採点基準　３", "採点基準　４", "採点基準　５"], "ans": 0, "essential": false}, {"q": "腹臥位で関節可動域測定（日本整形外科学会・日本リハビリテーション医学基準による）をするのはどれか。", "opts": ["股伸展", "膝屈曲", "肩内旋", "前腕回外"], "ans": 0, "essential": false}, {"q": "小脳性運動失調の評価に用いるのはどれか。", "opts": ["指鼻試験", "徒手筋力テスト", "ブルンストロームのステージ分類", "線分二等分テスト"], "ans": 0, "essential": false}, {"q": "運動療法の目的でないのはどれか。", "opts": ["活動に必要な筋肉を弛緩させる。", "筋力と持久力を増大させる。", "関節可動域を増大させる。", "筋群相互の機能平衡を獲得する。"], "ans": 0, "essential": false}, {"q": "徒手筋力テストで抗重力肢位の自動介助運動による筋力増強法が主体となるのはどれか。", "opts": ["MMT２", "MMT１", "MMT３", "MMT４"], "ans": 0, "essential": false}, {"q": "マッサージの禁忌はどれか。", "opts": ["開放創の浮腫軽減", "間質浮腫の軽減", "麻痺筋の循環改善", "静脈系血管循環の改善"], "ans": 0, "essential": false}, {"q": "マッサージの禁忌はどれか。", "opts": ["感染組織の循環改善", "間質浮腫の軽減", "麻痺筋の循環改善", "関節の浮腫軽減"], "ans": 0, "essential": false}, {"q": "頸椎の固定性が最も高い装具はどれか。", "opts": ["ハローベスト", "フィラデルフィア･カラー", "金属支柱付き頚椎装具", "ソフトカラー"], "ans": 0, "essential": false}, {"q": "C5脊髄損傷完全四肢麻痺患者（第５頚髄節まで機能残存）が可能な動作はどれか。", "opts": ["食事動作", "座位保持", "起き上がり動作", "洗髪動作"], "ans": 0, "essential": false}, {"q": "56歳の男性。急に右上下肢が動かしづらくなり、独歩で救急外来を受診し、左被殻出血と診断され入院となった。現在入院から３日が経過している。軽い麻痺は残存しているが、頭部CT検査で出血の増大傾向はなく、バイタルサインは安定している。リハビリテーションで正しいのはどれか。", "opts": ["座位、立位、歩行訓練を進める。", "1週間ベッド上安静とする。", "ベッド上安静で左右への体位変換のみ許可する。", "関節可動域訓練は他動的訓練のみ行う。"], "ans": 0, "essential": false}, {"q": "物理療法と禁忌との組合せで誤っているのはどれか。〔必〕", "opts": ["パラフィン−−　関節リウマチ", "超短波　−−−　体内金属", "超音波　−−−　眼　球", "寒　冷　−−−　レイノー（Raynaud）病"], "ans": 0, "essential": false}, {"q": "外傷性脊髄損傷による完全対麻痺患者のリハビリテーションの基本方針で適切なのはどれか。", "opts": ["就業し経済的に自立することを目標とする。", "要介護状態での施設入所を目標とする。", "日常生活動作を自立し施設入所を目標とする。", "要介護状態での自宅退院を目標とする。"], "ans": 0, "essential": false}, {"q": "頚随損傷による四肢麻痺患者のリハビリテーションアプローチで、能力低下の改善を目標としているのはどれか。", "opts": ["車椅子駆動訓練", "両下肢関節の可動域訓練", "両上肢筋力訓練", "家屋改修"], "ans": 0, "essential": false}, {"q": "ICIDH（国際障害分類）で能力低下にあたるのはどれか。", "opts": ["膝関節痛のために歩行ができない。", "膝関節が曲がらず正座ができないので茶会に参加できない。", "膝関節痛のために自宅の２階の浴槽が利用できない。", "膝関節痛のために好きだったゴルフに参加できない。"], "ans": 0, "essential": false}, {"q": "関節運動の方向の表現で正しいのはどれか。", "opts": ["大腿の回旋を股関節の内旋・外旋という。", "上腕の回旋を肩関節の内転・外転という。", "前腕の回旋を肘関節の内転・外転という。", "下腿の回旋を足部の内がえし・外がえしという。"], "ans": 0, "essential": false}, {"q": "関節運動の方向の表現で正しいのはどれか。", "opts": ["上腕の回旋を肩関節の内旋・外旋という。", "前腕の回旋を肘関節の内転・外転という。", "大腿の回旋を股関節の内転・外転という。", "下腿の回旋を足部の内がえし・外がえしという。"], "ans": 0, "essential": false}, {"q": "ロンベルグ徴候陽性となる病態はどれか。", "opts": ["脊髄性運動失調", "小脳性運動失調", "両側腓骨神経麻痺", "パーキンソン（Parkinson）病"], "ans": 0, "essential": false}, {"q": "右下腿骨折の治療中に体重の3分の１までの荷重が許可された。このときの歩行補助具で適切なのはどれか。", "opts": ["２本の松葉づえを使用した。", "１本の松葉づえを左上肢で使用した。", "１本の松葉づえを右上肢で使用した。", "２本のＴ字つえを使用した。"], "ans": 0, "essential": false}, {"q": "歩行能力が平行棒内両手支持で往復可能なレベルの場合、屋内移動で用いる適切な補助具はどれか。", "opts": ["高さ固定式歩行器", "松葉づえ", "ロフトランド・クラッチ", "T字つえ"], "ans": 0, "essential": false}, {"q": "大腿義足に特有のソケットはどれか。", "opts": ["四辺形ソケット", "差し込み式ソケット", "吸着式ソケット", "全面荷重式ソケット"], "ans": 0, "essential": false}, {"q": "一般的な失語症治療で適切なのはどれか。", "opts": ["得られた反応を選択的に強化する。", "視覚刺激は微弱な方が良い。", "刺激より矯正が重要である。", "刺激は反復しない方が良い。"], "ans": 0, "essential": false}, {"q": "脳卒中後遺症の片麻痺患者の日常生活指導で正しいのはどれか。", "opts": ["階段をおりるときは麻痺側から前に出す。", "浴槽に入るときは麻痺側から入る。", "脱衣は麻痺側から行う。", "車いすからトイレに移るときは麻痺側が便座に接する方向で近づく。"], "ans": 0, "essential": false}, {"q": "45歳の女性。脳出血発症後６か月を経過したが重度の右片麻痺が残存した。左上肢支持にて立位は安定しているが右内反尖足のために歩行は非常に困難である。誤っているのはどれか。", "opts": ["尖足は矯正せずに歩行訓練を行う。", "装具を作成して歩行訓練を行う。", "健側の筋力増強訓練を行う。", "アキレス腱延長術を考慮に入れる。"], "ans": 0, "essential": false}, {"q": "手段的ＡＤＬに含まれるのはどれか。〔必〕", "opts": ["買い物", "食　事", "更　衣", "入　浴"], "ans": 0, "essential": false}, {"q": "リハビリテーションの4分野にないのはどれか。", "opts": ["予防的リハビリテーション", "医学的リハビリテーション", "教育的リハビリテーション", "職業的リハビリテーション"], "ans": 0, "essential": false}, {"q": "国際生活機能分類(ICF)の構成要素でないのはどれか。", "opts": ["社会的不利", "心身機能と身体構造", "活　動", "参　加"], "ans": 0, "essential": false}, {"q": "国際障害分類(ICIDH)で能力低下にあたるのはどれか。", "opts": ["箸を使った食事ができない。", "職場に戻ることができない。", "学校に戻ることができない。", "スポーツ観戦に行くことができない。"], "ans": 0, "essential": false}, {"q": "図に示す左肩関節の肢位で正しいのはどれか。図", "opts": ["外転125度", "屈曲125度", "伸展125度", "内転55度"], "ans": 0, "essential": false}, {"q": "障害高齢者の日常生活自立度「ランクＡ」の状態はどれか。", "opts": ["屋内での生活は概ね自立しているが、介助なしには外出しない。", "何らかの障害などを有するが、日常生活はほぼ自立しており独力で外出する。", "1日中ベッド上で過ごし、排泄、食事、着替えにおいても介助を要する。", "屋内での生活は何らかの介助を要し、日中もベッド上の生活が主体である。"], "ans": 0, "essential": false}, {"q": "人工股関節置換術後に人工関節が脱臼しやすい肢位をとらないように指導されているため、靴下がうまく履けないとの訴えがあった。正しい対応はどれか。", "opts": ["自助具を用いて靴下を履く訓練を行う。", "下肢の関節可動域を拡大し靴下を履けるようにする。", "家族の介助で靴下を履くように指導する。", "靴下を履かないように指導する。"], "ans": 0, "essential": false}, {"q": "腰部脊柱管狭窄症に用いられる装具はどれか。", "opts": ["ウィリアムズ型装具", "ダーメルンコルセット", "テイラー型装具", "ジュウェット型装具"], "ans": 0, "essential": false}, {"q": "松葉づえをついたときの肘の最適な屈曲角度はどれか。", "opts": ["30度", "10度", "20度", "40度"], "ans": 0, "essential": false}, {"q": "脳卒中で正しいのはどれか。", "opts": ["歩行が自立するとほとんどの症例で排泄も自立する。", "下肢麻痺よりも上肢麻痺の方が治りやすい。", "感覚障害の合併はごくまれである。", "わが国では寝たきりの原因の第2位に挙げられる。"], "ans": 0, "essential": false}, {"q": "脳梗塞で流暢に話すが内容に脈絡がなく言語の理解も悪い。病変部位はどれか。", "opts": ["左大脳半球", "右大脳半球", "小　脳", "脳　幹"], "ans": 0, "essential": false}, {"q": "50歳の男性。高所作業中に転落し、胸髄損傷をきたし6か月が経過している。完全麻痺症状があるが、上肢機能は正常で、車いすを利用した外出も可能な機能まで回復している。膀胱直腸機能障害があり、尿道カテーテルがはずせない。今後の方針で最も適切なのはどれか。", "opts": ["自己間歇導尿法を指導する。", "尿道カテーテル留置を続ける。", "用手排尿法を指導する。", "膀胱瘻を造設する。"], "ans": 0, "essential": false}, {"q": "重力に抗してかろうじて肘を全可動域に屈曲できる場合、徒手筋力テストにおける上腕二頭筋の筋力はどれか。〔必〕", "opts": ["３", "１", "２", "４"], "ans": 0, "essential": false}, {"q": "リハビリテーションの目的でないのはどれか。", "opts": ["病気の治療", "機能障害の軽減", "復　職", "経済的自立"], "ans": 0, "essential": false}, {"q": "橈骨神経麻痺で用いる装具はどれか。", "opts": ["オッペンハイマー型装具", "短対立装具", "ＭＰ伸展補助装具", "ＰＩＰ伸展補助装具"], "ans": 0, "essential": false}, {"q": "国際生活機能分類（ICF）での活動はどれか。", "opts": ["書字困難", "事務職就職困難", "上肢麻痺", "巧緻障害"], "ans": 0, "essential": false}, {"q": "日本リハビリテーション医学会および日本整形外科学会が制定した関節可動域測定法で、右股関節の関節可動域を測定する際に右膝関節90度屈曲位で計測するのはどれか。", "opts": ["外　旋", "伸　展", "外　転", "内　転"], "ans": 0, "essential": false}, {"q": "下腿周径の測定で正しいのはどれか。", "opts": ["最大周径を測定する。", "膝関節裂隙の遠位5cmで測定する。", "膝関節裂隙の遠位10cmで測定する。", "内果の近位20cmで測定する。"], "ans": 0, "essential": false}, {"q": "日常生活動作(ADL)でないのはどれか。", "opts": ["会　話", "入　浴", "食　事", "整　容"], "ans": 0, "essential": false}, {"q": "脳卒中片麻痺の回復をみるブルンストローム法で分離運動がみられてくるのはどれか。", "opts": ["ステージ４", "ステージ２", "ステージ３", "ステージ５"], "ans": 0, "essential": false}, {"q": "プール内に立位になった時の水深は胸の高さであった。浮力による体重軽減の割合はどれか。", "opts": ["約70％", "約30％", "約50％", "約90％"], "ans": 0, "essential": false}, {"q": "脳梗塞を６か月前に発症し、現在、利き手の右手に重度の麻痺が残存している。食事動作訓練で正しいのはどれか。", "opts": ["左手で食事動作訓練を行う。", "麻痺が回復するまで右手の機能訓練を行う。", "右手で自助具を用いて食事動作訓練を行う。", "介助で食事するように家族指導を行う。"], "ans": 0, "essential": false}, {"q": "PTB式免荷装具の適応はどれか。", "opts": ["変形性足関節症", "変形性膝関節症", "腓骨神経麻痺", "脳梗塞後遺症"], "ans": 0, "essential": false}, {"q": "65歳の男性。２年前の高所からの転落で上部胸髄損傷で対麻痺がある。車いすでの日常生活は自立していたが、急に頭痛、顔面紅潮、発汗が出現した。注意するのはどれか。", "opts": ["膀胱への多量の尿の貯留", "股関節などの異所性骨化", "肺炎の有無", "両下肢の筋緊張の亢進"], "ans": 0, "essential": false}, {"q": "ＭＭＴ３における筋力増強訓練法はどれか。［必］", "opts": ["自重を利用した自動運動", "筋機能再教育", "徒手的に介助した自動運動", "徒手的に抵抗を加えた自動運動"], "ans": 0, "essential": false}, {"q": "リハビリテーションの意味で誤っているのはどれか。", "opts": ["収　容", "復　職", "名誉回復", "復　権"], "ans": 0, "essential": false}, {"q": "関節強直の原因で正しいのはどれか。", "opts": ["骨", "靱　帯", "筋　肉", "皮　膚"], "ans": 0, "essential": false}, {"q": "関節強直の原因で正しいのはどれか。", "opts": ["軟　骨", "神　経", "筋　肉", "皮　膚"], "ans": 0, "essential": false}, {"q": "末梢神経麻痺で正しいのはどれか。", "opts": ["腱反射の消失", "筋トーヌスの増強", "軽微な筋萎縮", "病的反射の出現"], "ans": 0, "essential": false}, {"q": "国際障害分類（ICIDH）で能力低下はどれか。", "opts": ["変形性股関節症のため500ｍの歩行ができない。", "心臓の大動脈弁閉鎖不全のため心拍出量が落ちている。", "廃用のため独居の自宅へ退院できない。", "認知機能低下のため発症前の仕事に復帰できない。"], "ans": 0, "essential": false}, {"q": "下肢筋力増強のための仰臥位での膝伸展位下肢挙上訓練で大腿広筋群の筋収縮はどれか。", "opts": ["等尺性筋収縮", "等張性筋収縮", "遠心性筋収縮", "求心性筋収縮"], "ans": 0, "essential": false}, {"q": "関節可動域訓練で正しいのはどれか。", "opts": ["愛護的に伸張運動を行う。", "1秒程度の持続時間で伸張運動を行う。", "他動伸張が基本である。", "伸張前に拘縮部を冷却する。"], "ans": 0, "essential": false}, {"q": "脳卒中に伴う障害で同時性障害はどれか。", "opts": ["嚥下障害", "褥　瘡", "変形性脊椎症", "痛　風"], "ans": 0, "essential": false}, {"q": "脳卒中に伴う障害で同時性障害はどれか。", "opts": ["失認症", "褥　瘡", "変形性脊椎症", "糖尿病"], "ans": 0, "essential": false}, {"q": "脳梗塞慢性期で左片麻痺がある。痙性麻痺で共同運動を認め、内反尖足のために歩行が不安定である。歩行補助具として用いるのはどれか。", "opts": ["左短下肢装具", "左長下肢装具", "左膝装具", "両側松葉杖"], "ans": 0, "essential": false}, {"q": "脳卒中急性期の患者に対して他動的関節可動域訓練を施行する。不動が長い場合、拘縮を生じやすい部位はどれか。", "opts": ["腓腹筋", "橈側手根伸筋", "上腕三頭筋", "大腿四頭筋"], "ans": 0, "essential": false}, {"q": "頸髄損傷による完全四肢麻痺（第5頸髄節残存）で可能な目標はどれか。", "opts": ["自助具使用での食事動作", "床上での更衣動作", "頸髄損傷者用に改造した自動車の運転", "下肢装具を使用しての歩行"], "ans": 0, "essential": false}, {"q": "43歳の男性。2か月前に高所での作業中に転落し、第5頸椎脱臼骨折をきたし頸髄を損傷した。<br>脱臼骨折は整形外科で観血的整復固定術を施行されている。<br>現在の徒手筋力テストは両肘関節の屈曲が4、手関節の背屈が4および肘関節の伸展が0であり、握力は0kgである。<br>リハビリテーションで正しいのはどれか。", "opts": ["ハンドリムにゴムを巻き車椅子駆動練習", "車椅子移乗時の立ち上がり練習", "車椅子での坂道の昇降練習", "車椅子でのキャスターあげ練習"], "ans": 0, "essential": false}, {"q": "徒手筋力テストで4と表示するのはどれか。〔必〕", "opts": ["若干の抵抗に打ち勝って完全に運動できる。", "重力に抗して完全に運動できる。", "わずかな筋収縮はあるが関節は動かない。", "強い抵抗に逆らって完全に運動できる。"], "ans": 0, "essential": false}, {"q": "閉眼すると悪化する運動失調はどれか。", "opts": ["脊髄後索性", "大脳性", "小脳性", "前庭性"], "ans": 0, "essential": false}, {"q": "内部障害に対する全身調整運動のプログラムで正しいのはどれか。", "opts": ["運動の持続時間は10分以上に設定する。", "筋の自動的な伸長運動を行う。", "運動強度はなるべく高く設定する。", "運動の頻度は重要ではない。"], "ans": 0, "essential": false}, {"q": "松葉づえで正しいのはどれか。", "opts": ["長さは身長の3／4程度である。", "木製松葉づえはJIS規格に制定されていない。", "握りで体重を支える2点支持つえである。", "上肢に体重を支える力がなくても適応がある。"], "ans": 0, "essential": false}, {"q": "リハビリテーションの目的はどれか。", "opts": ["日常生活動作の自立", "運動機能の改善", "病気の治癒", "障がい者の保護"], "ans": 0, "essential": false}, {"q": "リハビリテーションの目的はどれか。", "opts": ["障がい者の社会復帰", "病気の治癒", "障がい者の保護", "障がい学の研究"], "ans": 0, "essential": false}, {"q": "前脛骨筋の筋力低下を生じるのはどれか。", "opts": ["腓骨神経麻痺", "第2仙骨神経麻痺", "第2腰神経麻痺", "脛骨神経麻痺"], "ans": 0, "essential": false}, {"q": "失語症で復唱が可能なのはどれか。", "opts": ["健忘失語", "ブローカ失語", "ウェルニッケ失語", "伝導失語"], "ans": 0, "essential": false}, {"q": "機能的自立度評価法（FIM）で監視または準備が必要だが、一人で実施可能な場合のレベルはどれか。", "opts": ["５", "７", "６", "４"], "ans": 0, "essential": false}, {"q": "86歳の男性。3年前に脳卒中になり、現在、屋内での生活は概ね自立しているが、介助なしには外出しない状況で、外出の頻度も少なく日中も寝たり起きたりの生活をしている。障害高齢者の日常生活自立度の分類はどれか。", "opts": ["Ａ２", "Ａ１", "Ｂ１", "Ｂ２"], "ans": 0, "essential": false}, {"q": "脳卒中のリハビリテーション治療で正しいのはどれか。", "opts": ["ポジショニングはできるだけ早期に開始する。", "寝返りができない患者では約4時間おきに体位変換する。", "関節拘縮を防ぐため週3回の関節可動域訓練が必要である。", "中等度の意識障害があっても座位訓練を行う。"], "ans": 0, "essential": false}, {"q": "45歳の男性。高所からの転落で頸髄損傷を受傷した。職業はパソコン操作によるデスクワークだが、自家用車での通勤が必要である。改造自動車を用いた運転が可能な損傷レベルはどれか。", "opts": ["第7頸髄節残存", "第4頸髄節残存", "第5頸髄節残存", "第6頸髄節残存？"], "ans": 0, "essential": false}, {"q": "ICIDHの機能障害で正しいのはどれか。", "opts": ["病気や外傷によりもたらされる。", "同じ機能障害を持った人は同じ程度の能力低下を持つ。", "下肢切断をした人は歩けないという機能障害を持つ。", "下肢切断者に義足を処方することで軽減する。"], "ans": 0, "essential": false}, {"q": "日常関連動作はどれか。", "opts": ["洗濯動作", "食事動作", "整容動作", "入浴動作"], "ans": 0, "essential": false}, {"q": "温熱の作用で誤っているのはどれか。", "opts": ["心拍出量の低下", "鎮　痛", "筋痙縮の緩和", "膠原線維の伸張"], "ans": 0, "essential": false}, {"q": "腓骨神経麻痺に用いるのはどれか。", "opts": ["短下肢装具", "長下肢装具", "両側松葉杖", "ニーブレース"], "ans": 0, "essential": false}, {"q": "ケーブルシステム及びハーネスを利用し把持動作を行う義手はどれか。", "opts": ["体内力源義手", "装飾用義手", "作業用義手", "体外力源義手"], "ans": 0, "essential": false}, {"q": "職種と用いるリハビリテーションの組合せで適切でないのはどれか。", "opts": ["臨床心理士 −−−−−− 嚥下機能評価", "理学療法士 −−−−−− 運動療法、物理療法", "作業療法士 −−−−−− 手芸、工作", "言語聴覚士 −−−−−− コミュニケーション訓練"], "ans": 0, "essential": false}, {"q": "脳卒中の急性期リハビリテーションで優先度が低いのはどれか。", "opts": ["高次脳機能訓練", "関節可動域訓練", "ベッド上動作訓練", "歩行訓練"], "ans": 0, "essential": false}, {"q": "ICIDHで能力低下はどれか。", "opts": ["歩行距離が最大 50 ｍである。", "大腿四頭筋の徒手筋力テストが 3 である。", "足関節の背屈可動域がマイナス 10 度である。", "歩行可能範囲に商店がなく買い物ができない。"], "ans": 0, "essential": false}, {"q": "65歳の男性。数年前から安静時の振戦があり、パーキンソン(Parkinson) 病の診断を受けている。最近になって歩き始めの一歩が出にくくなり、歩き始めると止まれないことがあるため受診した。正しいのはどれか。", "opts": ["立位歩行訓練を主体としたリハビリテーションを行う。", "施設入所を勧める。", "可及的に安静を取るよう指示する。", "関節可動域訓練を主体としたリハビリテーションを行う。"], "ans": 0, "essential": false}, {"q": "脳卒中患者にみられる障害のうち ＷＨＯ国際障害分類の能力低下にあたるのはどれか。", "opts": ["書字障害", "片麻痺", "失語症", "趣味の喪失"], "ans": 0, "essential": false}, {"q": "長期臥床に伴う拘縮の好発部位と肢位の組合せで正しいのはどれか。", "opts": ["股関節 −−− 外　旋", "肩関節 −−− 外　旋", "手関節 −−− 背　屈", "足関節 −−− 背　屈"], "ans": 0, "essential": false}, {"q": "筋持久力の向上に適した方法はどれか。", "opts": ["低強度長時間運動", "高強度長時間運動", "高強度短時間運動", "低強度短時間運動"], "ans": 0, "essential": false}, {"q": "屋内での生活は介助を要するが、車いすの移乗は可能で、排泄はベッドから離れて行うことができる。この障害高齢者の日常生活自立度はどれか。", "opts": ["ランク Ｂ１", "ランク Ａ１", "ランク Ａ２", "ランク Ｂ２"], "ans": 0, "essential": false}, {"q": "劣位半球由来の症状はどれか。", "opts": ["着衣失行", "観念失行", "失算症", "失語症"], "ans": 0, "essential": false}, {"q": "最も深部に到達する温熱はどれか。", "opts": ["超音波", "ホットパック", "極超短波", "赤外線"], "ans": 0, "essential": false}, {"q": "バネによる足関節運動補助機能がある足継手はどれか。", "opts": ["クレンザック継手", "遊動継手", "後方制動継手", "前方制動継手"], "ans": 0, "essential": false}, {"q": "職種が行う役割の組合せで誤っているのはどれか。", "opts": ["義肢装具士−−−−−装具処方", "理学療法士−−−−−運動療法", "作業療法士−−−−−日常生活活動訓練", "言語聴覚士−−−−−嚥下訓練"], "ans": 0, "essential": false}, {"q": "身体障害者手帳を交付するのはだれか。", "opts": ["都道府県知事", "市区町村長", "厚生労働大臣", "内閣総理大臣"], "ans": 0, "essential": false}, {"q": "57歳の男性。生来右利きである。左中大脳動脈領域のアテローム性脳梗塞を発症し、4週が経過した。右片麻痺のブルンストロームステージは上肢2、手指1、下肢4で、感覚障害は表在・深部とも軽度である。 これから行うべき対応で正しいのはどれか。", "opts": ["利き手交換の訓練", "車いすに適した自宅改修", "長下肢装具の作成", "右手箸操作の訓練"], "ans": 0, "essential": false}, {"q": "WHO 国際生活機能分類(ICF)の4つの分野における第一レベル分類で環境因子の項目はどれか。", "opts": ["支援と関係", "家庭生活", "対人関係", "コミュニケーション"], "ans": 0, "essential": false}, {"q": "神経伝導検査の所見でないのはどれか。", "opts": ["陽性鋭波", "潜時遅延", "伝導ブロック", "持続時間の延長"], "ans": 0, "essential": false}, {"q": "機能的自立評価法(FIM)に含まれるが、バーセル指数には含まれない評価項目はどれか。", "opts": ["理　解", "食　事", "更　衣", "整　容"], "ans": 0, "essential": false}, {"q": "他動的に関節を動かした際、全可動域で抵抗感があるが運動は容易であった。痙縮の程度を評価するアッシュワーススケールで正しいのはどれか。", "opts": ["2", "1", "3", "4"], "ans": 0, "essential": false}, {"q": "職種と役割の組合せで誤っているのはどれか。", "opts": ["臨床心理士 −−−−−− 社会復帰援助", "理学療法士 −−−−−− 運動療法", "作業療法士 −−−−−− 日常生活活動訓練", "言語聴覚士 −−−−−− 摂食機能療法"], "ans": 0, "essential": false}, {"q": "脳卒中のリハビリテーション治療で積極的な練習を行ってよいのはどれか。", "opts": ["安静時収縮期血圧 160 mmHg", "安静時拡張期血圧 130 mmHg", "安静時脈拍 130 回/分", "体温 39.0℃"], "ans": 0, "essential": false}, {"q": "車いすのバックサポートにおける腋窩からの高さで、適切なのはどれか。", "opts": ["5 〜 10cm", "0 〜 5cm", "10 〜 15cm", "15 〜 20cm"], "ans": 0, "essential": false}, {"q": "脳卒中で右上下肢とも中等度麻痺を呈している。通常使わない補装具はどれか。", "opts": ["前輪歩行器", "Ｔ字杖", "短下肢装具", "普通型車いす"], "ans": 0, "essential": false}, {"q": "脳卒中片麻痺患者の急性期にみられないのはどれか。", "opts": ["肩手症候群", "排尿障害", "嚥下障害", "沈下性肺炎"], "ans": 0, "essential": false}, {"q": "高齢者の姿勢バランスをファンクショナルリーチテストで見る場合、正常とみなされる境界到達距離はどれか。", "opts": ["15cm", "5cm", "10cm", "20cm"], "ans": 0, "essential": false}, {"q": "64歳の男性。脳梗塞を発症後、コミュニケーション障害が生じた。口数が少なく、「痛いところはありますか」と尋ねると、「う、ん」と答え、「どこですか」と尋ねると何か言おうとするものの言葉にならないようである。 「ボールペンと言ってください」と指示すると、「ボーボ・・・」と途中まで言いかけてあきらめてしまった。「左手でじゃんけんのチョキをしてください」という指示には間違いなく従える。考えられる症状はどれか。", "opts": ["ブローカ失語", "全失語", "伝導失語", "ウェルニッケ失語"], "ans": 0, "essential": false}, {"q": "身体障害者手帳の肢体不自由の重症度で、「一側上肢の著しい機能障害」に該当するのはどれか。", "opts": ["3 級", "1 級", "2 級", "4 級"], "ans": 0, "essential": false}, {"q": "ＡＤＬの評価項目で誤っているのはどれか。", "opts": ["バーセル指数にはコミュニケーションが含まれる。", "バーセル指数には入浴が含まれる。", "機能的自立度評価表(FIM) には階段昇降が含まれる。", "機能的自立度評価表 (FIM)には記憶が含まれる。"], "ans": 0, "essential": false}, {"q": "知能を評価するのはどれか。", "opts": ["ベントン視覚記銘検査", "ミネソタ多面人格目録", "ロールシャッハテスト", "内田クレペリン精神検査"], "ans": 0, "essential": false}, {"q": "失語症で正しいのはどれか。", "opts": ["純粋語唖は発語面に限定した障害である。", "純粋語聾では非言語音の理解が不良である。", "超皮質性運動性失語では復唱が障害される。", "ジャーゴンはブローカ失語に特徴的である。"], "ans": 0, "essential": false}, {"q": "ボツリヌス毒素治療薬が痙縮に対して主に作用する部位はどれか。", "opts": ["神経筋接合部", "軸　索", "脊髄神経節", "脊髄前角細胞体"], "ans": 0, "essential": false}, {"q": "セルフケアに関連したＡＤＬを主として訓練する職種はどれか。", "opts": ["作業療法士", "理学療法士", "医療福祉士", "介護支援専門員"], "ans": 0, "essential": false}, {"q": "訓練と内容の組合せで誤っているのはどれか。", "opts": ["フレンケル体操 ─── 関節可動域運動", "スクワット ───── 筋力増強運動", "緊縛帯訓練 ───── 協調運動練習", "トレッドミル歩行 ── 持久性運動"], "ans": 0, "essential": false}, {"q": "プラスチック製短下肢装具で誤っているのはどれか。", "opts": ["関節角度を制御しやすい。", "軽量である。", "通気性が乏しい。", "加熱によって形の調整が可能である。"], "ans": 0, "essential": false}, {"q": "パーキンソン (Parkinson) 病のヤール分類のIIに相当するのはどれか。", "opts": ["両側性パーキンソニズムがあるが、姿勢反射障害はなく、歩行可能である。", "中等度のパーキンソニズムがあり、姿勢反射障害があるが、歩行可能である。", "高度障害を示すが、歩行可能である。", "車椅子を使用した生活となる。"], "ans": 0, "essential": false}, {"q": "レビー小体型認知症で正しいのはどれか。", "opts": ["幻視を特徴とする。", "症状は段階的に進行する。", "錐体路障害が出現する。", "コンビニなどで品物を持ち去る。"], "ans": 0, "essential": false}, {"q": "レビー小体型認知症で正しいのはどれか", "opts": ["パーキンソン症状が出現する。", "アミロイドβの蓄積による脳萎縮を特徴とする。", "症状は段階的に進行する。", "コンビニなどで品物を持ち去る。"], "ans": 0, "essential": false}, {"q": "70歳の女性。脳梗塞を発症し、病院で急性期治療とリハビリテーション治療を終えて退院した。動作は緩慢であるが日常生活に支障はない。介護保険の申請をしたが非該当と判定された。介護予防についての適切な相談先はどれか。", "opts": ["地域包括支援センター", "保健所", "福祉事務所", "精神保健福祉センター"], "ans": 0, "essential": false}, {"q": "ＩＣＦで正しいのはどれか。", "opts": ["活動とは個人による課題や行為の遂行を示す。", "対象範囲を障害者としている。", "身体構造とは身体の生理的機能を示す。", "個人因子の中に物理社会的状況が含まれる。"], "ans": 0, "essential": false}, {"q": "日本版ミニメンタルテスト (ＭＭＳＥ) に含まれるのはどれか。", "opts": ["五角形が2つ組み合わさった図を見せてその図形を描かせる。", "年齢を尋ねる。", "知っている野菜の名前をできるだけ多く言ってもらう。", "5つの品物を見せて隠した後に何があったか言ってもらう。"], "ans": 0, "essential": false}, {"q": "筋原性疾患を示すのはどれか。", "opts": ["針筋電図における早期動員パターン", "神経伝導検査における潜時遅延", "神経伝導検査における伝導ブロック", "針筋電図における随意収縮時の高振幅多相波"], "ans": 0, "essential": false}, {"q": "自発語が流暢で、理解は障害され、復唱は良好な失語はどれか。", "opts": ["超皮質性感覚性失語", "ブローカ失語", "ウェルニッケ失語", "超皮質性運動性失語"], "ans": 0, "essential": false}, {"q": "有酸素運動が主体なのはどれか。", "opts": ["サイクリング", "重量挙げ", "腕立て伏せ", "100ｍ全力疾走"], "ans": 0, "essential": false}, {"q": "都道府県が実施する試験によって資格審査されるのはどれか。", "opts": ["介護支援専門員(ケアマネージャー)", "臨床心理士", "義肢装具士", "介護福祉士"], "ans": 0, "essential": false}, {"q": "頸椎の固定性が高い装具の順番で正しいのはどれか。", "opts": ["ハロー装具 ＞ フィラデルフィアカラー ＞ 頸椎カラー", "ハロー装具 ＞ 頸椎カラー ＞ フィラデルフィアカラー", "フィラデルフィアカラー ＞ ハロー装具 ＞ 頸椎カラー", "フィラデルフィアカラー ＞ 頸椎カラー ＞ ハロー装具"], "ans": 0, "essential": false}, {"q": "介護保険において「要支援1・2」の認定原因で最も多いのはどれか。", "opts": ["関節疾患", "認知症", "脳血管障害", "パーキンソン(Parkinson)病"], "ans": 0, "essential": false}, {"q": "認知症と症状の組合せで正しいのはどれか。", "opts": ["アルツハイマー型認知症───物盗られ妄想", "レビー小体型認知症─────同じ動作を繰り返す", "脳血管性認知症───────幻　視", "前頭側頭葉変性症──────感情失禁"], "ans": 0, "essential": false}, {"q": "55歳の男性。仕事中に突然ろれつが回らなくなり、意識レベルの低下と左半身の脱力を生じ、近医に搬送された。右中大脳動脈領域の脳梗塞と診断され、保存的加療が行われた。 直接嚥下訓練を開始すべきでない症状はどれか。", "opts": ["Japan Coma Scale 10", "左片麻痺あり", "構音障害あり", "半側空間無視あり"], "ans": 0, "essential": false}, {"q": "「健康および障害」を評価する WHODAS 2.0で、6つの領域に含まれるのはどれか。", "opts": ["日常活動", "疼　痛", "筋　力", "自然環境"], "ans": 0, "essential": false}, {"q": "CTではやや低吸収域、MRI拡散強調画像では鮮明な高信号域として描出される脳病巣はどれか。", "opts": ["新しい脳梗塞", "新しい脳出血", "古い脳出血", "古い脳梗塞"], "ans": 0, "essential": false}, {"q": "自発語は非流暢だが、言語理解と復唱が良好なのはどれか。", "opts": ["超皮質性運動性失語", "ブローカ失語", "ウェルニッケ失語", "超皮質性感覚性失語"], "ans": 0, "essential": false}, {"q": "手続き記憶にあたるのはどれか。", "opts": ["キーボードを操作する。", "締め切りは来月10日である。", "役場に行って申し込みをした。", "発行されたワンタイムパスワードは5077である。"], "ans": 0, "essential": false}, {"q": "高次脳機能障害に対するリハビリテーションを行う職種はどれか。", "opts": ["臨床心理士", "介護福祉士", "管理栄養士", "社会福祉士"], "ans": 0, "essential": false}, {"q": "高次脳機能障害に対するリハビリテーションを行う職種はどれか。", "opts": ["作業療法士", "介護福祉士", "社会福祉士", "義肢装具士"], "ans": 0, "essential": false}, {"q": "脳卒中後の歩行訓練で使用する長下肢装具の主な目的はどれか。", "opts": ["膝および足関節の安定化", "腰痛の軽減", "脚長差の補正", "下肢の筋力強化"], "ans": 0, "essential": false}, {"q": "頸部で固定性は低いが回旋を抑制できるのはどれか。", "opts": ["フィラデルフィアカラー", "頸椎カラー", "ハロー装具", "ジュエット型装具"], "ans": 0, "essential": false}, {"q": "脳卒中片麻痺の回復を評価するブルンストローム法で、分離運動が認められるステージはどれか。", "opts": ["4", "1", "2", "3"], "ans": 0, "essential": false}, {"q": "運動麻痺や失調などがなく要素的には動作が可能なはずなのに、実際には目的動作に障害がみられる状態はどれか。", "opts": ["失　行", "失　認", "注意障害", "遂行機能障害"], "ans": 0, "essential": false}, {"q": "ロコモティブシンドロームの有無を評価するロコチェックの7項目に含まれるのはどれか。", "opts": ["横断歩道を青信号で渡りきれない。", "握力が20kg未満である。", "自転車に乗ることができない。", "開眼片脚起立時間が15秒未満である。"], "ans": 0, "essential": false},{"q": "自立生活運動(IL運動)はどれか。", "opts": ["障害者が自ら意思決定をする主体的な生活を送り、他者からの干渉を排除する。","職業訓練を通じて障害者に社会復帰を促す。","障害者の日常生活を健常者の規範にできるだけ近づけ、社会生活を共に送る。","医学的、職業的、教育的、社会的の4つの側面全てを含んだリハビリテーションを行う。"], "ans": 0, "essential": false},{"q": "ウェクスラー成人知能検査第4版(WAIS-Ⅳ)の指標に含まれないのはどれか。", "opts": ["流動性推理","言語理解","知覚推理","ワーキングメモリー"], "ans": 0, "essential": false},{"q": "頭部画像(別冊No.1)を別に示す。考えられる診断はどれか。", "opts": ["脳梗塞 ","脳出血 ","外傷性脳損傷 ","くも膜下出血 "], "ans": 0, "essential": false},{"q": "心理的防衛機制で否認はどれか。", "opts": ["現実的状況を無意識的に認めまいとする。","衝動や葛藤を無意識的に押さえ込む。","ある対象に向けられた感情とは正反対の感情や振舞いを無意識に行う。","ストレスに遭遇したりその状況が長く続くと、それ以前の発達段階に戻って自我を守る。"], "ans": 0, "essential": false},{"q": "下位運動ニューロン障害の特徴はどれか。", "opts": ["病的反射は出現しない。","筋萎縮は軽微である。","腱反射は亢進する。","筋トーヌスは増強する。"], "ans": 0, "essential": false},{"q": "介護支援専門員の役割はどれか。", "opts": ["介護サービス計画の作成 ","家事援助 ","経済的問題の解決 ","訪問入浴サービス "], "ans": 0, "essential": false},{"q": "創傷治癒促進を目的とした治療的電気刺激はどれか。", "opts": ["微弱電流刺激","干渉波電流","ロシアンカレント","高電圧パルス電流"], "ans": 0, "essential": false},{"q": "杖の長さの調節で正しいのはどれか。", "opts": ["グリップは大腿骨大転子の高さ","肘関節は75度程度の屈曲位","杖先は足尖部から15cm 後方に位置","杖先は足尖部から50cm 外側に位置"], "ans": 0, "essential": false},{"q": "パーキンソン(Parkinson) 病の症状でないのはどれか。", "opts": ["酩酊歩行","寡　動","筋固縮","姿勢反射障害"], "ans": 0, "essential": false},{"q": "介護保険において要介護の原因で最も多いのはどれか。", "opts": ["認知症","関節疾患","骨折・転倒","高齢による衰弱"], "ans": 0, "essential": false},{"q": "77歳の女性。家族と同居している。老化に伴い歩行速度が0.9m/秒と低下しており、障害高齢者の日常生活自立度はA-1である。握力は左右とも15kg、BMIは16.5であり、最近、食事中にむせるようになった。 適切な支援策はどれか。。", "opts": ["散歩などの外出を促す。","経管栄養を導入する。","屋内の移動に車椅子を使用する。","ハローワークに登録し職探しをする。"], "ans": 0, "essential": false}];
+
+let questions = [], current = 0, selected = null, results = [], optMap = [], shuffleOpts = true;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const numVal = parseInt(document.getElementById('selectNum').value);
+  const isRandom = document.getElementById('selectOrder').value === '1';
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  let pool = [...ALL_DATA];
+  if (isRandom) pool = shuffle(pool);
+  questions = numVal === 0 ? pool : pool.slice(0, numVal);
+  current = 0; results = [];
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current];
+  const total = questions.length;
+  document.getElementById('progressBar').style.width = (current / total * 100) + '%';
+  document.getElementById('headerSub').textContent = `${current + 1} / ${total} 問`;
+  document.getElementById('qNum').textContent = `問${current + 1}`;
+  document.getElementById('qText').textContent = q.q;
+  const badge = document.getElementById('qBadge');
+  badge.style.display = q.essential ? 'inline-block' : 'none';
+
+  let indices = [0, 1, 2, 3];
+  if (shuffleOpts) indices = shuffle(indices);
+  optMap = indices;
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  const labels = ['ア', 'イ', 'ウ', 'エ'];
+  indices.forEach((origIdx, dispIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[dispIdx]}</span><span class="opt-text">${q.opts[origIdx]}</span>`;
+    btn.onclick = () => selectOption(dispIdx, origIdx, q.ans);
+    grid.appendChild(btn);
+  });
+
+  selected = null;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('btnNext').disabled = true;
+  document.getElementById('btnNext').textContent = current < questions.length - 1 ? '次の問題 →' : '結果を見る';
+}
+
+function selectOption(dispIdx, origIdx, ans) {
+  if (selected !== null) return;
+  selected = origIdx;
+  const btns = document.querySelectorAll('.opt-btn');
+  const isCorrect = origIdx === ans;
+  btns.forEach((btn, i) => {
+    btn.onclick = null;
+    if (optMap[i] === ans) btn.classList.add('correct');
+    if (i === dispIdx && !isCorrect) btn.classList.add('wrong');
+    if (i === dispIdx && isCorrect) btn.classList.add('correct');
+  });
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'ng');
+  fb.innerHTML = isCorrect ? '✅ 正解！' : `❌ 不正解　正解：${questions[current].opts[ans]}`;
+  results.push({ q: questions[current], chosen: origIdx, correct: isCorrect });
+  recordAnswer(questions[current], isCorrect);
+  document.getElementById('btnNext').disabled = false;
+  if (navigator.vibrate) navigator.vibrate(isCorrect ? 30 : [50, 30, 50]);
+}
+
+function nextQuestion() {
+  if (selected === null) return;
+  current++;
+  if (current >= questions.length) { showResult(); } else { showQuestion(); }
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  document.getElementById('progressBar').style.width = '100%';
+  const total = results.length;
+  const correct = results.filter(r => r.correct).length;
+  const score = Math.round(correct / total * 100);
+  saveSession(total, correct, score);
+  setTimeout(refreshWeakBtn, 100);
+  document.getElementById('resultScore').innerHTML = `${score}<span>点</span>`;
+  document.getElementById('resultDetail').textContent = `${total}問中 ${correct}問正解`;
+  document.getElementById('headerSub').textContent = '結果';
+  let emoji = '😢', msg = 'もう少し頑張りましょう！';
+  if (score >= 60) { emoji = '🙂'; msg = '合格ライン到達！'; }
+  if (score >= 80) { emoji = '😊'; msg = 'よくできました！'; }
+  if (score === 100) { emoji = '🎉'; msg = 'Perfect!! おめでとう！'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultMsg').textContent = msg;
+  setTimeout(() => { document.getElementById('scoreBar').style.width = score + '%'; }, 100);
+  const wrongCount = results.filter(r => !r.correct).length;
+  const btnRetry = document.getElementById('btnRetry');
+  btnRetry.style.display = wrongCount > 0 ? 'block' : 'none';
+  btnRetry.textContent = `間違えた${wrongCount}問をやり直す`;
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (r.correct ? 'correct-item' : 'wrong-item');
+    div.innerHTML = `
+      <div class="review-q">問${i+1}：${r.q.q}</div>
+      <div class="review-ans">
+        ${r.correct
+          ? `<span class="label-correct">✅ 正解：${r.q.opts[r.q.ans]}</span>`
+          : `<span class="label-wrong">❌ あなた：${r.q.opts[r.chosen]}</span>　正解：<span class="label-correct">${r.q.opts[r.q.ans]}</span>`
+        }
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function retryWrong() {
+  const wrongItems = results.filter(r => !r.correct).map(r => r.q);
+  if (wrongItems.length === 0) return;
+  questions = wrongItems; current = 0; results = [];
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function backToStart() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('headerSub').textContent = '第14回〜第33回 国家試験問題';
+}
+
+
+
+// ===== 苦手問題・成績履歴機能 =====
+var SKEY = (document.title || '').replace(/（第\d+回〜第\d+回）/, '').trim();
+var sessionStart = null;
+var weakData = {};
+var historyData = [];
+
+function loadData() {
+  try {
+    var w = localStorage.getItem('wk_' + SKEY);
+    var h = localStorage.getItem('hs_' + SKEY);
+    weakData    = w ? JSON.parse(w) : {};
+    historyData = h ? JSON.parse(h) : [];
+  } catch(e) { weakData = {}; historyData = []; }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('wk_' + SKEY, JSON.stringify(weakData));
+    localStorage.setItem('hs_' + SKEY, JSON.stringify(historyData));
+  } catch(e) {}
+}
+
+function getWeakList() {
+  return ALL_DATA.filter(function(q, i) {
+    var d = weakData[String(i)];
+    if (!d) return false;
+    var t = d.c + d.w;
+    return t >= 2 && (d.c / t) < 0.5;
+  });
+}
+
+function refreshWeakBtn() {
+  var btn = document.getElementById('btnWeak');
+  if (!btn) return;
+  var wl = getWeakList();
+  if (wl.length === 0) {
+    btn.textContent = '⚡ 苦手問題なし（まず通常クイズを解いてください）';
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+  } else {
+    btn.textContent = '⚡ 苦手問題だけ出題する（' + wl.length + '問）';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+}
+
+function doStartQuiz() {
+  sessionStart = Date.now();
+  startQuiz();
+}
+
+function doStartWeak() {
+  var wl = getWeakList();
+  if (wl.length === 0) { alert('苦手問題がありません。まず通常クイズを解いてください。'); return; }
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  questions = wl;
+  current = 0; results = [];
+  sessionStart = Date.now();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function recordAnswer(qObj, isCorrect) {
+  var i = String(ALL_DATA.indexOf(qObj));
+  if (i === '-1') return;
+  if (!weakData[i]) weakData[i] = { c: 0, w: 0 };
+  if (isCorrect) weakData[i].c++; else weakData[i].w++;
+  saveData();
+}
+
+function saveSession(total, correct, score) {
+  var mins = sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart) / 60000)) : 0;
+  var now = new Date();
+  var d = now.getFullYear() + '/' +
+    String(now.getMonth()+1).padStart(2,'0') + '/' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  historyData.unshift({ date: d, score: score, total: total, correct: correct, mins: mins });
+  if (historyData.length > 50) historyData.length = 50;
+  saveData();
+  sessionStart = null;
+}
+
+function openHistory() {
+  loadData();
+  var n  = historyData.length;
+  var tq = historyData.reduce(function(a,b){ return a+b.total; }, 0);
+  var as = n ? Math.round(historyData.reduce(function(a,b){ return a+b.score; }, 0) / n) : 0;
+  var tt = historyData.reduce(function(a,b){ return a+(b.mins||0); }, 0);
+  var wl = getWeakList();
+  document.getElementById('hSessions').textContent   = n;
+  document.getElementById('hQuestions').textContent  = tq;
+  document.getElementById('hAvgScore').textContent   = as + '%';
+  document.getElementById('hTime').textContent       = tt + '分';
+  document.getElementById('hWeakCount').textContent  = wl.length + '問';
+  var list = document.getElementById('hSessionList');
+  list.innerHTML = n === 0
+    ? '<div style="color:#718096;font-size:13px;text-align:center;padding:20px">まだ履歴がありません</div>'
+    : historyData.map(function(h){
+        return '<div class="hist-row"><div>' +
+          '<div style="font-weight:600">' + h.correct + '/' + h.total + '問正解　' + (h.mins||0) + '分</div>' +
+          '<div class="hist-date">' + h.date + '</div></div>' +
+          '<div class="hist-score">' + h.score + '点</div></div>';
+      }).join('');
+  document.getElementById('historyPanel').classList.add('show');
+}
+
+// ===== イベント登録（iOS Safari対応）=====
+window.addEventListener('load', function() {
+  loadData();
+  refreshWeakBtn();
+
+  function tap(id, fn) {
+    var el = typeof id === 'string' ? document.getElementById(id) : id;
+    if (!el) return;
+    el.addEventListener('click', fn);
+    el.addEventListener('touchend', function(e){ e.preventDefault(); fn(); });
+  }
+
+  tap('btnStart',    doStartQuiz);
+  tap('btnWeak',     doStartWeak);
+  tap('btnNext',     nextQuestion);
+  tap('btnRetry',    function(){ sessionStart = Date.now(); retryWrong(); });
+  tap('btnRestart', backToStart);
+  tap('historyBtn',  openHistory);
+  tap('historyClose', function(){ document.getElementById('historyPanel').classList.remove('show'); });
+  tap('btnClear', function(){
+    if (confirm('履歴と苦手データをすべてリセットしますか？')) {
+      weakData = {}; historyData = [];
+      saveData(); openHistory(); refreshWeakBtn();
+    }
+  });
+  var panel = document.getElementById('historyPanel');
+  if (panel) panel.addEventListener('click', function(e){ if(e.target===panel) panel.classList.remove('show'); });
+});
+</script>
+
+<button class="history-btn" id="historyBtn">📊</button>
+<div class="history-panel" id="historyPanel">
+  <div class="history-inner">
+    <div class="history-header">
+      <h2>📊 成績・履歴</h2>
+      <button class="history-close" id="historyClose">✕</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="hSessions">0</div><div class="stat-label">総セッション数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hQuestions">0</div><div class="stat-label">総解答問題数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hAvgScore">0%</div><div class="stat-label">平均正答率</div></div>
+      <div class="stat-card"><div class="stat-val" id="hTime">0分</div><div class="stat-label">総学習時間</div></div>
+    </div>
+    <div class="weak-stat">
+      <div class="weak-count" id="hWeakCount">0問</div>
+      <div style="font-size:13px;color:#e65100;margin-top:4px;">苦手問題数（正答率50%未満・2回以上解いた問題）</div>
+    </div>
+    <div class="hist-section-title">📅 セッション履歴（最新50件）</div>
+    <div id="hSessionList"></div>
+    <button class="btn-clear" id="btnClear">🗑 履歴・苦手データをリセット</button>
+  </div>
+</div>
+</body>
+</html>
