@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>病理学クイズ（第14回〜第34回）</title>
+<style>
+  :root {
+    --primary: #7b2d2d;
+    --primary-light: #f8eded;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --bg: #f8f0f0;
+    --card: #ffffff;
+    --text: #1a202c;
+    --text-sub: #718096;
+    --border: #e2e8f0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 14px;
+    --option-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; color: var(--text); }
+
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 14px 16px 10px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .progress-bar-wrap { height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin-top: 10px; }
+  .progress-bar { height: 100%; background: #ffd700; border-radius: 2px; transition: width 0.4s ease; }
+
+  #startScreen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 80px); padding: 24px;
+  }
+  .start-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 32px 24px; width: 100%; max-width: 420px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .start-icon { font-size: 56px; margin-bottom: 16px; }
+  .start-card h2 { font-size: 22px; color: var(--primary); margin-bottom: 8px; }
+  .start-card p { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px 14px; background: var(--bg); border-radius: 10px; }
+  .setting-label { font-size: 14px; font-weight: 600; }
+  .setting-row select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--border); background: white; color: var(--text); appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+  .btn-start {
+    width: 100%; padding: 16px; font-size: 18px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; letter-spacing: 1px; margin-top: 8px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 14px rgba(123,45,45,0.4);
+  }
+  .btn-start:active { transform: scale(0.97); }
+
+  #quizScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .q-num { background: var(--primary); color: white; font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .q-badge-hissu { background: #ff9500; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .q-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .q-text { font-size: 17px; line-height: 1.65; font-weight: 600; }
+  .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .opt-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; cursor: pointer;
+    font-size: 15px; line-height: 1.4; text-align: left;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    min-height: var(--option-h);
+    box-shadow: var(--shadow);
+    -webkit-user-select: none; user-select: none;
+  }
+  .opt-btn:active { transform: scale(0.98); }
+  .opt-btn.selected { border-color: var(--primary); background: var(--primary-light); }
+  .opt-btn.correct { border-color: var(--correct); background: #eafaf1; }
+  .opt-btn.wrong { border-color: var(--wrong); background: #fdecea; }
+  .opt-label {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%; background: var(--border); font-weight: 700; font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .opt-btn.selected .opt-label { background: var(--primary); color: white; }
+  .opt-btn.correct .opt-label { background: var(--correct); color: white; }
+  .opt-btn.wrong .opt-label { background: var(--wrong); color: white; }
+  .opt-text { flex: 1; }
+
+  .feedback { display: none; padding: 14px 16px; border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 15px; align-items: center; gap: 10px; }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: #eafaf1; color: var(--correct); border: 1.5px solid var(--correct); }
+  .feedback.ng { background: #fdecea; color: var(--wrong); border: 1.5px solid var(--wrong); }
+
+  .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .btn-next {
+    flex: 1; padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; transition: transform 0.1s;
+    box-shadow: 0 4px 14px rgba(123,45,45,0.35);
+  }
+  .btn-next:active { transform: scale(0.97); }
+  .btn-next:disabled { background: var(--border); color: var(--text-sub); box-shadow: none; }
+
+  #resultScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .result-hero {
+    background: var(--card); border-radius: var(--radius); padding: 32px 24px;
+    text-align: center; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 12px; }
+  .result-score { font-size: 56px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .result-score span { font-size: 24px; font-weight: 400; }
+  .result-msg { font-size: 17px; font-weight: 600; color: var(--text); margin: 10px 0; }
+  .result-detail { font-size: 14px; color: var(--text-sub); margin-bottom: 4px; }
+  .score-bar-wrap { background: var(--bg); border-radius: 8px; height: 12px; margin: 14px 0; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--primary), #c05a5a); transition: width 0.8s ease; }
+  .btn-retry, .btn-restart {
+    width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px;
+    transition: transform 0.1s;
+  }
+  .btn-retry { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(123,45,45,0.35); }
+  .btn-restart { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-retry:active, .btn-restart:active { transform: scale(0.97); }
+  .review-section { margin-top: 8px; }
+  .review-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
+  .review-item { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid var(--border); }
+  .review-item.wrong-item { border-left-color: var(--wrong); }
+  .review-item.correct-item { border-left-color: var(--correct); }
+  .review-q { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .review-ans { font-size: 13px; color: var(--text-sub); }
+  .review-ans .label-correct { color: var(--correct); font-weight: 700; }
+  .review-ans .label-wrong { color: var(--wrong); font-weight: 700; }
+
+  .btn-weak {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
+    background: #fff3e0; color: #e65100; border: 2px solid #ffb74d;
+    border-radius: 12px; cursor: pointer; margin-top: 10px;
+    -webkit-user-select: none; user-select: none; display: block; text-align: center;
+  }
+  .btn-weak:active { transform: scale(0.97); }
+  .history-btn {
+    position: fixed; bottom: 24px; right: 20px; z-index: 200;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--primary); color: white; border: none;
+    font-size: 22px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .history-panel {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.55); overflow-y: auto;
+  }
+  .history-panel.show { display: block; }
+  .history-inner {
+    background: white; border-radius: 16px 16px 0 0;
+    padding: 24px 16px 60px; margin-top: 60px;
+    min-height: calc(100vh - 60px);
+  }
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .history-header h2 { font-size: 18px; font-weight: 700; }
+  .history-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f0f0f0; border: none; font-size: 18px; cursor: pointer;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: #f8f9fa; border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+  .stat-label { font-size: 11px; color: #718096; margin-top: 2px; }
+  .weak-stat { background: #fff3e0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .weak-count { font-size: 24px; font-weight: 800; color: #e65100; }
+  .hist-section-title { font-size: 13px; font-weight: 700; color: #718096; margin: 16px 0 10px; }
+  .hist-row {
+    background: #f8f9fa; border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 8px; font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .hist-score { font-weight: 800; font-size: 18px; color: var(--primary); }
+  .hist-date { color: #718096; font-size: 12px; }
+  .btn-clear {
+    width: 100%; padding: 12px; font-size: 13px;
+    background: white; color: #e74c3c; border: 1.5px solid #e74c3c;
+    border-radius: 10px; cursor: pointer; margin-top: 16px;
+  }
+
+  .q-image-wrap { margin-bottom: 14px; text-align: center; display: none; }
+  .q-image-wrap.show { display: block; }
+  .q-image { max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid var(--border); box-shadow: var(--shadow); cursor: zoom-in; }
+  .q-image-label { font-size: 11px; color: var(--text-sub); margin-top: 6px; }
+  .img-modal { display: none; position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.88); align-items: center; justify-content: center; }
+  .img-modal.show { display: flex; }
+  .img-modal-img { max-width: 95vw; max-height: 90vh; border-radius: 8px; object-fit: contain; }
+  .img-modal-close { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.25); border: none; color: white; font-size: 22px; cursor: pointer; }
+  .img-tool-btn { position: fixed; bottom: 24px; left: 20px; z-index: 200; width: 54px; height: 54px; border-radius: 50%; background: #e67e22; color: white; border: none; font-size: 22px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; }
+  .img-tool-panel { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.55); overflow-y: auto; }
+  .img-tool-panel.show { display: block; }
+  .img-tool-inner { background: white; border-radius: 16px 16px 0 0; padding: 24px 16px 60px; margin-top: 40px; min-height: calc(100vh - 40px); }
+  .img-tool-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .img-tool-header h2 { font-size: 18px; font-weight: 700; }
+  .img-tool-close { width: 32px; height: 32px; border-radius: 50%; background: #f0f0f0; border: none; font-size: 18px; cursor: pointer; }
+  .img-upload-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 24px; text-align: center; background: #f8f9fa; margin-bottom: 16px; position: relative; cursor: pointer; }
+  .img-upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .img-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .img-list-item { background: #f8f9fa; border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 10px; }
+  .img-list-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
+  .img-list-info { flex: 1; }
+  .img-list-label { font-size: 12px; color: #718096; }
+  .img-qnum-input { width: 80px; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px; text-align: center; margin-top: 4px; display: block; }
+  .img-list-remove { width: 28px; height: 28px; border-radius: 50%; background: #fdecea; border: none; color: #e74c3c; font-size: 16px; cursor: pointer; }
+  .btn-save-img { width: 100%; padding: 14px; font-size: 15px; font-weight: 700; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; margin-top: 8px; }
+  .img-stats { background: #e8f4fd; border-radius: 10px; padding: 12px 14px; font-size: 13px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🧫 病理学クイズ</h1>
+  <div class="header-sub" id="headerSub">第14回〜第33回 国家試験問題</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+</div>
+
+<div id="startScreen">
+  <div class="start-card">
+    <div class="start-icon">🧫</div>
+    <h2>病理学クイズ</h2>
+    <p>国家試験（第14回〜第34回）から<br>出題された病理学問題を学習しましょう。<br>全<strong>296問</strong>収録</p>
+    <div class="setting-row">
+      <span class="setting-label">出題数</span>
+      <select id="selectNum">
+        <option value="10">10問</option>
+        <option value="20">20問</option>
+        <option value="30" selected>30問</option>
+        <option value="50">50問</option>
+        <option value="100">100問</option>
+        <option value="0">全問（296問）</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">出題順</span>
+      <select id="selectOrder">
+        <option value="1" selected>ランダム</option>
+        <option value="0">番号順</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">選択肢順</span>
+      <select id="selectShuffle">
+        <option value="1" selected>ランダム</option>
+        <option value="0">固定</option>
+      </select>
+    </div>
+    <button class="btn-start" id="btnStart">スタート ▶</button>
+    <button class="btn-weak" id="btnWeak">⚡ 苦手問題だけ出題する</button>
+  </div>
+</div>
+
+<div id="quizScreen">
+  <div class="q-meta">
+    <span class="q-num" id="qNum">問1</span>
+    <span class="q-badge-hissu" id="qBadge" style="display:none">必修</span>
+  </div>
+  <div class="q-card">
+    <div class="q-image-wrap" id="qImageWrap"><img class="q-image" id="qImage" src="" alt="図版"><div class="q-image-label">タップすると拡大できます</div></div>
+    <p class="q-text" id="qText"></p>
+  </div>
+  <div class="options-grid" id="optionsGrid"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="action-row">
+    <button class="btn-next" id="btnNext" disabled>次の問題 →</button>
+  </div>
+</div>
+
+<div id="resultScreen">
+  <div class="result-hero">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-score" id="resultScore">0<span>点</span></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="score-bar-wrap"><div class="score-bar" id="scoreBar" style="width:0%"></div></div>
+  </div>
+  <button class="btn-retry" id="btnRetry">間違えた問題をやり直す</button>
+  <button class="btn-restart" id="btnRestart">トップへ戻る</button>
+  <div class="review-section">
+    <div class="review-title">📝 解答一覧</div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<script>
+const ALL_DATA = [{"q": "正しいのはどれか。", "opts": ["肉芽組織には多数の毛細血管の新生が起こる。", "創傷治癒では瘢痕形成後に肉芽組織が形成される。", "肉芽組織には神経細胞増殖が起こる。", "創傷治癒では脂肪化から瘢痕組織となり治癒する。"], "ans": 0, "essential": true}, {"q": "グロコット染色で黒色に染まるのはどれか。", "opts": ["真　菌", "結核菌", "大腸菌", "ブドウ球菌"], "ans": 0, "essential": false}, {"q": "分泌過剰で満月様顔貌、高血圧および多毛となるのはどれか。", "opts": ["コルチゾン", "インスリン", "成長ホルモン", "甲状腺ホルモン"], "ans": 0, "essential": false}, {"q": "石綿（アスベスト）を長期間吸入することで起こるのはどれか。", "opts": ["悪性中皮腫", "炭粉症", "珪肺症", "骨軟化症"], "ans": 0, "essential": false}, {"q": "うっ血と関係のない変化はどれか。", "opts": ["水腎症", "心不全細胞", "にくずく肝", "メズサの頭"], "ans": 0, "essential": false}, {"q": "最も多い塞栓はどれか。", "opts": ["血　栓", "腫　瘍", "空　気", "脂　肪"], "ans": 0, "essential": false}, {"q": "仮性肥大がみられるのはどれか。", "opts": ["進行性筋ジストロフィーの腓腹筋", "高血圧症の心筋", "片方が機能不全に陥ったときの残った腎臓", "前立腺肥大"], "ans": 0, "essential": false}, {"q": "組織内異物の処理でないのはどれか。", "opts": ["化生", "排　除", "器質化", "被　包"], "ans": 0, "essential": false}, {"q": "炎症について正しいのはどれか。", "opts": ["漿液性炎は液性成分の滲出を主成分とする。", "線維素炎は粘液分泌の亢進が著しい。", "カタル性炎は大量の好中球を含む。", "化膿性炎は腐敗菌の感染による著しい組織の壊死を生じる。"], "ans": 0, "essential": false}, {"q": "サイトカインでないのはどれか。", "opts": ["ヒスタミン", "インターロイキン", "インターフェロン", "コロニー刺激因子"], "ans": 0, "essential": false}, {"q": "正しい組み合わせはどれか。", "opts": ["２型アレルギー・・・・細胞傷害型反応", "１型アレルギー・・・・免疫複合体病", "３型アレルギー・・・・アナフィラキシー反応", "４型アレルギー・・・・花粉症"], "ans": 0, "essential": false}, {"q": "誤っている組み合わせはどれか。", "opts": ["悪性黒色腫・・・・ヒト絨毛性ゴナドトロピン（hCG）", "肝細胞癌・・・・・αフェトプロテイン", "膵癌・・・・・・・CA19-9", "大腸癌・・・・・・胎児性癌抗原（CEA）"], "ans": 0, "essential": false}, {"q": "常染色体異常による疾患はどれか。", "opts": ["ダウン（Down）症候群", "ターナー（Turner）症候群", "クラインフェルター（Klinefelter）症候群", "血友病"], "ans": 0, "essential": false}, {"q": "奇形の原因となるのはどれか。", "opts": ["サリドマイド", "Ｂ型肝炎", "インフルエンザ", "炭粉"], "ans": 0, "essential": false}, {"q": "奇形の原因となるのはどれか。", "opts": ["風疹", "ＭＲＳＡ感染", "インフルエンザ", "炭粉"], "ans": 0, "essential": false}, {"q": "良性腫瘍の特徴について正しいのはどれか。", "opts": ["膨張性発育", "播種", "悪液質", "強い異型性"], "ans": 0, "essential": true}, {"q": "ビタミンB12欠乏による疾患はどれか。", "opts": ["悪性貧血", "くる病", "夜盲症", "壊血病"], "ans": 0, "essential": false}, {"q": "第II度熱傷の特徴はどれか。", "opts": ["水疱形成", "炭化", "潰瘍形成", "湿疹、紅斑"], "ans": 0, "essential": false}, {"q": "環境ホルモン（内分泌撹乱物質）でないのはどれか。", "opts": ["アスベスト", "ダイオキシン", "PCB", "DDT"], "ans": 0, "essential": false}, {"q": "原虫でないのはどれか。", "opts": ["クリプトコッカス", "赤痢アメーバ", "腟トリコモナス", "トキソプラズマ"], "ans": 0, "essential": false}, {"q": "日和見感染はどれか。", "opts": ["カンジダ症", "インフルエンザ", "マラリア", "サルモネラ症"], "ans": 0, "essential": false}, {"q": "廃用性萎縮はどれか。", "opts": ["ギプス固定後の運動痛", "老人の胸腺", "水腎症", "動脈硬化性萎縮腎"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["にくずく肝　　─　肝硬変", "肺うっ血　　　─　左心不全", "下肢のうっ血　─　妊　娠", "腹水　　　　　─　門脈圧亢進"], "ans": 0, "essential": false}, {"q": "肉芽組織の構成成分でないのはどれか。", "opts": ["上皮細胞", "線維芽細胞", "マクロファージ", "毛細血管"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["好酸球　　─　アレルギー性疾患", "好塩基球　─　IgG", "好中球　　─　抗体産生", "リンパ球　─　異物貪食"], "ans": 0, "essential": false}, {"q": "ターナー（Turner）症候群の染色体はどれか。", "opts": ["45、XO", "46、XX", "46、XY", "47、XXY"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["未分化癌─────小細胞癌", "腺　癌──────癌真珠", "扁平上皮癌────印環細胞癌", "カルチノイド───悪性非上皮性腫瘍"], "ans": 0, "essential": false}, {"q": "正しい組み合わせはどれか。", "opts": ["ダウン（Down）症候群 ────21トリソミー", "マルファン（Marfan）症候群──伴性劣性遺伝", "血友病────────────常染色体劣性遺伝", "痛　風────────────常染色体優性遺伝"], "ans": 0, "essential": false}, {"q": "奇形の原因となるウィルス感染はどれか。", "opts": ["風疹", "麻疹", "インフルエンザ", "日本脳炎"], "ans": 0, "essential": false}, {"q": "アレルギーIV型（遅延型反応）はどれか。", "opts": ["ツベルクリン反応", "免疫複合体による反応", "アルサス（Arthus）反応", "アナフィラキシー反応"], "ans": 0, "essential": true}, {"q": "病理組織標本作製における一般染色はどれか。", "opts": ["ヘマトキシリン・エオジン（HE）染色", "ワンギーソン染色", "コンゴー赤染色", "チール・ネルゼン染色"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["膵島インスリン低下症　−　糖尿病", "下垂体成長ホルモン亢進症　−　粘液水腫", "甲状腺ホルモン低下症　−　バセドゥ（Basedow）病", "副腎髄質カテコールアミン亢進症　−　巨人症"], "ans": 0, "essential": false}, {"q": "外因と疾病の正しい組合せはどれか。", "opts": ["プリオン　　　−　牛海綿状脳症（狂牛病）", "スピロヘータ　−　結　核", "リケッチア　　−　麻　疹", "真菌　　　　　−　トキソプラズマ症"], "ans": 0, "essential": false}, {"q": "水腎症における萎縮はどれか。", "opts": ["圧迫性萎縮", "廃用性萎縮", "神経性萎縮", "生理的萎縮"], "ans": 0, "essential": false}, {"q": "胆管癌による黄疸はどれか。", "opts": ["閉塞性黄疸", "溶血性黄疸", "肝細胞性黄疸", "核黄疸"], "ans": 0, "essential": false}, {"q": "潜函病の原因はどれか。", "opts": ["空気塞栓", "血栓塞栓", "脂肪塞栓", "腫瘍塞栓"], "ans": 0, "essential": false}, {"q": "常時生理的に再生しているのはどれか。", "opts": ["造血細胞", "肝細胞", "神経細胞", "心筋細胞"], "ans": 0, "essential": false}, {"q": "肉芽組織から瘢痕になるときに増加するのはどれか。", "opts": ["膠原線維", "毛細血管", "炎症細胞", "線維芽細胞"], "ans": 0, "essential": false}, {"q": "急性炎症における滲出反応の伝達物質でないのはどれか。", "opts": ["アドレナリン", "プロスタグランジン", "ヒスタミン", "ブラジキニン"], "ans": 0, "essential": false}, {"q": "特異性炎でないのはどれか。", "opts": ["偽膜性大腸炎", "梅毒", "サルコイドーシス", "ハンセン（Hansen）病"], "ans": 0, "essential": false}, {"q": "ウイルスが原因となる腫瘍はどれか。", "opts": ["バーキット（Burkitt）リンパ腫", "甲状腺腫瘍", "ウイルムス（Wilms）腫瘍", "グラヴィッツ（Grawitz）腫瘍"], "ans": 0, "essential": false}, {"q": "常染色体優性遺伝について誤っているのはどれか。", "opts": ["保因者が存在する。", "50％の確率で子供に出現する。", "どの世代にも患者が出現する。", "男女同数に発症する。"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["血友病　　　　　　　　　−　伴性劣性遺伝", "家族性大腸ポリポーシス　−　常染色体劣性遺伝", "脂質蓄積症　　　　　　　−　常染色体優性遺伝", "レックリングハウゼン病　−　伴性劣性遺伝"], "ans": 0, "essential": false}, {"q": "病因のうち内因でないのはどれか。", "opts": ["感　染", "免　疫", "遺　伝", "年　齢"], "ans": 0, "essential": true}, {"q": "光学顕微鏡で観察するときの病理標本の厚さはどれか。", "opts": ["3&#12316;5μm", "3&#12316;5cm", "3&#12316;5mm", "3&#12316;5nm"], "ans": 0, "essential": false}, {"q": "疾病の分類で対応しない組合せはどれか。", "opts": ["遺伝性　─　続発性", "限局性　─　全身性", "器質性　─　機能性", "急　性　─　慢　性"], "ans": 0, "essential": false}, {"q": "出血性梗塞を起こしやすいのはどれか。", "opts": ["肺　臓", "大　脳", "心　臓", "腎　臓"], "ans": 0, "essential": false}, {"q": "浮腫の原因で誤っているのはどれか。", "opts": ["毛細血管内圧の低下", "リンパ管の閉塞", "毛細血管壁の透過性亢進", "血漿蛋白量の低下"], "ans": 0, "essential": false}, {"q": "高血圧症でみられる心筋の変化はどれか。", "opts": ["肥　大", "過形成", "再　生", "萎　縮"], "ans": 0, "essential": false}, {"q": "結核性肉芽腫でみられないのはどれか。", "opts": ["好中球浸潤", "乾酪壊死巣", "類上皮細胞", "ラングハンス巨細胞"], "ans": 0, "essential": false}, {"q": "自己免疫疾患でないのはどれか。", "opts": ["気管支喘息", "全身性エリテマトーデス", "橋本病", "関節リウマチ"], "ans": 0, "essential": false}, {"q": "アレルギーで正しい組合せはどれか。", "opts": ["I型（アナフィラキシー型）　−　じんま疹", "II型（細胞傷害型）　　　　  −　ツベルクリン反応", "III型（免疫複合体型）　　　−　異型輸血", "IV型（遅延型）　　　　　　−　血清病"], "ans": 0, "essential": false}, {"q": "良性腫瘍でみられないのはどれか。", "opts": ["播　種", "管腔閉塞", "内分泌異常", "圧　迫"], "ans": 0, "essential": false}, {"q": "非上皮性腫瘍はどれか。", "opts": ["血管腫", "乳頭腫", "グラヴィッツ（Grawitz）腫瘍", "小細胞癌"], "ans": 0, "essential": false}, {"q": "悪性腫瘍はどれか。", "opts": ["骨肉腫", "乳頭腫", "平滑筋腫", "腺　腫"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["ヘテロ接合では対立遺伝子が同質である。", "遺伝子は染色体上の特定の遺伝子座にある。", "対立遺伝子は相同染色体上に対応して存在する。", "染色体は父親と母親とからの1本ずつが対となっている。"], "ans": 0, "essential": false}, {"q": "奇形の原因となるのはどれか。", "opts": ["風疹ウイルス", "カンジダ", "結核菌", "C型肝炎ウイルス"], "ans": 0, "essential": false}, {"q": "良性腫瘍の特徴はどれか。", "opts": ["分化度が高い。", "浸潤性に増殖する。", "増殖速度が速い。", "転移をおこす。"], "ans": 0, "essential": true}, {"q": "外因で誤っている組合せはどれか。", "opts": ["単純ヘルペスウィルス　&#8722;　子宮頚癌", "放射線　　　　　　　　&#8722;　白血病", "アルコール飲料　　　　&#8722;　慢性膵炎", "アスベスト　　　　　　&#8722;　悪性中皮腫"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["骨折固定時の筋　　　&#8722;　内分泌性萎縮", "コルセット肝　　　　&#8722;　圧迫萎縮", "筋萎縮性側索硬化症　&#8722;　神経性萎縮", "思春期以降の胸腺　　&#8722;　生理的萎縮"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["結核　　　&#8722;　吐血", "尿管結石　&#8722;　血尿", "大腸炎　　&#8722;　下血", "打撲　　　&#8722;　紫斑"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["腎性浮腫　　　　&#8722;　高蛋白血症", "下肢の慢性浮腫　&#8722;　フィラリア症", "肺水腫　　　　　&#8722;　左心不全", "炎症性浮腫　　　&#8722;　血管透過性亢進"], "ans": 0, "essential": false}, {"q": "生理的に再生を繰り返しているのはどれか。", "opts": ["胃粘膜細胞", "神経細胞", "心筋細胞", "肝細胞"], "ans": 0, "essential": false}, {"q": "特異性炎（肉芽腫性炎）はどれか。", "opts": ["ゴム腫", "線維腫", "腺腫", "脂肪腫"], "ans": 0, "essential": false}, {"q": "ヘルパーＴ細胞が選択的に障害されるのはどれか。", "opts": ["後天性免疫不全症候群（AIDS）", "関節リウマチ", "全身性エリテマトーデス", "多発性筋炎"], "ans": 0, "essential": false}, {"q": "アレルギーV型（刺激型）反応はどれか。", "opts": ["バセドウ（Basedow）病", "血清病", "ツベルクリン反応", "新生児重症黄疸"], "ans": 0, "essential": false}, {"q": "不顕性癌でないのはどれか。", "opts": ["末期癌", "オカルト癌", "偶発癌", "ラテント癌"], "ans": 0, "essential": false}, {"q": "ウィルスが原因でない悪性腫瘍はどれか。", "opts": ["前立腺癌", "バーキット（Burkitt）リンパ腫", "鼻咽頭癌", "成人Ｔ細胞白血病"], "ans": 0, "essential": false}, {"q": "子宮に発生する腫瘍で頻度が高いのはどれか。", "opts": ["平滑筋腫", "血管腫", "脂肪腫", "軟骨腫"], "ans": 0, "essential": false}, {"q": "伴性劣性遺伝形式の疾患はどれか。", "opts": ["血友病", "マルファン（Marfan）症候群", "フォン・レックリングハウゼンVon Recklinghausen’s病", "脂質蓄積症"], "ans": 0, "essential": false}, {"q": "性染色体異常による疾患はどれか。", "opts": ["ターナー（Turner）症候群", "マルファン（Marfan）症候群", "猫鳴き症候群", "ダウン（Down）症候群"], "ans": 0, "essential": false}, {"q": "性染色体異常による疾患はどれか。", "opts": ["クラインフェルター（Klinefelter）症候群", "猫鳴き症候群", "ダウン（Down）症候群", "家族性高コレステロール血症"], "ans": 0, "essential": false}, {"q": "物理的外因と病態との組合せで誤っているのはどれか。〔必〕", "opts": ["高　温　　　&#8722;　潜函病", "機械的損傷　&#8722;　挫滅症候群", "放射線　　　&#8722;　血小板減少", "光　線　　　&#8722;　色素沈着"], "ans": 0, "essential": false}, {"q": "年齢層と罹患しやすい疾患との組合せで誤っているのはどれか。", "opts": ["成長期　&#8722;　骨粗鬆症", "周産期・新生児期　&#8722;　肺硝子膜症", "乳児期&#12316;小児期　&#8722;　水　痘", "壮年期　&#8722;　動脈硬化症"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["ビタミンB12欠乏　&#8722;　出血傾向", "カルシウム不足　　&#8722;　骨軟化症", "銅代謝異常　　　　&#8722;　ウィルソン病", "蛋白質不足　　　　&#8722;　飢餓浮腫"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["経胎盤（母子）感染　&#8722;　トキソプラズマ症", "経皮感染　&#8722;　結核", "接触感染　&#8722;　赤痢", "経口感染　&#8722;　百日咳"], "ans": 0, "essential": false}, {"q": "仮性肥大を起こした骨格筋の組織で増加している細胞はどれか。", "opts": ["脂肪細胞", "神経細胞", "骨格筋細胞", "平滑筋細胞"], "ans": 0, "essential": false}, {"q": "創傷の修復現象に含まれないのはどれか。", "opts": ["壊　死", "炎症性細胞浸潤", "瘢痕化", "肉芽組織形成"], "ans": 0, "essential": false}, {"q": "肉芽腫性炎でないのはどれか。", "opts": ["肝硬変", "梅毒", "ハンセン（Hansen）病", "サルコイドーシス"], "ans": 0, "essential": false}, {"q": "サイトカインでないのはどれか。", "opts": ["ヒスタミン", "インターフェロン", "コロニー刺激因子", "腫瘍壊死因子"], "ans": 0, "essential": false}, {"q": "後天性免疫不全症候群（AIDS）で正しいのはどれか。", "opts": ["ヘルパーT細胞が減少する。", "輸血では感染しない。", "悪性腫瘍の要因とはならない。", "HCVの感染による"], "ans": 0, "essential": false}, {"q": "自己免疫疾患と症候との組合せで正しいのはどれか。", "opts": ["シェーグレン症候群　　　&#8722;　口内乾燥", "全身性エリテマトーデス　&#8722;　リウマチ結節", "強皮症　　　　　　　　　&#8722;　蝶形紅斑", "多発性筋炎　　　　　　　&#8722;　レイノー病"], "ans": 0, "essential": false}, {"q": "良性腫瘍の特徴で正しいのはどれか。", "opts": ["分化度が高い。", "再発が多い。", "転移を起こす。", "核分裂が多い。"], "ans": 0, "essential": false}, {"q": "腫瘍マーカーでαフェトプロテイン（AFP）が有用なのはどれか。", "opts": ["肝癌（肝細胞癌）", "膵臓癌", "前立腺癌", "大腸癌"], "ans": 0, "essential": false}, {"q": "ウィルスが原因となる腫瘍はどれか。", "opts": ["成人T細胞白血病（ATL）", "ウィルムス腫瘍", "家族性大腸性ポリポーシス", "カルチノイド"], "ans": 0, "essential": false}, {"q": "良性非上皮性腫瘍はどれか。", "opts": ["子宮筋腫", "白血病", "乳頭腫", "骨肉腫"], "ans": 0, "essential": false}, {"q": "原因と疾患との組合せで誤っているのはどれか。〔必〕", "opts": ["土壌汚染　−　アザラシ肢症", "水質汚濁　−　イタイイタイ病", "大気汚染　−　慢性気管支炎", "放射線被曝　−　白血球減少症"], "ans": 0, "essential": false}, {"q": "組織標本の一般染色法はどれか。", "opts": ["へマトキシリン・エオジン（HE）染色", "チール・ネルゼン染色", "グラム染色", "ワンギーソン染色"], "ans": 0, "essential": false}, {"q": "女性に多い疾患はどれか。", "opts": ["胆石症", "肝硬変", "胃　癌", "肺　癌"], "ans": 0, "essential": false}, {"q": "放射線に対して感受性の低いのはどれか。", "opts": ["筋細胞", "腸上皮細胞", "造血細胞", "精祖細胞"], "ans": 0, "essential": false}, {"q": "加齢に伴い心筋細胞内にみられるのはどれか。", "opts": ["リポフスチン", "メラニン", "ビリルビン", "へモジデリン"], "ans": 0, "essential": false}, {"q": "肉芽組織の構成細胞でないのはどれか。", "opts": ["神経細胞", "線維芽細胞", "血管内皮細胞", "炎症細胞"], "ans": 0, "essential": false}, {"q": "炎症反応で誤っている組合せはどれか。", "opts": ["赤血球の漏出　　−　浮　腫", "滲出反応　　　　−　ヒスタミン", "好中球の増多　　−　化　膿", "組織の増生　　　−　線維芽細胞"], "ans": 0, "essential": false}, {"q": "滲出性炎でないのはどれか。", "opts": ["肉芽腫性炎", "カタル性炎", "線維素性炎", "化膿性炎"], "ans": 0, "essential": false}, {"q": "自己免疫疾患でないのはどれか。", "opts": ["後天性免疫不全症候群（AIDS）", "全身性エリテマトーデス", "結節性多発性動脈炎", "関節リウマチ"], "ans": 0, "essential": false}, {"q": "腫瘍と性状との組合せで誤っているのはどれか。", "opts": ["良性腫瘍　−　壊　死", "髄様癌　　−　軟らかい", "腎細胞癌　−　黄褐色", "悪性腫瘍　−　浸潤性増殖"], "ans": 0, "essential": false}, {"q": "ヒトパピローマウイルスが原因となるのはどれか。", "opts": ["子宮頸部扁平上皮癌", "バーキット（Burkitt）リンパ腫", "成人Ｔ細胞白血病", "鼻咽頭癌"], "ans": 0, "essential": false}, {"q": "良性非上皮性腫瘍はどれか。", "opts": ["神経線維腫", "カルチノイド", "乳頭腺腫", "黒色腫"], "ans": 0, "essential": false}, {"q": "単因子性遺伝性疾患はどれか。", "opts": ["血友病", "高血圧症", "統合失調症", "痛　風"], "ans": 0, "essential": false}, {"q": "染色体数が45本なのはどれか。", "opts": ["ターナー（Turner）症候群", "猫鳴き症候群", "クラインフェルター（Klinefelter）症候群", "ダウン（Down）症候群"], "ans": 0, "essential": false}, {"q": "外因と疾患との組合せで正しいのはどれか。〔必〕", "opts": ["アスベスト　―――　悪性中皮腫", "サリドマイド　――　スモン（亜急性脊髄視神経障害）", "プリオン　――――　骨軟化症", "有機水銀　――――　アザラシ肢症"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["電子顕微鏡観察　―――――――――　遺伝子配列の同定", "免疫染色（免疫組織化学）　――――　タンパク質局在の探索", "分子生物学的方法/ＩＳＨ ―――――　メッセンジャーＲＮＡの同定", "へマトキシリン・エオジン染色　――　組織構造の観察"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["脂肪肝　――――　適応障害", "尿毒症　――――　代謝異常", "アレルギー　――　免疫異常", "ショック　―――　循環障害"], "ans": 0, "essential": false}, {"q": "女性よりも男性に頻度の高い疾患はどれか。", "opts": ["痛　風", "関節リウマチ", "骨粗鬆症", "胆石症"], "ans": 0, "essential": false}, {"q": "アルコール性肝障害でみられるのはどれか。", "opts": ["脂肪変性", "アミロイド変性", "硝子滴変性", "フィブリノイド変性"], "ans": 0, "essential": false}, {"q": "壊死で正しいのはどれか。", "opts": ["ガス壊疽は壊死組織への腐敗菌感染による。", "乾酪壊死は融解壊死に属する。", "脳梗塞では凝固壊死がみられる。", "壊死による組織欠損は修復されない。"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["肝うっ血では小葉辺縁帯にうつ血が強い。", "うっ血は静脈血の還流障害によって起こる。", "肺うっ血は左心不全によって起こる。", "肝硬変で門脈圧は亢進する。"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["静脈血栓症の好発部位は上肢の静脈である。", "多血症では血栓形成が起こりやすい。", "血栓は血流が緩徐な部分で形成されやすい。", "播種性血管内凝固症候群ではフィブリン微小血栓の形成がみられる。"], "ans": 0, "essential": false}, {"q": "創傷治癒過程の出現順序で正しいのはどれか。", "opts": ["肉芽形成　→　線維化　　→　瘢痕", "肉芽形成　→　瘢痕　　　→　線維化", "線維化　　→　瘢痕　　　→　肉芽形成", "線維化　　→　肉芽形成　→　瘢痕"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["らい菌　―――――　肉芽腫性炎", "ジフテリア菌　――　出血性炎", "結核菌　―――――　ゴム腫", "淋菌　――――――　乾酪壊死"], "ans": 0, "essential": false}, {"q": "IV型アレルギー（遅延型過敏反応）はどれか。", "opts": ["ツベルクリン反応", "花粉症", "Ｒｈ不適合輪血", "血清病"], "ans": 0, "essential": false}, {"q": "悪性腫瘍の特徴で誤っているのはどれか。", "opts": ["過形成", "自律性増殖", "組織破壊", "悪液質"], "ans": 0, "essential": false}, {"q": "関連性の低い組合せはどれか。", "opts": ["エプスタイン・バーウイルス　――　子宮頸部癌", "へリコバクター・ピロリ菌　―――　胃　癌", "α-フェトプロテイン ――――――　肝　癌", "癌胎児性抗原　―――――――――　大腸癌"], "ans": 0, "essential": false}, {"q": "常染色体優性遺伝を示す疾患はどれか。", "opts": ["家族性大腸ポリポーシス", "緑赤色盲", "ウィルソン（Wilson）病", "伴性無ガンマグロブリン血症"], "ans": 0, "essential": false}, {"q": "骨折の治癒過程の順序で正しいのはどれか。〔必〕", "opts": ["血　腫→肉芽組織→類　骨→仮　骨→骨折治癒", "血　腫→類　骨→肉芽組織→仮　骨→骨折治癒", "血　腫→類　骨→仮　骨→肉芽組織→骨折治癒", "血　腫→肉芽組織→仮　骨→類　骨→骨折治癒"], "ans": 0, "essential": false}, {"q": "病理解剖の意義で正しいのはどれか。", "opts": ["臨床診断の評価と治療効果の検証", "犯罪に関連した死因に関する推定", "正常な状態の形態観察", "異常死体の検案"], "ans": 0, "essential": false}, {"q": "奇形と要因との組合せで誤っているのはどれか。", "opts": ["メッケル鼓室　　　&#8722;　酸素欠乏", "先天性風疹症候群　&#8722;　ウイルス感染", "アザラシ肢症　　　&#8722;　薬　物", "小頭症　　　　　　&#8722;　放射線"], "ans": 0, "essential": false}, {"q": "放射線に対する感受性が低いのはどれか。", "opts": ["神経細胞", "卵母細胞", "腸管上皮細胞", "骨髄造血細胞"], "ans": 0, "essential": false}, {"q": "アミロイド沈着の検出に用いられる染色法はどれか。", "opts": ["コンゴー赤染色", "グラム染色", "アザン・マロリー染色", "チール・ネルゼン染色"], "ans": 0, "essential": false}, {"q": "血管壁の脆弱性により出血傾向を呈する疾患はどれか。", "opts": ["アレルギー性紫斑病", "血友病A", "新生児メレナ", "血小板減少性紫斑病"], "ans": 0, "essential": false}, {"q": "貧血性梗塞が起こりにくい臓器はどれか。", "opts": ["肝　臓", "脳", "心　臓", "腎　臓"], "ans": 0, "essential": false}, {"q": "過形成に分類されるのはどれか。", "opts": ["前立腺肥大症による前立腺", "高血圧症による心肥大", "ハチ刺されによる局所肥大", "進行性筋ジストロフィーによる骨格筋の肥大"], "ans": 0, "essential": false}, {"q": "非感染性の肉芽腫性病変はどれか。", "opts": ["リウマトイド結節", "結核結節", "ゴム腫", "らい腫"], "ans": 0, "essential": false}, {"q": "補体の説明で誤っているのはどれか。", "opts": ["タンパク質一次構造の多様性を示す。", "血清に多量に存在する。", "食細胞の貪食作用を促進する。", "免疫複合体により活性化される。"], "ans": 0, "essential": false}, {"q": "花粉症の病態で正しいのはどれか。", "opts": ["IｇEが抗原を認識して誘導される即時型反応である。", "Tリンパ球により誘導される遅延型反応である。", "細胞膜抗原に結合する抗体で誘導される細胞傷害反応である。", "免疫複合体によって誘導される組織障害反応である。"], "ans": 0, "essential": false}, {"q": "発癌の内因はどれか。", "opts": ["免疫不全", "放射線被曝", "ウイルス感染", "アスベスト曝露"], "ans": 0, "essential": false}, {"q": "悪性腫瘍と組織型・機能分類との組合せで誤っているのはどれか。", "opts": ["尿路上皮癌　　&#8722;　低分化扁平上皮癌", "カルチノイド　&#8722;　ホルモン産生腫瘍", "印環細胞癌　&#8722;　粘液産生・貯留性低分化腺癌", "癌真珠腫　&#8722;　角化型高分化扁平上皮癌"], "ans": 0, "essential": false}, {"q": "性染色体異常による疾患はどれか。", "opts": ["クラインフェルター（Klinefelter）症候群", "ダウン（Down）症候群", "先天性巨大結腸症", "猫鳴き症候群"], "ans": 0, "essential": false}, {"q": "カタル性炎で正しいのはどれか。〔必〕", "opts": ["粘膜の炎症で粘液分泌の亢進が著しい。", "体腔に漿液が貯留する。", "結合組織内に多量の好中球が浸潤する。", "線維素の析出が著しい。"], "ans": 0, "essential": false}, {"q": "生体の正常な状態の形態観察を目的に行われるのはどれか。", "opts": ["系統解剖", "病理解剖", "司法解剖", "行政解剖"], "ans": 0, "essential": false}, {"q": "他覚的所見はどれか。", "opts": ["心肥大", "咳　嗽", "眩　暈", "倦怠感"], "ans": 0, "essential": false}, {"q": "熱傷の説明で誤っているのはどれか。", "opts": ["第２度熱傷は瘢痕を残さずに治癒する。", "胃・十二指腸の急性出血性潰瘍の原因となる。", "気道熱傷は肺浮腫を起こすことがある。", "第３度熱傷では潰瘍がみられる。"], "ans": 0, "essential": false}, {"q": "放射線晩期傷害はどれか。", "opts": ["発　癌", "脱　毛", "下　痢", "白血球減少"], "ans": 0, "essential": false}, {"q": "アポトーシスで誤っているのはどれか。", "opts": ["細胞は膨化する。", "核は断片化する。", "マクロファージに貪食される。", "放射線により誘導される。"], "ans": 0, "essential": false}, {"q": "血栓形成の順序で正しいのはどれか。", "opts": ["内皮障害　→　血小板凝集　→　フィブリン凝固　→　器質化", "内皮障害　→　フィブリン凝固　→　血小板凝集　→　器質化", "内皮障害　→　フィブリン凝固　→　器質化　→　血小板凝集", "内皮障害　→　血小板凝集　→　器質化　→　フィブリン凝固"], "ans": 0, "essential": false}, {"q": "ネフローゼ症候群で全身性浮腫が生じる原因はどれか。", "opts": ["血漿膠質浸透圧の低下", "血管透過性の亢進", "毛細血管圧の上昇", "リンパ管の閉塞"], "ans": 0, "essential": false}, {"q": "炎症の分類と疾患との組合せで誤っているのはどれか。", "opts": ["線維素炎　　−　間質性肺炎", "カタル性炎　−　アレルギー性鼻炎", "化膿性炎　　−　気管支肺炎", "肉芽腫性炎　−　ハンセン(Hansen)病"], "ans": 0, "essential": false}, {"q": "免疫担当細胞と関連病態・機能との組合せで誤っているのはどれか。", "opts": ["Ｂリンパ球　　　　　　−　ウイルス感染細胞の破壊", "細胞傷害性Ｔリンパ球　−　移植臓器の拒絶反応", "ヘルパーＴリンパ球　　−　後天性免疫不全症候群で減少", "ナチュラルキラー細胞　−　自己防衛的役割"], "ans": 0, "essential": false}, {"q": "アレルギー分類と疾患との組合せで誤っているのはどれか。", "opts": ["IV型（遅延型）　　　　　　−　自己免疫性溶血", "I型（アナフィラキシー型）−　花粉症", "II型（細胞傷害型）　　　　−　異型輸血", "III型（免疫複合体型）　　　−　血清病"], "ans": 0, "essential": false}, {"q": "前立腺癌の診断に有用な腫瘍マーカーはどれか。", "opts": ["PSA", "hCG", "CA19-9", "CEA"], "ans": 0, "essential": false}, {"q": "癌と原因との組合せで正しいのはどれか。", "opts": ["膀胱癌　　−　アニリン", "肝細胞癌　−　アスベスト", "鼻咽頭癌　−　ヘリコバクター・ピロリ", "食道癌　　−　エプスタイン・バーウイルス"], "ans": 0, "essential": false}, {"q": "男性に頻度の高い遺伝病はどれか。", "opts": ["血友病Ａ", "結節性硬化症", "マルファン（Marfan）症候群", "家族性大腸ポリポーシス"], "ans": 0, "essential": false}, {"q": "炎症で誤っているのはどれか。〔必〕", "opts": ["慢性炎症の浸潤細胞は好中球が多い。", "急性炎症では血管透過性が亢進する。", "炎症性サイトカインの作用によって発熱する。", "肉芽組織形成は組織の修復過程にみられる。"], "ans": 0, "essential": false}, {"q": "脂肪を検出するのに用いられる染色法はどれか。", "opts": ["オイルレッドＯ染色", "コッサ染色", "ヘマトキシリン・エオジン（HE）染色", "ベルリン青染色"], "ans": 0, "essential": false}, {"q": "疾病の発生原因で内因に属するのはどれか。", "opts": ["免 疫", "栄養障害", "内分泌かく乱物質", "水"], "ans": 0, "essential": false}, {"q": "褐色萎縮で沈着するのはどれか。", "opts": ["リポフスチン", "胆汁色素", "ヘモジデリン", "メラニン"], "ans": 0, "essential": false}, {"q": "循環障害の定義で誤っているのはどれか。", "opts": ["うっ血とは動脈血が組織や臓器にうっ滞している状態", "充血とは組織、臓器内を流れる血液量が過剰の状態", "血栓症とは凝固血が血管壁に付着している状態", "塞栓症とは血管内異物により小血管腔が閉塞する状態"], "ans": 0, "essential": false}, {"q": "病態と疾患の組合せで正しいのはどれか。", "opts": ["左心不全 　　─ 肺水腫", "腎動脈狭窄 　─ 本態性高血圧症", "冠動脈閉塞 　─ 狭心症", "粥状動脈硬化 ─ 糖尿病性網膜症"], "ans": 0, "essential": false}, {"q": "浮腫のメカニズムで誤っている組合せはどれか。", "opts": ["熱　傷          ─ 毛細血管圧の上昇", "蜂窩織炎       ─ 血管透過性の亢進", "ネフローゼ症候群 ─ 膠質浸透圧の低下", "フィラリア症    ─ リンパ管の閉塞"], "ans": 0, "essential": false}, {"q": "良性腫瘍の特徴で正しいのはどれか。", "opts": ["核分裂が少ない。", "浸潤性に増殖する。", "転移を起こす。", "悪液質を起こす。"], "ans": 0, "essential": false}, {"q": "瘢痕の主な構成成分はどれか。", "opts": ["膠原線維", "マクロファージ", "好中球", "毛細血管"], "ans": 0, "essential": false}, {"q": "偽膜性大腸炎の原因菌はどれか。", "opts": ["クロストリジウム・ディフィシル菌", "黄色ブドウ球菌", "スピロヘータ", "らい菌"], "ans": 0, "essential": false}, {"q": "シェーグレン症候群の組織学的所見で正しいのはどれか。", "opts": ["唾液腺の腺房細胞萎縮", "慢性リンパ球性甲状腺炎", "近位筋の萎縮", "増殖性滑膜炎"], "ans": 0, "essential": false}, {"q": "ウイルスと発癌の組合せで正しいのはどれか。", "opts": ["エプスタイン・バーウイルス - バーキット（Burkitt）腫瘍", "Ａ型肝炎ウイルス         - 肝細胞癌", "ヒト免疫不全ウイルス      - 成人Ｔ細胞白血病", "ヒトパピローマウイルス    -　大腸癌"], "ans": 0, "essential": false}, {"q": "小児に多い悪性腫瘍はどれか。", "opts": ["ウィルムス（Wilms）腫瘍", "胃　癌", "大腸癌", "腎細胞癌"], "ans": 0, "essential": false}, {"q": "両親の一方が罹患者で子供の半数に男女差なくみられる疾患はどれか。", "opts": ["家族性大腸ポリポーシス", "先天緑赤色覚異常", "血友病Ａ", "ダウン（Down）症候群"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。〔必〕", "opts": ["特異性炎　　−　増殖性炎", "漿液性炎　　−　炎症性浮腫", "線維素性炎　−　偽膜性炎", "化膿性炎　　−　蜂窩織炎"], "ans": 0, "essential": false}, {"q": "日和見感染の原因でないのはどれか。", "opts": ["抗菌薬投与", "抗癌薬投与", "免疫抑制療法", "放射線療法"], "ans": 0, "essential": false}, {"q": "変性と疾患の組合せで誤っているのはどれか。", "opts": ["フィブリノイド変性　-　フォン・ギルケ(von Gierke)病", "硝子滴変性　　　　　-　水銀中毒", "アミロイド変性　　　-　手根管症候群", "脂肪変性　　　　　　-　アルコール性肝障害"], "ans": 0, "essential": false}, {"q": "組織・臓器の循環障害で正しい組合せはどれか。", "opts": ["虚　血 - 動脈の血液供給が減少した状態", "充　血 - 静脈血が貯留した状態", "うっ血 - 流れる血液が過剰な状態", "血　栓 - 血管の支配領域が壊死した状態"], "ans": 0, "essential": false}, {"q": "門脈圧亢進症の症状で正しいのはどれか。", "opts": ["メズサの頭", "肺うっ血", "ニクズク肝", "下肢静脈瘤"], "ans": 0, "essential": false}, {"q": "浮腫の成因でないのはどれか。", "opts": ["体腔リンパ液の貯留", "血漿膠質浸透圧の低下", "リンパ管の閉塞", "血管透過性の亢進"], "ans": 0, "essential": false}, {"q": "移植で誤っている組合せはどれか。", "opts": ["同系移植 ― 二卵性双生児間の移植", "自己移植 ― 同じ生体内での移植", "異種移植 ― 種類の異なる動物間の移植", "異系移植 ― 遺伝子の異なる兄弟間の移植"], "ans": 0, "essential": false}, {"q": "ゴム腫の病理学的特徴で正しいのはどれか。", "opts": ["周囲に線維形成が豊富である。", "中心部に壊死はみられない。", "泡沫細胞の集簇からなる。", "好酸球浸潤が目立つ。"], "ans": 0, "essential": false}, {"q": "花粉症に関連するのはどれか。", "opts": ["アレルゲン特異的ＩgＥ抗体", "免疫複合体の沈着", "細胞性免疫反応", "自己抗体"], "ans": 0, "essential": false}, {"q": "悪性腫瘍で正しいのはどれか。", "opts": ["病理解剖で初めて明らかになった癌をラテント癌という。", "シュニッツラーの転移はリンパ行性転移である。", "胃癌の直腸子宮窩への転移をクルーケンベルグ転移という。", "早期癌はＴＮＭ分類でII期に相当する。"], "ans": 0, "essential": false}, {"q": "癌細胞増殖がホルモンに依存することが多いのはどれか。", "opts": ["乳　癌", "大腸癌", "肺　癌", "胃　癌"], "ans": 0, "essential": false}, {"q": "癌細胞増殖がホルモンに依存することが多いのはどれか。", "opts": ["前立腺癌", "食道癌", "大腸癌", "肺　癌"], "ans": 0, "essential": false}, {"q": "良性腫瘍の特徴はどれか。", "opts": ["膨張性増殖", "組織破壊", "悪液質", "壊死傾向"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["性染色体異常 　　― ダウン(Down)症候群", "伴性劣性遺伝 　　―　血友病Ａ", "常染色体優性遺伝 ― マルファン(Marfan)症候群", "常染色体劣性遺伝 ― ウィルソン(Wilson)病"], "ans": 0, "essential": false}, {"q": "女性に多い先天性疾患はどれか。", "opts": ["ターナー(Turner)症候群", "血友病Ａ", "口唇裂", "先天性風疹症候群"], "ans": 0, "essential": false}, {"q": "呼吸器や消化器などの粘膜の炎症で粘液分泌の亢進が著しいのはどれか。［必］", "opts": ["カタル性炎", "漿液性炎", "線維素性炎", "化膿性炎"], "ans": 0, "essential": false}, {"q": "一定の家系内に発生する疾患はどれか。", "opts": ["血友病A", "ダウン(Down)症候群", "先天性風疹症候群", "ファロー（Fallot）四徴症"], "ans": 0, "essential": false}, {"q": "生物学的外因と疾患との組合せで誤っているのはどれか。", "opts": ["ウィルス  −　ハンセン(Hansen)病", "スピロヘータ  −　梅　毒", "クラミジア  −　トラコーマ", "リケッチア  −　ツツガムシ病"], "ans": 0, "essential": false}, {"q": "結節性多発性動脈炎でみられるのはどれか。", "opts": ["フィブリノイド変性", "アミロイド変性", "空胞変性", "脂肪変性"], "ans": 0, "essential": false}, {"q": "壊死病変で誤っている組合せはどれか。", "opts": ["湿性壊疽　−　心筋梗塞", "乾酪壊死　−　結核結節", "融解壊死　−　脳軟化", "乾性壊疽　−　ミイラ化"], "ans": 0, "essential": false}, {"q": "血小板減少の原因となるのはどれか。", "opts": ["放射線の大量被爆", "ビタミンCの不足", "ビタミンKの不足", "血液凝固因子の不足"], "ans": 0, "essential": false}, {"q": "浮腫の成因と発生機序の組合せで誤っているのはどれか。", "opts": ["ネフローゼ症候群による浮腫 −　血管透過性の亢進", "低アルブミン血症による浮腫 −　血漿膠質浸透圧の低下", "乳癌術後の患側肢の浮腫  −　リンパ管の閉塞", "心不全による浮腫  −　毛細血管内圧の上昇"], "ans": 0, "essential": false}, {"q": "皮膚の創傷治癒過程において血餅の下層にみられるのはどれか。", "opts": ["線維芽細胞増生", "表皮細胞増殖", "扁平上皮化生", "乾酪壊死"], "ans": 0, "essential": false}, {"q": "皮膚の創傷治癒過程において血餅の下層にみられるのはどれか。", "opts": ["毛細血管新生", "痂皮形成", "扁平上皮化生", "乾酪壊死"], "ans": 0, "essential": false}, {"q": "肉芽腫性炎でないのはどれか。", "opts": ["偽膜性大腸炎", "結　核", "サルコイドーシス", "野兎病"], "ans": 0, "essential": false}, {"q": "抗原感作されたＴリンパ球によって起こり細胞性免疫反応とも呼ばれるアレルギーはどれか。", "opts": ["遅延型反応", "刺激型反応", "細胞傷害型反応", "免疫複合体型反応"], "ans": 0, "essential": false}, {"q": "腫瘍マーカーと悪性腫瘍の組合せで誤っているのはどれか。", "opts": ["α−フェトプロテイン  −　前立腺癌", "癌胎児性抗原  −　大腸癌", "ヒト絨毛性ゴナドトロピン  −　絨毛癌", "ＣＡ19−9   −　膵　癌"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["我が国で大腸癌の発生の多い部位は直腸、S状結腸である。", "我が国の男性の悪性腫瘍部位別年齢調整死亡率の第一位は胃癌である。", "我が国の男性の悪性腫瘍部罹患率の第一位は肺癌である。", "子宮頸癌はエプスタイン・バーウィルス感染により発症する。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["家族性大腸ポリポーシスは常染色体優性遺伝形式をとる。", "伴性劣性遺伝病は男性には発病しない。", "ダウン（Down）症候群では第5染色体が1本しか存在しない。", "マルファン（Marfan）症候群は伴性劣性遺伝形式をとる。"], "ans": 0, "essential": false}, {"q": "奇形成立の臨界期はどれか。", "opts": ["妊娠3〜10週", "妊娠11〜20週", "妊娠21〜30週", "妊娠31週以降"], "ans": 0, "essential": false}, {"q": "貪食作用を有するのはどれか。〔必〕", "opts": ["単　球", "好塩基球", "好酸球", "ナチュラルキラー（NK）細胞"], "ans": 0, "essential": false}, {"q": "男性より女性に多い疾患はどれか。", "opts": ["甲状腺癌", "血友病", "心筋梗塞", "肺　癌"], "ans": 0, "essential": false}, {"q": "内因と疾患との組合せで正しいのはどれか。", "opts": ["女　性　−−　全身性エリテマトーデス", "乳児期　−−　肝細胞癌", "日本人　−−　前立腺癌", "成長ホルモンの分泌異常　−−　クッシング（Cushing）病"], "ans": 0, "essential": false}, {"q": "真菌感染症はどれか。", "opts": ["ニューモシスチス肺炎", "梅　毒", "アメーバ赤痢", "ツツガムシ病"], "ans": 0, "essential": false}, {"q": "アルコール性肝障害でみられる病変はどれか。", "opts": ["脂肪変性", "アミロイド変性", "フィブリノイド変性", "糖原変性"], "ans": 0, "essential": false}, {"q": "死の判定基準のうち脳死の基準のみに含まれるのはどれか。", "opts": ["平坦脳波", "呼吸の停止", "心音の停止", "瞳孔反射の消失"], "ans": 0, "essential": false}, {"q": "門脈圧亢進に続発する徴候で誤っているのはどれか。", "opts": ["肝硬変", "腹　水", "脾　腫", "食道静脈瘤"], "ans": 0, "essential": false}, {"q": "フィラリア症でみられる浮腫の成因はどれか。", "opts": ["リンパ管の閉塞", "血管透過性の亢進", "毛細血管圧の上昇", "膠質浸透圧の低下"], "ans": 0, "essential": false}, {"q": "後天性の免疫不全はどれか。", "opts": ["ヒト免疫不全ウィルス（HIV）感染症", "重症複合型免疫不全症", "ディジョージ（Di George）症候群", "伴性無ガンマグロブリン血症"], "ans": 0, "essential": false}, {"q": "アレルギー反応で正しい組合せはどれか。", "opts": ["ツベルクリン反応　　　　　　−　IV型", "Rh血液型不適合胎児赤芽球症　−　I型", "気管支喘息　　　　　　　 　　−　II型", "バセドウ（Basedow）病　　　　−　III型"], "ans": 0, "essential": false}, {"q": "女性ホルモンの影響を受ける悪性腫瘍はどれか。", "opts": ["乳　癌", "肝　癌", "白血病", "悪性黒色腫"], "ans": 0, "essential": false}, {"q": "女性ホルモンの影響を受ける悪性腫瘍はどれか。", "opts": ["子宮内膜癌", "大腸癌", "肝　癌", "悪性黒色腫"], "ans": 0, "essential": false}, {"q": "常染色体劣性遺伝形式をとるのはどれか。", "opts": ["ゴーシェ（Gaucher）病", "マルファン（Marfan）症候群", "デュシェンヌ（Duchenne）型筋ジストロフィー", "クラインフェルター（Klinefelter）症候群"], "ans": 0, "essential": false}, {"q": "催奇形因子の説明で正しいのはどれか。", "opts": ["妊婦は低線量放射線被曝でも避けるべきである。", "妊娠3か月以降の風疹感染で胎児奇形発生率が高くなる。", "妊娠後期の母体のショック、出血、貧血は催奇形因子である。", "胎児は薬剤など化学物資に対する感受性が低い。"], "ans": 0, "essential": false}, {"q": "静脈血栓塞栓症における塞栓部位はどれか。", "opts": ["肺動脈", "門　脈", "腎静脈", "冠状動脈"], "ans": 0, "essential": false}, {"q": "犯罪性のない異状死に対して死因の究明を目的に監察医が行う解剖はどれか。", "opts": ["行政解剖", "系統解剖", "病理解剖", "司法解剖"], "ans": 0, "essential": false}, {"q": "好発年齢と疾患の組合せで正しいのはどれか。", "opts": ["成長期 −−−−−−− 骨肉腫", "新生児期 −−−−− 白血病", "乳児期 −−−−−−− 肺硝子膜症", "壮年期 −−−−−−− 肝芽腫"], "ans": 0, "essential": false}, {"q": "アミロイドタンパクの沈着がみられるのはどれか。", "opts": ["アルツハイマー(Alzheimer) 病", "結節性多発動脈炎", "細動脈硬化症", "フォン・ギルケ(von Gierke) 病"], "ans": 0, "essential": false}, {"q": "血中間接（非抱合型）ビリルビンが増加するのはどれか。", "opts": ["溶血性貧血", "胆石症", "デュビン・ジョンソン(Dubin−Johnson)症候群", "乳頭部癌"], "ans": 0, "essential": false}, {"q": "出血に関する組合せで正しいのはどれか。", "opts": ["動脈瘤 −−−−−−− 破綻性出血", "血友病 −−−−−−− 微小血栓", "外　傷 −−−−−−− 漏出性出血", "血小板減少 −−−−−−− 新生児メレナ"], "ans": 0, "essential": false}, {"q": "塞栓とその原因の組合せで誤っているのはどれか。", "opts": ["腫瘍塞栓−−−−−−−白血病", "骨髄塞栓−−−−−−−心臓マッサージ", "空気塞栓−−−−−−−潜函病", "脂肪塞栓−−−−−−−外　傷"], "ans": 0, "essential": false}, {"q": "出血性梗塞を起こしやすい臓器はどれか。", "opts": ["肺　臓", "心　臓", "脾　臓", "腎　臓"], "ans": 0, "essential": false}, {"q": "化生はどれか。", "opts": ["気管支粘膜の慢性炎症によって扁平上皮への置換が起こった。", "トレーニングによって骨格筋の筋細胞の容積が増大した。", "エストロゲンの作用によって乳腺組織が増大した。", "進行性筋ジストロフィーで下肢遠位筋組織内に脂肪が増えた。"], "ans": 0, "essential": false}, {"q": "血漿由来の炎症メディエーターはどれか。", "opts": ["ブラジキニン", "セロトニン", "ヒスタミン", "ロイコトリエン"], "ans": 0, "essential": false}, {"q": "エプスタイン・バーウィルス感染と関連があるのはどれか。", "opts": ["バーキット(Burkitt)リンパ腫", "肝細胞癌", "子宮頸癌", "成人Ｔ細胞白血病"], "ans": 0, "essential": false}, {"q": "悪性非上皮性腫瘍はどれか。", "opts": ["骨肉腫", "乳頭腫", "腺　癌", "血管腫"], "ans": 0, "essential": false}, {"q": "扁平上皮癌でみられるのはどれか。", "opts": ["癌真珠", "印環細胞", "腺腔形成", "粘液産生"], "ans": 0, "essential": false}, {"q": "癌とそのリスク因子の組合せで誤っているのはどれか。", "opts": ["乳　癌−−−−−−−ヒトパピローマウィルス", "胃　癌−−−−−−−塩・塩蔵物", "大腸癌−−−−−−−肥　満", "食道癌−−−−−−−喫　煙"], "ans": 0, "essential": false}, {"q": "原因による命名でない病名はどれか。", "opts": ["劇症肝炎", "ウィルス性肝炎", "アルコール性肝炎", "薬剤性肝炎"], "ans": 0, "essential": false}, {"q": "先天性疾患はどれか。", "opts": ["ダウン(Down)症候群", "関節リウマチ", "特発性心筋症", "神経性食思不振症"], "ans": 0, "essential": false}, {"q": "先天性疾患はどれか。", "opts": ["アザラシ肢症", "関節リウマチ", "特発性心筋症", "AIDS（エイズ）"], "ans": 0, "essential": false}, {"q": "感染経路で空気感染を示すのはどれか。", "opts": ["麻　疹", "インフルエンザ", "日本脳炎", "Ｃ型肝炎"], "ans": 0, "essential": false}, {"q": "神経性萎縮の原因となるのはどれか。", "opts": ["脊髄前角炎", "筋ジストロフィー", "長期間のギプス固定", "寝たきりの生活"], "ans": 0, "essential": false}, {"q": "閉塞性黄疸の原因はどれか。", "opts": ["十二指腸乳頭部癌", "溶血性貧血", "胎児赤芽球症", "ウイルス性肝炎"], "ans": 0, "essential": false}, {"q": "症候と疾患の組合せで正しいのはどれか。", "opts": ["血　尿 −−−−−−　膀胱癌", "喀　血 −−−−−−　胃潰瘍", "吐　血 −−−−−−　肺結核", "タール便 −−−−　直腸癌"], "ans": 0, "essential": false}, {"q": "外傷に直接関連しないのはどれか。", "opts": ["血栓塞栓", "空気塞栓", "脂肪塞栓", "骨髄塞栓"], "ans": 0, "essential": false}, {"q": "異物の処理過程に含まれないのはどれか。", "opts": ["壊　死", "被　包", "器質化", "排　除"], "ans": 0, "essential": false}, {"q": "特異性炎でないのはどれか。", "opts": ["線維素性心外膜炎", "サルコイドーシス", "野兎病", "梅　毒"], "ans": 0, "essential": false}, {"q": "IV型アレルギーに分類されるのはどれか。", "opts": ["金属アレルギー", "特発性血小板減少性紫斑病", "バセドウ(Basedow)病", "花粉症"], "ans": 0, "essential": false}, {"q": "腫瘍と発生原因の組合せで正しいのはどれか。", "opts": ["神経線維腫症 −−−− 遺　伝", "腎　癌 −−−−−−−トロトラスト", "大腸癌 −−−−−−−−低栄養", "前立腺癌 −−−−−− 化学染料"], "ans": 0, "essential": false}, {"q": "ワクチン接種で予防可能なのはどれか。", "opts": ["子宮頸癌", "前立腺癌", "子宮体癌", "卵巣癌"], "ans": 0, "essential": false}, {"q": "上皮性腫瘍はどれか。", "opts": ["腺　腫", "平滑筋腫", "脂肪肉腫", "神経鞘腫"], "ans": 0, "essential": false}, {"q": "単因子遺伝性疾患はどれか。", "opts": ["血友病", "統合失調症", "糖尿病", "痛　風"], "ans": 0, "essential": false}, {"q": "疾病の経過で自覚症状が認められない時期はどれか。", "opts": ["潜伏期", "急性期", "最盛期", "慢性期"], "ans": 0, "essential": false}, {"q": "奇形の原因となるのはどれか。", "opts": ["風疹ウイルス", "結核菌", "カンジダ", "Ｂ型肝炎ウイルス"], "ans": 0, "essential": false}, {"q": "疾患の外因と悪性新生物の組合せで誤っているのはどれか。", "opts": ["ヒトパピローマウイルス −−−−− 子宮体癌", "紫外線 −−−−−−−−−− 皮膚癌", "タバコ −−−−−−−−−− 肺　癌", "アスベスト −−−−−−−− 中皮腫"], "ans": 0, "essential": false}, {"q": "脂肪肝の原因であてはまらないのはどれか。", "opts": ["ウイルス感染", "肥　満", "アルコール", "薬　物"], "ans": 0, "essential": false}, {"q": "間接ビリルビンが増加する疾患はどれか。", "opts": ["新生児黄疸", "胆管炎", "ファーター(Vater)乳頭部癌", "デュビン・ジョンソン(Dubin-Johnson)症候群"], "ans": 0, "essential": false}, {"q": "肺塞栓症の原因となる血栓ができる部位はどれか。", "opts": ["大腿静脈", "大動脈瘤", "左心耳", "肺静脈"], "ans": 0, "essential": false}, {"q": "血液中の濃度低下が浮腫を引き起こすのはどれか。", "opts": ["アルブミン", "ヒスタミン", "キニン", "ヘモグロビン"], "ans": 0, "essential": false}, {"q": "再生能の低い細胞はどれか。", "opts": ["中枢神経細胞", "グリア細胞", "線維芽細胞", "血管内皮細胞"], "ans": 0, "essential": false}, {"q": "炎症のケミカルメディエーターで誤っているのはどれか。", "opts": ["レニン", "セロトニン", "ヒスタミン", "プロスタグランジン"], "ans": 0, "essential": false}, {"q": "後天性免疫不全症候群(AIDS)で誤っているのはどれか。", "opts": ["ＣＤ8+Ｔ細胞が選択的に傷害される。", "ＨＩＶウイルス感染によって起こる。", "日和見感染を起こす。", "悪性リンパ腫を合併する。"], "ans": 0, "essential": false}, {"q": "薬剤注射直後に起こり得る副反応の機序はどれか。", "opts": ["IgE が抗原と結合して誘導される即時型反応", "細胞膜抗原に結合する抗体に誘導される細胞傷害反応", "免疫複合体に誘導される組織傷害反応", "Ｔリンパ球に誘導される遅延型反応"], "ans": 0, "essential": false}, {"q": "前癌病変でないのはどれか。", "opts": ["前立腺肥大", "食道異形成", "大腸腺腫", "子宮頸部異形成"], "ans": 0, "essential": false}, {"q": "扁平上皮癌の好発部位はどれか。", "opts": ["口　腔", "胃", "大　腸", "子宮体部"], "ans": 0, "essential": false}, {"q": "抗原抗体反応を利用した染色法はどれか。", "opts": ["免疫組織化学", "PAS染色", "グラム染色", "ベルリン青染色"], "ans": 0, "essential": false}, {"q": "病名に経過が含まれているのはどれか。", "opts": ["急性虫垂炎", "橋本病", "気管支肺炎", "ウイルス性肝炎"], "ans": 0, "essential": false}, {"q": "ホルモンと疾患の組合せで正しいのはどれか。", "opts": ["甲状腺ホルモン─バセドウ (Basedow) 病", "成長ホルモン──尿崩症", "アルドステロン─クッシング (Cushing)症候群", "インスリン───褐色細胞腫"], "ans": 0, "essential": false}, {"q": "加齢に伴って心筋に沈着する色素はどれか。", "opts": ["リポフスチン", "メラニン", "ビリルビン", "ヘモジデリン"], "ans": 0, "essential": false}, {"q": "肺うっ血の原因となるのはどれか。", "opts": ["左心不全", "肝硬変", "下肢静脈瘤", "心タンポナーデ"], "ans": 0, "essential": false}, {"q": "血栓形成の原因となるのはどれか。", "opts": ["脱　水", "血小板減少", "第VIII因子欠乏", "ビタミンC欠乏"], "ans": 0, "essential": false}, {"q": "扁平上皮化生がみられないのはどれか。", "opts": ["慢性胃炎", "慢性膀胱炎", "慢性気管支炎", "慢性子宮頸管炎"], "ans": 0, "essential": false}, {"q": "炎症の分類と疾患の組合せで正しいのはどれか。", "opts": ["肉芽腫性炎──野兎病", "増殖性炎───梅　毒", "滲出性炎───自己免疫疾患", "出血性炎───アレルギー性鼻炎"], "ans": 0, "essential": false}, {"q": "炎症の分類と疾患の組合せで正しいのはどれか。", "opts": ["滲出性炎───膿　胸", "肉芽腫性炎──血友病", "増殖性炎───梅　毒", "出血性炎───アレルギー性鼻炎"], "ans": 0, "essential": false}, {"q": "リンパ球の中で、他のリンパ球の分化を誘導するのはどれか。", "opts": ["ヘルパーＴ細胞", "ＮＫＴ 細胞", "細胞傷害性Ｔ細胞", "ナチュラルキラー細胞"], "ans": 0, "essential": false}, {"q": "自己免疫疾患と特徴の組合せで誤っているのはどれか。", "opts": ["橋本病───────── 口内乾燥症", "関節リウマチ────── 滑膜炎", "多発性筋炎・皮膚筋炎── 脱　力", "全身性エリテマトーデス─ 抗核抗体"], "ans": 0, "essential": false}, {"q": "良性腫瘍の特徴はどれか。", "opts": ["膨張性増殖", "転　移", "悪液質", "強い異型性"], "ans": 0, "essential": false}, {"q": "ウイルスが原因となるのはどれか。", "opts": ["肝細胞癌", "乳　癌", "大腸癌", "前立腺癌"], "ans": 0, "essential": false}, {"q": "妊娠中に感染すると奇形発生率が高いウイルスはどれか。", "opts": ["風　疹", "ロ　タ", "Ｂ型肝炎", "インフルエンザ"], "ans": 0, "essential": false}, {"q": "高血圧の合併症で誤っているのはどれか。", "opts": ["心筋過形成", "脳出血", "腎糸球体硬化", "動脈硬化進行"], "ans": 0, "essential": false}, {"q": "代償性の変化はどれか。", "opts": ["左腎摘出後の右腎肥大", "トレーニングによる骨格筋の発達", "加齢男性の前立腺肥大", "妊娠時乳腺組織の発達"], "ans": 0, "essential": false}, {"q": "炎症の経過で正しいのはどれか。", "opts": ["細胞傷害によって毛細血管の透過性亢進が起こる。", "肉芽形成で炎症治癒は終結する。", "線維化は細胞傷害直後にみられる反応である。", "急性炎症ではリンパ球が血管外に遊出し、遅れて好中球が遊出する。"], "ans": 0, "essential": false}, {"q": "Ｖ型(刺激型反応)アレルギーに分類されるのはどれか。", "opts": ["バセドウ(Basedow)病", "蕁麻疹", "IgＡ腎症", "異型輸血"], "ans": 0, "essential": false}, {"q": "良性腫瘍でみられないのはどれか。", "opts": ["浸潤性の増殖", "内分泌の異常", "巨大腫瘤の形成", "周囲組織の圧迫"], "ans": 0, "essential": false}, {"q": "肺癌で正しいのはどれか。", "opts": ["我が国において患者数が急速に増加している。", "肺癌全体の5年生存率は70％程度である。", "組織学的には扁平上皮癌が腺癌より多い。", "女性に多い。"], "ans": 0, "essential": false}, {"q": "染色体数が正常なのはどれか。", "opts": ["マルファン(Marfan)症候群", "ダウン(Down)症候群", "ターナー(Turner) 症候群", "クラインフェルター(Klinefelter) 症候群"], "ans": 0, "essential": false}, {"q": "生検の試料となるのはどれか。", "opts": ["病巣の試験切除によって得られた検体", "気道吸引によって得られた喀痰", "腹腔穿刺によって得られた腹水", "子宮頸部の擦過によって得られた検体"], "ans": 0, "essential": false}, {"q": "媒介動物名に由来する病名はどれか。", "opts": ["ツツガムシ病", "フィラリア症", "アメーバ赤痢", "アニサキス症"], "ans": 0, "essential": false}, {"q": "疾病と原因の組合せで正しいのはどれか。", "opts": ["水俣病──────有機水銀", "川崎病──────大気汚染", "珪肺症──────石綿(アスベスト)", "イタイイタイ病───ヒ　素"], "ans": 0, "essential": false}, {"q": "神経原性筋萎縮を示すのはどれか。", "opts": ["筋萎縮性側索硬化症", "皮膚筋炎", "多発性筋炎", "筋ジストロフィー"], "ans": 0, "essential": false}, {"q": "間接ビリルビンが高値となるのはどれか。", "opts": ["溶血性貧血", "胆管癌", "先天性胆道閉塞症", "デュビン・ジョンソン(Dubin-Johnson)症候群"], "ans": 0, "essential": false}, {"q": "うっ血で正しいのはどれか。", "opts": ["下肢のうっ血では下肢静脈瘤が生じやすい。", "肺うっ血は右心不全によって起こる。", "門脈圧亢進症では腹水より胸水をきたしやすい。", "うっ血肝では小葉中心部が黄色、辺縁部が暗赤色を呈する。"], "ans": 0, "essential": false}, {"q": "病理解剖の目的でないのはどれか。", "opts": ["犯罪性の立証", "生前の疾患の正確な診断", "疾患の本態解明", "治療効果の検討"], "ans": 0, "essential": false}, {"q": "他覚的所見はどれか。", "opts": ["脾　腫", "悪　心", "動　悸", "疼　痛"], "ans": 0, "essential": false}, {"q": "メタボリック症候群の診断基準項目はどれか。", "opts": ["血　糖", "皮下脂肪量", "肝機能", "尿酸値"], "ans": 0, "essential": false}, {"q": "メタボリック症候群の診断基準項目はどれか。", "opts": ["血　圧", "肝機能", "皮下脂肪量", "BMI（Body Mass Index）"], "ans": 0, "essential": false}, {"q": "萎縮と臟器の組合せで正しいのはどれか。", "opts": ["圧迫性萎縮────肝　臓", "神経性萎縮────副　腎", "無為性萎縮────腎　臟", "内分泌性萎縮───胸　腺"], "ans": 0, "essential": false}, {"q": "疾患と原因の組合せで正しいのはどれか。", "opts": ["血友病Ａ ──────────第VIII因子欠乏", "壊血病───────────ビタミンK欠乏", "新生児メレナ────────ビタミンC欠乏", "特発性血小板減少性紫斑病──血管壁脆弱"], "ans": 0, "essential": false}, {"q": "低張性脱水をきたすのはどれか。", "opts": ["運動後の水道水大量摂取", "大量の発汗", "起立性の低血圧", "尿崩症による多尿"], "ans": 0, "essential": false}, {"q": "常時再生しているのはどれか。", "opts": ["胃粘膜上皮", "心　筋", "血管内皮", "中枢神経"], "ans": 0, "essential": false}, {"q": "肉芽腫性炎を引き起こすのはどれか。", "opts": ["梅　毒", "間質性肺炎", "偽膜性大腸炎", "アレルギー性鼻炎"], "ans": 0, "essential": false}, {"q": "細胞性免疫が低下しないのはどれか。", "opts": ["伴性無ガンマグロブリン血症", "後天性免疫不全症候群 (AIDS)", "重症複合型免疫不全症 (SCID)", "ディジョージ (Di George) 症候群"], "ans": 0, "essential": false}, {"q": "Ｉ型アレルギーはどれか。", "opts": ["気管支喘息", "血清病", "接触性皮膚炎", "自己免疫性溶血性貧血"], "ans": 0, "essential": false}, {"q": "腫瘍マーカーと腫瘍の組合せで正しいのはどれか。", "opts": ["CA19-9───胆管癌", "AFP ────絨毛癌", "CEA ────喉頭癌", "PSA─────膵　癌"], "ans": 0, "essential": false}, {"q": "乳癌で誤っているのはどれか。", "opts": ["HER2の過剰発現は予後良好因子とされる。", "近年日本では若年者に増加している。", "組織学的には腺癌が多い。", "男性にも発生する。"], "ans": 0, "essential": false}, {"q": "疾患と遺伝形式の組合せで正しいのはどれか。", "opts": ["家族性大腸ポリポーシス───常染色体優性", "血友病───────────常染色体劣性", "マルファン(Marfan)症候群──伴性劣性", "フェニルケトン尿症─────多因子性"], "ans": 0, "essential": false},{"q": "病理検体の採取時に用いる固定液はどれか。", "opts": ["ホルマリン","キシレン","パラフィン","エオジン"], "ans": 0, "essential": false},{"q": "◯◯はどれか。", "opts": ["梗　塞","壊　死","肉　芽","転　移"], "ans": 0, "essential": false},{"q": "◯◯はどれか。", "opts": ["胆嚢癌","胆管癌","肝細胞癌","肝内胆管癌"], "ans": 0, "essential": false},{"q": "疾患・症状と原因の組合せで正しいのはどれか。", "opts": ["テタニー ───────── カルシウム不足","ウィルソン(Wilson)病 ─── 鉄過剰","ヘモクロマトーシス ──── 銅過剰","高血圧 ────────── ナトリウム不足"], "ans": 0, "essential": false},{"q": "Ⅰ型糖尿病で障害される膵臓の細胞はどれか。", "opts": ["B(β)細胞","A(α) 細胞","腺房細胞","膵管上皮細胞"], "ans": 0, "essential": false},{"q": "充血の原因とならないのはどれか。", "opts": ["ギプス固定","細菌感染","温　熱","アルコール摂取"], "ans": 0, "essential": false},{"q": "漏出性出血が起こるのはどれか。", "opts": ["消化管毛細血管","大動脈","腎動脈","下大静脈"], "ans": 0, "essential": false},{"q": "慢性炎症で円柱上皮が扁平上皮に変化する現象はどれか。", "opts": ["化　生","萎　縮","再　生","過形成"], "ans": 0, "essential": false},{"q": "急性炎症の指標となる細胞はどれか。", "opts": ["好中球","マクロファージ","形質細胞","リンパ球"], "ans": 0, "essential": false},{"q": "Ⅰ型アレルギーに関与するのはどれか。", "opts": ["IgE ","IgG ","IgM ","IgA "], "ans": 0, "essential": false},{"q": "後天性免疫不全症候群(AIDS)で正しいのはどれか。", "opts": ["ヘルパー(CD4＋) T細胞が選択的に傷害される。","細菌感染が原因となる。","液性免疫系が障害される。","感染直後に抗体が陽性になる。"], "ans": 0, "essential": false},{"q": "悪性腫瘍はどれか。", "opts": ["骨肉腫","横紋筋腫","神経線維腫","血管腫"], "ans": 0, "essential": false},{"q": "胃癌で正しいのはどれか。", "opts": ["ヘリコバクター・ピロリ感染が発癌に関与する。","罹患者は女性に多い。","年齢調整死亡率は増加している。","肉眼型分類1型は早期胃癌とされる。"], "ans": 0, "essential": false}];
+
+let questions = [], current = 0, selected = null, results = [], optMap = [], shuffleOpts = true;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const numVal = parseInt(document.getElementById('selectNum').value);
+  const isRandom = document.getElementById('selectOrder').value === '1';
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  let pool = [...ALL_DATA];
+  if (isRandom) pool = shuffle(pool);
+  questions = numVal === 0 ? pool : pool.slice(0, numVal);
+  current = 0; results = [];
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current];
+  const total = questions.length;
+  document.getElementById('progressBar').style.width = (current / total * 100) + '%';
+  document.getElementById('headerSub').textContent = `${current + 1} / ${total} 問`;
+  document.getElementById('qNum').textContent = `問${current + 1}`;
+  document.getElementById('qText').textContent = q.q;
+  showQuestionImage(current);
+  const badge = document.getElementById('qBadge');
+  badge.style.display = q.essential ? 'inline-block' : 'none';
+
+  let indices = [0, 1, 2, 3];
+  if (shuffleOpts) indices = shuffle(indices);
+  optMap = indices;
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  const labels = ['ア', 'イ', 'ウ', 'エ'];
+  indices.forEach((origIdx, dispIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[dispIdx]}</span><span class="opt-text">${q.opts[origIdx]}</span>`;
+    btn.onclick = () => selectOption(dispIdx, origIdx, q.ans);
+    grid.appendChild(btn);
+  });
+
+  selected = null;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('btnNext').disabled = true;
+  document.getElementById('btnNext').textContent = current < questions.length - 1 ? '次の問題 →' : '結果を見る';
+}
+
+function selectOption(dispIdx, origIdx, ans) {
+  if (selected !== null) return;
+  selected = origIdx;
+  const btns = document.querySelectorAll('.opt-btn');
+  const isCorrect = origIdx === ans;
+  btns.forEach((btn, i) => {
+    btn.onclick = null;
+    if (optMap[i] === ans) btn.classList.add('correct');
+    if (i === dispIdx && !isCorrect) btn.classList.add('wrong');
+    if (i === dispIdx && isCorrect) btn.classList.add('correct');
+  });
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'ng');
+  fb.innerHTML = isCorrect ? '✅ 正解！' : `❌ 不正解　正解：${questions[current].opts[ans]}`;
+  results.push({ q: questions[current], chosen: origIdx, correct: isCorrect });
+  recordAnswer(questions[current], isCorrect);
+  document.getElementById('btnNext').disabled = false;
+  if (navigator.vibrate) navigator.vibrate(isCorrect ? 30 : [50, 30, 50]);
+}
+
+function nextQuestion() {
+  if (selected === null) return;
+  current++;
+  if (current >= questions.length) { showResult(); } else { showQuestion(); }
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  document.getElementById('progressBar').style.width = '100%';
+  const total = results.length;
+  const correct = results.filter(r => r.correct).length;
+  const score = Math.round(correct / total * 100);
+  saveSession(total, correct, score);
+  setTimeout(refreshWeakBtn, 100);
+  document.getElementById('resultScore').innerHTML = `${score}<span>点</span>`;
+  document.getElementById('resultDetail').textContent = `${total}問中 ${correct}問正解`;
+  document.getElementById('headerSub').textContent = '結果';
+  let emoji = '😢', msg = 'もう少し頑張りましょう！';
+  if (score >= 60) { emoji = '🙂'; msg = '合格ライン到達！'; }
+  if (score >= 80) { emoji = '😊'; msg = 'よくできました！'; }
+  if (score === 100) { emoji = '🎉'; msg = 'Perfect!! おめでとう！'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultMsg').textContent = msg;
+  setTimeout(() => { document.getElementById('scoreBar').style.width = score + '%'; }, 100);
+  const wrongCount = results.filter(r => !r.correct).length;
+  const btnRetry = document.getElementById('btnRetry');
+  btnRetry.style.display = wrongCount > 0 ? 'block' : 'none';
+  btnRetry.textContent = `間違えた${wrongCount}問をやり直す`;
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (r.correct ? 'correct-item' : 'wrong-item');
+    div.innerHTML = `
+      <div class="review-q">問${i+1}：${r.q.q}</div>
+      <div class="review-ans">
+        ${r.correct
+          ? `<span class="label-correct">✅ 正解：${r.q.opts[r.q.ans]}</span>`
+          : `<span class="label-wrong">❌ あなた：${r.q.opts[r.chosen]}</span>　正解：<span class="label-correct">${r.q.opts[r.q.ans]}</span>`
+        }
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function retryWrong() {
+  const wrongItems = results.filter(r => !r.correct).map(r => r.q);
+  if (wrongItems.length === 0) return;
+  questions = wrongItems; current = 0; results = [];
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function backToStart() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('headerSub').textContent = '第14回〜第33回 国家試験問題';
+}
+
+
+
+// ===== 苦手問題・成績履歴機能 =====
+var SKEY = (document.title || '').replace(/（第\d+回〜第\d+回）/, '').trim();
+var sessionStart = null;
+var weakData = {};
+var historyData = [];
+
+function loadData() {
+  try {
+    var w = localStorage.getItem('wk_' + SKEY);
+    var h = localStorage.getItem('hs_' + SKEY);
+    weakData    = w ? JSON.parse(w) : {};
+    historyData = h ? JSON.parse(h) : [];
+  } catch(e) { weakData = {}; historyData = []; }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('wk_' + SKEY, JSON.stringify(weakData));
+    localStorage.setItem('hs_' + SKEY, JSON.stringify(historyData));
+  } catch(e) {}
+}
+
+function getWeakList() {
+  return ALL_DATA.filter(function(q, i) {
+    var d = weakData[String(i)];
+    if (!d) return false;
+    var t = d.c + d.w;
+    return t >= 2 && (d.c / t) < 0.5;
+  });
+}
+
+function refreshWeakBtn() {
+  var btn = document.getElementById('btnWeak');
+  if (!btn) return;
+  var wl = getWeakList();
+  if (wl.length === 0) {
+    btn.textContent = '⚡ 苦手問題なし（まず通常クイズを解いてください）';
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+  } else {
+    btn.textContent = '⚡ 苦手問題だけ出題する（' + wl.length + '問）';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+}
+
+function doStartQuiz() {
+  sessionStart = Date.now();
+  startQuiz();
+}
+
+function doStartWeak() {
+  var wl = getWeakList();
+  if (wl.length === 0) { alert('苦手問題がありません。まず通常クイズを解いてください。'); return; }
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  questions = wl;
+  current = 0; results = [];
+  sessionStart = Date.now();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function recordAnswer(qObj, isCorrect) {
+  var i = String(ALL_DATA.indexOf(qObj));
+  if (i === '-1') return;
+  if (!weakData[i]) weakData[i] = { c: 0, w: 0 };
+  if (isCorrect) weakData[i].c++; else weakData[i].w++;
+  saveData();
+}
+
+function saveSession(total, correct, score) {
+  var mins = sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart) / 60000)) : 0;
+  var now = new Date();
+  var d = now.getFullYear() + '/' +
+    String(now.getMonth()+1).padStart(2,'0') + '/' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  historyData.unshift({ date: d, score: score, total: total, correct: correct, mins: mins });
+  if (historyData.length > 50) historyData.length = 50;
+  saveData();
+  sessionStart = null;
+}
+
+function openHistory() {
+  loadData();
+  var n  = historyData.length;
+  var tq = historyData.reduce(function(a,b){ return a+b.total; }, 0);
+  var as = n ? Math.round(historyData.reduce(function(a,b){ return a+b.score; }, 0) / n) : 0;
+  var tt = historyData.reduce(function(a,b){ return a+(b.mins||0); }, 0);
+  var wl = getWeakList();
+  document.getElementById('hSessions').textContent   = n;
+  document.getElementById('hQuestions').textContent  = tq;
+  document.getElementById('hAvgScore').textContent   = as + '%';
+  document.getElementById('hTime').textContent       = tt + '分';
+  document.getElementById('hWeakCount').textContent  = wl.length + '問';
+  var list = document.getElementById('hSessionList');
+  list.innerHTML = n === 0
+    ? '<div style="color:#718096;font-size:13px;text-align:center;padding:20px">まだ履歴がありません</div>'
+    : historyData.map(function(h){
+        return '<div class="hist-row"><div>' +
+          '<div style="font-weight:600">' + h.correct + '/' + h.total + '問正解　' + (h.mins||0) + '分</div>' +
+          '<div class="hist-date">' + h.date + '</div></div>' +
+          '<div class="hist-score">' + h.score + '点</div></div>';
+      }).join('');
+  document.getElementById('historyPanel').classList.add('show');
+}
+
+// ===== イベント登録（iOS Safari対応）=====
+window.addEventListener('load', function() {
+  loadData();
+  refreshWeakBtn();
+
+  function tap(id, fn) {
+    var el = typeof id === 'string' ? document.getElementById(id) : id;
+    if (!el) return;
+    el.addEventListener('click', fn);
+    el.addEventListener('touchend', function(e){ e.preventDefault(); fn(); });
+  }
+
+  tap('btnStart',    doStartQuiz);
+  tap('btnWeak',     doStartWeak);
+  tap('btnNext',     nextQuestion);
+  tap('btnRetry',    function(){ sessionStart = Date.now(); retryWrong(); });
+  tap('btnRestart', backToStart);
+  tap('historyBtn',  openHistory);
+  tap('historyClose', function(){ document.getElementById('historyPanel').classList.remove('show'); });
+  tap('btnClear', function(){
+    if (confirm('履歴と苦手データをすべてリセットしますか？')) {
+      weakData = {}; historyData = [];
+      saveData(); openHistory(); refreshWeakBtn();
+    }
+  });
+  var panel = document.getElementById('historyPanel');
+  if (panel) panel.addEventListener('click', function(e){ if(e.target===panel) panel.classList.remove('show'); });
+
+  // 図版：画像タップで拡大
+  tap('qImage', function() {
+    var src = document.getElementById('qImage').src;
+    if (!src || src === window.location.href) return;
+    document.getElementById('imgModalImg').src = src;
+    document.getElementById('imgModal').classList.add('show');
+  });
+  // 図版：モーダルを閉じる
+  tap('imgModalClose', function() { document.getElementById('imgModal').classList.remove('show'); });
+  var imgModalEl = document.getElementById('imgModal');
+  if (imgModalEl) imgModalEl.addEventListener('click', function(e) { if (e.target === imgModalEl) imgModalEl.classList.remove('show'); });
+  // 図版：管理パネルを開く
+  tap('imgToolBtn', function() { renderImgList(); updateImgStats(); document.getElementById('imgToolPanel').classList.add('show'); });
+  // 図版：管理パネルを閉じる
+  tap('imgToolClose', function() { document.getElementById('imgToolPanel').classList.remove('show'); });
+  var toolPanelEl = document.getElementById('imgToolPanel');
+  if (toolPanelEl) toolPanelEl.addEventListener('click', function(e) { if (e.target === toolPanelEl) toolPanelEl.classList.remove('show'); });
+  // 図版：ファイル選択
+  var fileInputEl = document.getElementById('imgFileInput');
+  if (fileInputEl) fileInputEl.addEventListener('change', function(e) { handleImgFiles(e.target.files); fileInputEl.value = ''; });
+  // 図版：保存
+  tap('btnSaveImg', function() {
+    try {
+      localStorage.setItem('img_' + SKEY, JSON.stringify(imgData));
+      alert('保存しました（' + Object.keys(imgData).length + '件）');
+      document.getElementById('imgToolPanel').classList.remove('show');
+    } catch(e) { alert('保存失敗。画像サイズが大きすぎる可能性があります。'); }
+  });
+  // 図版データ読み込み
+  loadImgData();
+  updateImgStats();
+
+});
+
+// ===== 図版機能 =====
+var imgData = {};
+
+function loadImgData() {
+  try { var d = localStorage.getItem('img_' + SKEY); imgData = d ? JSON.parse(d) : {}; }
+  catch(e) { imgData = {}; }
+}
+
+function updateImgStats() {
+  var el = document.getElementById('imgCount');
+  if (el) el.textContent = Object.keys(imgData).length;
+}
+
+function showQuestionImage(idx) {
+  var wrap = document.getElementById('qImageWrap');
+  var img = document.getElementById('qImage');
+  if (!wrap || !img) return;
+  var qNum = String(ALL_DATA.indexOf(questions[idx]) + 1);
+  if (imgData[qNum]) {
+    img.src = imgData[qNum];
+    wrap.classList.add('show');
+  } else {
+    wrap.classList.remove('show');
+    img.src = '';
+  }
+}
+
+function renderImgList() {
+  var list = document.getElementById('imgList');
+  if (!list) return;
+  var keys = Object.keys(imgData).sort(function(a,b){ return Number(a)-Number(b); });
+  if (keys.length === 0) {
+    list.innerHTML = '<div style="color:#718096;font-size:13px;text-align:center;padding:16px">まだ図版が登録されていません</div>';
+    return;
+  }
+  var out = '';
+  for (var ki = 0; ki < keys.length; ki++) {
+    var k = keys[ki];
+    out += '<div class="img-list-item">'
+      + '<img src="' + imgData[k] + '" alt="">'
+      + '<div class="img-list-info"><div class="img-list-label">問題番号</div>'
+      + '<input class="img-qnum-input" type="number" value="' + k + '" data-old="' + k + '"></div>'
+      + '<button class="img-list-remove" data-key="' + k + '">x</button>'
+      + '</div>';
+  }
+  list.innerHTML = out;
+  var inputs = list.querySelectorAll('.img-qnum-input');
+  for (var ii = 0; ii < inputs.length; ii++) {
+    (function(inp) {
+      inp.addEventListener('change', function() {
+        var ok = this.getAttribute('data-old');
+        var nk = String(parseInt(this.value));
+        if (ok !== nk && nk && !isNaN(nk)) {
+          imgData[nk] = imgData[ok];
+          delete imgData[ok];
+          renderImgList(); updateImgStats();
+        }
+      });
+    })(inputs[ii]);
+  }
+  var removes = list.querySelectorAll('.img-list-remove');
+  for (var ri = 0; ri < removes.length; ri++) {
+    (function(btn) {
+      btn.addEventListener('click', function() {
+        var key = this.getAttribute('data-key');
+        if (confirm('問' + key + 'の図版を削除しますか？')) {
+          delete imgData[key]; renderImgList(); updateImgStats();
+        }
+      });
+    })(removes[ri]);
+  }
+}
+
+function handleImgFiles(files) {
+  var arr = Array.from(files);
+  if (arr.length === 0) return;
+  var done = 0;
+  arr.forEach(function(file) {
+    if (!file.type.startsWith('image/')) { done++; return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var m = file.name.match(/([0-9]+)/);
+      var qNum = m ? m[1] : String(Object.keys(imgData).length + 1);
+      imgData[qNum] = e.target.result;
+      done++;
+      if (done === arr.length) { renderImgList(); updateImgStats(); }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+</script>
+
+<button class="history-btn" id="historyBtn">📊</button>
+<div class="history-panel" id="historyPanel">
+  <div class="history-inner">
+    <div class="history-header">
+      <h2>📊 成績・履歴</h2>
+      <button class="history-close" id="historyClose">✕</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="hSessions">0</div><div class="stat-label">総セッション数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hQuestions">0</div><div class="stat-label">総解答問題数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hAvgScore">0%</div><div class="stat-label">平均正答率</div></div>
+      <div class="stat-card"><div class="stat-val" id="hTime">0分</div><div class="stat-label">総学習時間</div></div>
+    </div>
+    <div class="weak-stat">
+      <div class="weak-count" id="hWeakCount">0問</div>
+      <div style="font-size:13px;color:#e65100;margin-top:4px;">苦手問題数（正答率50%未満・2回以上解いた問題）</div>
+    </div>
+    <div class="hist-section-title">📅 セッション履歴（最新50件）</div>
+    <div id="hSessionList"></div>
+    <button class="btn-clear" id="btnClear">🗑 履歴・苦手データをリセット</button>
+  </div>
+</div>
+
+<div class="img-modal" id="imgModal">
+  <button class="img-modal-close" id="imgModalClose">✕</button>
+  <img class="img-modal-img" id="imgModalImg" src="" alt="拡大">
+</div>
+<button class="img-tool-btn" id="imgToolBtn">🖼</button>
+<div class="img-tool-panel" id="imgToolPanel">
+  <div class="img-tool-inner">
+    <div class="img-tool-header">
+      <h2>🖼 図版管理ツール</h2>
+      <button class="img-tool-close" id="imgToolClose">✕</button>
+    </div>
+    <div class="img-stats">登録済み図版：<strong id="imgCount">0</strong> 件</div>
+    <div class="img-upload-zone">
+      <input type="file" id="imgFileInput" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+      <div style="font-size:32px;margin-bottom:8px">📁</div>
+      <div style="font-size:14px;font-weight:600">画像ファイルをタップして選択</div>
+      <div style="font-size:12px;color:#718096;margin-top:4px">JPG・PNG・GIF・WebP対応</div>
+    </div>
+    <div class="img-list" id="imgList"></div>
+    <button class="btn-save-img" id="btnSaveImg">💾 図版データを保存する</button>
+    <div style="font-size:12px;color:#718096;margin-top:12px;line-height:1.6">
+      ※ 問題番号を入力して画像を紐付けてください。<br>
+      ※ 保存するとブラウザに記録され次回以降も表示されます。
+    </div>
+  </div>
+</div>
+</body>
+</html>
