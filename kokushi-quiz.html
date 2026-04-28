@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>クイズ公開ツール</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222538;
+    --border: #2e3354;
+    --accent: #4f8ef7;
+    --accent2: #7c5ff7;
+    --success: #2dd4a0;
+    --warning: #f7c54f;
+    --danger: #f75f5f;
+    --text: #e8eaf6;
+    --text-sub: #7b82a8;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  body {
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(79,142,247,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(124,95,247,0.08) 0%, transparent 50%);
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(26,29,39,0.8);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .header h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+
+  /* ===== MAIN ===== */
+  .main { max-width: 760px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  /* ===== SECTION ===== */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-sub);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    display: block;
+    width: 3px; height: 14px;
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+  }
+
+  /* ===== SETTINGS ===== */
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .field input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .field input::placeholder { color: var(--text-sub); opacity: 0.6; }
+  .field-row { display: flex; gap: 12px; }
+  .field-row .field { flex: 1; }
+  .hint {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-top: 5px;
+    line-height: 1.5;
+  }
+  .hint a { color: var(--accent); text-decoration: none; }
+
+  /* ===== DROP ZONE ===== */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface2);
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(79,142,247,0.06);
+  }
+  .drop-zone input[type=file] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .drop-icon { font-size: 40px; margin-bottom: 12px; }
+  .drop-text { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .drop-sub { font-size: 12px; color: var(--text-sub); }
+
+  /* ===== FILE LIST ===== */
+  .file-list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .file-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .file-icon { font-size: 18px; }
+  .file-name { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); word-break: break-all; }
+  .file-size { font-size: 11px; color: var(--text-sub); white-space: nowrap; }
+  .file-remove {
+    width: 22px; height: 22px;
+    background: rgba(247,95,95,0.15);
+    border: none;
+    border-radius: 50%;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.1s;
+    flex-shrink: 0;
+  }
+  .file-remove:hover { background: rgba(247,95,95,0.3); }
+
+  /* ===== REPO NAME ===== */
+  .repo-suggest {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;
+  }
+  .repo-chip {
+    font-size: 11px;
+    padding: 3px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .repo-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ===== PUBLISH BUTTON ===== */
+  .btn-publish {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(79,142,247,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .btn-publish:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(79,142,247,0.4); }
+  .btn-publish:active { transform: scale(0.98); }
+  .btn-publish:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ===== PROGRESS ===== */
+  .progress-wrap {
+    display: none;
+    margin-top: 20px;
+  }
+  .progress-wrap.show { display: block; }
+  .progress-bar-bg {
+    background: var(--surface2);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .progress-log {
+    font-size: 12px;
+    color: var(--text-sub);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.8;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  .progress-log .log-ok { color: var(--success); }
+  .progress-log .log-err { color: var(--danger); }
+  .progress-log .log-info { color: var(--accent); }
+
+  /* ===== RESULTS ===== */
+  .results { display: none; margin-top: 20px; }
+  .results.show { display: block; }
+  .result-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--success);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .url-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: fadeIn 0.3s ease;
+  }
+  .url-card .url-name {
+    font-size: 12px; color: var(--text-sub);
+    white-space: nowrap; min-width: 160px;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .url-card .url-link {
+    flex: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-decoration: none;
+    word-break: break-all;
+  }
+  .url-card .url-link:hover { text-decoration: underline; }
+  .btn-copy {
+    padding: 5px 12px;
+    font-size: 11px;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: rgba(79,142,247,0.15);
+    border: 1px solid rgba(79,142,247,0.3);
+    border-radius: 6px;
+    color: var(--accent);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.1s;
+  }
+  .btn-copy:hover { background: rgba(79,142,247,0.25); }
+  .btn-copy.copied { color: var(--success); border-color: var(--success); background: rgba(45,212,160,0.15); }
+
+  .btn-copy-all {
+    width: 100%;
+    padding: 10px;
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-sub);
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.1s;
+  }
+  .btn-copy-all:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ===== STATUS BADGE ===== */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .badge-ok { background: rgba(45,212,160,0.15); color: var(--success); border: 1px solid rgba(45,212,160,0.3); }
+  .badge-err { background: rgba(247,95,95,0.15); color: var(--danger); border: 1px solid rgba(247,95,95,0.3); }
+
+  /* ===== TIPS ===== */
+  .tips {
+    background: rgba(79,142,247,0.06);
+    border: 1px solid rgba(79,142,247,0.2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 12px;
+    color: var(--text-sub);
+    line-height: 1.8;
+    margin-top: 16px;
+  }
+  .tips strong { color: var(--accent); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🚀</div>
+  <div>
+    <h1>クイズ公開ツール</h1>
+    <div class="header-sub">HTMLファイルをGitHub Pagesで公開 → URLを発行</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- STEP 1: GitHub設定 -->
+  <div class="section">
+    <div class="section-title">Step 1 　GitHub 設定</div>
+    <div class="field-row">
+      <div class="field">
+        <label>GitHubユーザー名</label>
+        <input type="text" id="ghUser" placeholder="例: kokushi-quiz" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>リポジトリ名</label>
+        <input type="text" id="ghRepo" placeholder="例: quiz-app" autocomplete="off">
+        <div class="repo-suggest">
+          <span class="repo-chip" onclick="setRepo('quiz-app')">quiz-app</span>
+          <span class="repo-chip" onclick="setRepo('kokushi-quiz')">kokushi-quiz</span>
+          <span class="repo-chip" onclick="setRepo('study-quiz')">study-quiz</span>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Personal Access Token</label>
+      <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+      <div class="hint">
+        ⚠️ トークンはこのツール内のみで使用され、外部送信はされません。<br>
+        取得方法: GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate（repoにチェック）
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: ファイル選択 -->
+  <div class="section">
+    <div class="section-title">Step 2 　HTMLファイルを選択</div>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".html" multiple>
+      <div class="drop-icon">📂</div>
+      <div class="drop-text">ここにHTMLファイルをドロップ</div>
+      <div class="drop-sub">または クリックしてファイルを選択（複数選択可）</div>
+    </div>
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <!-- STEP 3: 公開 -->
+  <div class="section">
+    <div class="section-title">Step 3 　公開する</div>
+    <button class="btn-publish" id="btnPublish" onclick="publishFiles()">
+      🚀 GitHub Pagesで公開する
+    </button>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-log" id="progressLog"></div>
+    </div>
+
+    <div class="results" id="results">
+      <div class="result-title">✅ 公開完了！以下のURLでアクセスできます</div>
+      <div id="urlList"></div>
+      <button class="btn-copy-all" onclick="copyAllUrls()">📋 全URLをまとめてコピー</button>
+      <div class="tips">
+        <strong>💡 使い方のヒント</strong><br>
+        • URLをLINEやメールでiPhone/iPadに送ってSafariで開くと動作します<br>
+        • GitHub PagesのURLは永続的に無料で使用できます<br>
+        • ファイルを更新する場合は同じ手順で再アップロードしてください
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let selectedFiles = [];
+  let publishedUrls = [];
+
+  // ===== ファイル選択 =====
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    addFiles(Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.html')));
+  });
+  fileInput.addEventListener('change', (e) => {
+    addFiles(Array.from(e.target.files));
+    fileInput.value = '';
+  });
+
+  function addFiles(files) {
+    files.forEach(f => {
+      if (!selectedFiles.find(x => x.name === f.name)) {
+        selectedFiles.push(f);
+      }
+    });
+    renderFileList();
+  }
+
+  function removeFile(name) {
+    selectedFiles = selectedFiles.filter(f => f.name !== name);
+    renderFileList();
+  }
+
+  function renderFileList() {
+    const list = document.getElementById('fileList');
+    if (selectedFiles.length === 0) { list.innerHTML = ''; return; }
+    list.innerHTML = selectedFiles.map(f => `
+      <div class="file-item">
+        <span class="file-icon">📄</span>
+        <span class="file-name">${f.name}</span>
+        <span class="file-size">${(f.size / 1024).toFixed(1)} KB</span>
+        <button class="file-remove" onclick="removeFile('${f.name}')">×</button>
+      </div>
+    `).join('');
+  }
+
+  function setRepo(name) {
+    document.getElementById('ghRepo').value = name;
+  }
+
+  // ===== ログ出力 =====
+  function log(msg, type = '') {
+    const el = document.getElementById('progressLog');
+    const cls = type === 'ok' ? 'log-ok' : type === 'err' ? 'log-err' : 'log-info';
+    el.innerHTML += `<div class="${cls}">${msg}</div>`;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function setProgress(pct) {
+    document.getElementById('progressFill').style.width = pct + '%';
+  }
+
+  // ===== GitHub API =====
+  async function ghApi(path, method, body, token) {
+    const res = await fetch('https://api.github.com' + path, {
+      method,
+      headers: {
+        'Authorization': 'token ' + token,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: res.status, data: await res.json() };
+  }
+
+  function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ===== 公開処理 =====
+  async function publishFiles() {
+    const user  = document.getElementById('ghUser').value.trim();
+    const repo  = document.getElementById('ghRepo').value.trim();
+    const token = document.getElementById('ghToken').value.trim();
+
+    if (!user || !repo || !token) {
+      alert('GitHubユーザー名・リポジトリ名・トークンを入力してください');
+      return;
+    }
+    if (selectedFiles.length === 0) {
+      alert('HTMLファイルを選択してください');
+      return;
+    }
+
+    const btn = document.getElementById('btnPublish');
+    btn.disabled = true;
+    btn.textContent = '処理中...';
+
+    document.getElementById('progressWrap').classList.add('show');
+    document.getElementById('results').classList.remove('show');
+    document.getElementById('progressLog').innerHTML = '';
+    document.getElementById('urlList').innerHTML = '';
+    publishedUrls = [];
+    setProgress(0);
+
+    try {
+      // --- リポジトリ確認・作成 ---
+      log('📡 リポジトリを確認中...', 'info');
+      let repoRes = await ghApi(`/repos/${user}/${repo}`, 'GET', null, token);
+
+      if (repoRes.status === 404) {
+        log('📁 リポジトリを新規作成中...', 'info');
+        repoRes = await ghApi('/user/repos', 'POST', {
+          name: repo,
+          private: false,
+          auto_init: true,
+          description: '国試クイズアプリ'
+        }, token);
+        if (repoRes.status !== 201) {
+          throw new Error('リポジトリ作成失敗: ' + JSON.stringify(repoRes.data));
+        }
+        log('✅ リポジトリを作成しました', 'ok');
+        // 初期化待ち
+        await new Promise(r => setTimeout(r, 3000));
+      } else {
+        log('✅ リポジトリ確認完了', 'ok');
+      }
+
+      setProgress(15);
+
+      // --- GitHub Pages 有効化 ---
+      log('🌐 GitHub Pages を有効化中...', 'info');
+      await ghApi(`/repos/${user}/${repo}/pages`, 'POST', {
+        source: { branch: 'main', path: '/' }
+      }, token);
+      setProgress(25);
+
+      // --- ファイルをアップロード ---
+      const total = selectedFiles.length;
+      for (let i = 0; i < total; i++) {
+        const file = selectedFiles[i];
+        log(`📤 アップロード中: ${file.name}`, 'info');
+
+        const content = await toBase64(file);
+
+        // 既存ファイルのSHAを取得（更新の場合）
+        let sha = undefined;
+        const existing = await ghApi(`/repos/${user}/${repo}/contents/${encodeURIComponent(file.name)}`, 'GET', null, token);
+        if (existing.status === 200) sha = existing.data.sha;
+
+        const uploadRes = await ghApi(`/repos/${user}/${repo}/contents/${encodeURIComponent(file.name)}`, 'PUT', {
+          message: `Add ${file.name}`,
+          content: content,
+          ...(sha ? { sha } : {})
+        }, token);
+
+        if (uploadRes.status === 200 || uploadRes.status === 201) {
+          const url = `https://${user}.github.io/${repo}/${file.name}`;
+          publishedUrls.push({ name: file.name, url });
+          log(`✅ ${file.name} 完了`, 'ok');
+          addUrlCard(file.name, url);
+        } else {
+          log(`❌ ${file.name} 失敗: ${JSON.stringify(uploadRes.data)}`, 'err');
+        }
+
+        setProgress(25 + Math.round((i + 1) / total * 70));
+      }
+
+      setProgress(100);
+      log('🎉 全ファイルのアップロード完了！', 'ok');
+      log('⏳ GitHub PagesのURLが有効になるまで1〜2分かかる場合があります', 'info');
+
+      document.getElementById('results').classList.add('show');
+
+    } catch (err) {
+      log('❌ エラー: ' + err.message, 'err');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '🚀 GitHub Pagesで公開する';
+  }
+
+  function addUrlCard(name, url) {
+    const list = document.getElementById('urlList');
+    const div = document.createElement('div');
+    div.className = 'url-card';
+    div.innerHTML = `
+      <span class="url-name">📄 ${name.replace('_iOS修正版.html','').replace('_スマホ対応.html','')}</span>
+      <a class="url-link" href="${url}" target="_blank">${url}</a>
+      <button class="btn-copy" onclick="copyUrl(this, '${url}')">コピー</button>
+    `;
+    list.appendChild(div);
+  }
+
+  function copyUrl(btn, url) {
+    navigator.clipboard.writeText(url).then(() => {
+      btn.textContent = '✅ コピー済';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function copyAllUrls() {
+    const text = publishedUrls.map(u => `${u.name}\n${u.url}`).join('\n\n');
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.btn-copy-all');
+      btn.textContent = '✅ コピーしました！';
+      setTimeout(() => { btn.textContent = '📋 全URLをまとめてコピー'; }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
