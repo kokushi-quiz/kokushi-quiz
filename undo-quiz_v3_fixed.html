@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>運動学クイズ（第14回〜第34回）</title>
+<style>
+  :root {
+    --primary: #c0392b;
+    --primary-light: #fdf0ee;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --bg: #faf2f1;
+    --card: #ffffff;
+    --text: #1a202c;
+    --text-sub: #718096;
+    --border: #e2e8f0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 14px;
+    --option-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; color: var(--text); }
+
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 14px 16px 10px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .progress-bar-wrap { height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin-top: 10px; }
+  .progress-bar { height: 100%; background: #ffd700; border-radius: 2px; transition: width 0.4s ease; }
+
+  #startScreen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 80px); padding: 24px;
+  }
+  .start-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 32px 24px; width: 100%; max-width: 420px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .start-icon { font-size: 56px; margin-bottom: 16px; }
+  .start-card h2 { font-size: 22px; color: var(--primary); margin-bottom: 8px; }
+  .start-card p { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px 14px; background: var(--bg); border-radius: 10px; }
+  .setting-label { font-size: 14px; font-weight: 600; }
+  .setting-row select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--border); background: white; color: var(--text); appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+  .btn-start {
+    width: 100%; padding: 16px; font-size: 18px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; letter-spacing: 1px; margin-top: 8px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 14px rgba(192,57,43,0.4);
+  }
+  .btn-start:active { transform: scale(0.97); }
+
+  #quizScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .q-num { background: var(--primary); color: white; font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .q-badge-hissu { background: #ff9500; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .q-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .q-text { font-size: 17px; line-height: 1.65; font-weight: 600; }
+  .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .opt-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; cursor: pointer;
+    font-size: 15px; line-height: 1.4; text-align: left;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    min-height: var(--option-h);
+    box-shadow: var(--shadow);
+    -webkit-user-select: none; user-select: none;
+  }
+  .opt-btn:active { transform: scale(0.98); }
+  .opt-btn.selected { border-color: var(--primary); background: var(--primary-light); }
+  .opt-btn.correct { border-color: var(--correct); background: #eafaf1; }
+  .opt-btn.wrong { border-color: var(--wrong); background: #fdecea; }
+  .opt-label {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%; background: var(--border); font-weight: 700; font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .opt-btn.selected .opt-label { background: var(--primary); color: white; }
+  .opt-btn.correct .opt-label { background: var(--correct); color: white; }
+  .opt-btn.wrong .opt-label { background: var(--wrong); color: white; }
+  .opt-text { flex: 1; }
+
+  .feedback { display: none; padding: 14px 16px; border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 15px; align-items: center; gap: 10px; }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: #eafaf1; color: var(--correct); border: 1.5px solid var(--correct); }
+  .feedback.ng { background: #fdecea; color: var(--wrong); border: 1.5px solid var(--wrong); }
+
+  .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .btn-next {
+    flex: 1; padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; transition: transform 0.1s;
+    box-shadow: 0 4px 14px rgba(192,57,43,0.35);
+  }
+  .btn-next:active { transform: scale(0.97); }
+  .btn-next:disabled { background: var(--border); color: var(--text-sub); box-shadow: none; }
+
+  #resultScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .result-hero {
+    background: var(--card); border-radius: var(--radius); padding: 32px 24px;
+    text-align: center; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 12px; }
+  .result-score { font-size: 56px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .result-score span { font-size: 24px; font-weight: 400; }
+  .result-msg { font-size: 17px; font-weight: 600; color: var(--text); margin: 10px 0; }
+  .result-detail { font-size: 14px; color: var(--text-sub); margin-bottom: 4px; }
+  .score-bar-wrap { background: var(--bg); border-radius: 8px; height: 12px; margin: 14px 0; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--primary), #e87060); transition: width 0.8s ease; }
+  .btn-retry, .btn-restart {
+    width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px;
+    transition: transform 0.1s;
+  }
+  .btn-retry { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(192,57,43,0.35); }
+  .btn-restart { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-retry:active, .btn-restart:active { transform: scale(0.97); }
+  .review-section { margin-top: 8px; }
+  .review-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
+  .review-item { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid var(--border); }
+  .review-item.wrong-item { border-left-color: var(--wrong); }
+  .review-item.correct-item { border-left-color: var(--correct); }
+  .review-q { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .review-ans { font-size: 13px; color: var(--text-sub); }
+  .review-ans .label-correct { color: var(--correct); font-weight: 700; }
+  .review-ans .label-wrong { color: var(--wrong); font-weight: 700; }
+
+  .btn-weak {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
+    background: #fff3e0; color: #e65100; border: 2px solid #ffb74d;
+    border-radius: 12px; cursor: pointer; margin-top: 10px;
+    -webkit-user-select: none; user-select: none; display: block; text-align: center;
+  }
+  .btn-weak:active { transform: scale(0.97); }
+  .history-btn {
+    position: fixed; bottom: 24px; right: 20px; z-index: 200;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--primary); color: white; border: none;
+    font-size: 22px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .history-panel {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.55); overflow-y: auto;
+  }
+  .history-panel.show { display: block; }
+  .history-inner {
+    background: white; border-radius: 16px 16px 0 0;
+    padding: 24px 16px 60px; margin-top: 60px;
+    min-height: calc(100vh - 60px);
+  }
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .history-header h2 { font-size: 18px; font-weight: 700; }
+  .history-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f0f0f0; border: none; font-size: 18px; cursor: pointer;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: #f8f9fa; border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+  .stat-label { font-size: 11px; color: #718096; margin-top: 2px; }
+  .weak-stat { background: #fff3e0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .weak-count { font-size: 24px; font-weight: 800; color: #e65100; }
+  .hist-section-title { font-size: 13px; font-weight: 700; color: #718096; margin: 16px 0 10px; }
+  .hist-row {
+    background: #f8f9fa; border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 8px; font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .hist-score { font-weight: 800; font-size: 18px; color: var(--primary); }
+  .hist-date { color: #718096; font-size: 12px; }
+  .btn-clear {
+    width: 100%; padding: 12px; font-size: 13px;
+    background: white; color: #e74c3c; border: 1.5px solid #e74c3c;
+    border-radius: 10px; cursor: pointer; margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏃 運動学クイズ</h1>
+  <div class="header-sub" id="headerSub">第14回〜第34回 国家試験問題</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+</div>
+
+<div id="startScreen">
+  <div class="start-card">
+    <div class="start-icon">🏃</div>
+    <h2>運動学クイズ</h2>
+    <p>国家試験（第14回〜第34回）から<br>出題された運動学問題を学習しましょう。<br>全<strong>226問</strong>収録</p>
+    <div class="setting-row">
+      <span class="setting-label">出題数</span>
+      <select id="selectNum">
+        <option value="10">10問</option>
+        <option value="20">20問</option>
+        <option value="30" selected>30問</option>
+        <option value="50">50問</option>
+        <option value="100">100問</option>
+        <option value="0">全問（226問）</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">出題順</span>
+      <select id="selectOrder">
+        <option value="1" selected>ランダム</option>
+        <option value="0">番号順</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">選択肢順</span>
+      <select id="selectShuffle">
+        <option value="1" selected>ランダム</option>
+        <option value="0">固定</option>
+      </select>
+    </div>
+    <button class="btn-start" id="btnStart">スタート ▶</button>
+    <button class="btn-weak" id="btnWeak">⚡ 苦手問題だけ出題する</button>
+  </div>
+</div>
+
+<div id="quizScreen">
+  <div class="q-meta">
+    <span class="q-num" id="qNum">問1</span>
+    <span class="q-badge-hissu" id="qBadge" style="display:none">必修</span>
+  </div>
+  <div class="q-card">
+    <p class="q-text" id="qText"></p>
+  </div>
+  <div class="options-grid" id="optionsGrid"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="action-row">
+    <button class="btn-next" id="btnNext" disabled>次の問題 →</button>
+  </div>
+</div>
+
+<div id="resultScreen">
+  <div class="result-hero">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-score" id="resultScore">0<span>点</span></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="score-bar-wrap"><div class="score-bar" id="scoreBar" style="width:0%"></div></div>
+  </div>
+  <button class="btn-retry" id="btnRetry">間違えた問題をやり直す</button>
+  <button class="btn-restart" id="btnRestart">トップへ戻る</button>
+  <div class="review-section">
+    <div class="review-title">📝 解答一覧</div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<script>
+const ALL_DATA = [{"q": "足関節の伸展（背屈）に作用するのはどれか。", "opts": ["前脛骨筋", "長腓骨筋", "腓腹筋", "後脛骨筋"], "ans": 0, "essential": true}, {"q": "誤っている組み合わせはどれか。", "opts": ["第１のテコ・・・・大腿四頭筋による膝伸展", "第１のテコ・・・・上腕三頭筋による肘伸展", "第３のテコ・・・・上腕二頭筋による肘屈曲", "第３のテコ・・・・三角筋による肩外転"], "ans": 0, "essential": false}, {"q": "下り坂でゆっくりと左脚を降ろすとき、右脚の大腿四頭筋の収縮はどれか。", "opts": ["遠心性収縮", "求心性収縮", "等尺性収縮", "相動性収縮"], "ans": 0, "essential": false}, {"q": "肩関節の伸展に作用するのはどれか。", "opts": ["広背筋", "棘上筋", "小円筋", "肩甲下筋"], "ans": 0, "essential": false}, {"q": "股関節の伸展に作用しないのはどれか。", "opts": ["大腿筋膜張筋", "大腿二頭筋", "大殿筋", "半腱様筋"], "ans": 0, "essential": false}, {"q": "足部の外がえしに作用するのはどれか。", "opts": ["長腓骨筋", "後脛骨筋", "長指屈筋", "足底筋"], "ans": 0, "essential": false}, {"q": "筋紡錘に入出力しない神経線維はどれか。", "opts": ["α運動線維", "γ運動線維", "Iａ群線維", "II群線維"], "ans": 0, "essential": false}, {"q": "膝蓋腱反射について誤っているのはどれか。", "opts": ["表在反射である。", "伸張反射である。", "相反性神経支配がある。", "脊髄に反射中枢がある。"], "ans": 0, "essential": false}, {"q": "基本的立位姿勢で誤っているのはどれか。", "opts": ["重心線は第４腰椎体の後方を通る。", "重心線は足関節の前方を通る。", "重心線は支持基底内の中心に近いほど安定性が良い。", "重心はたえず動揺している。"], "ans": 0, "essential": false}, {"q": "正常新生児にみられないのはどれか。", "opts": ["ランドウ反射", "モロー反射", "ガラント反射", "交差性伸展反射"], "ans": 0, "essential": false}, {"q": "運動力学的歩行分析はどれか。", "opts": ["床反力", "速度", "関節可動域", "歩幅"], "ans": 0, "essential": false}, {"q": "肩関節を外転するのはどれか。", "opts": ["棘上筋", "小円筋", "肩甲下筋", "棘下筋"], "ans": 0, "essential": true}, {"q": "関節可動域表示で基本肢位の足関節角度はどれか。", "opts": ["0度", "10度", "90度", "100度"], "ans": 0, "essential": false}, {"q": "運動の法則で誤っているのはどれか。", "opts": ["加速度は力の働く方向と反対方向に働く", "加速度は力の大きさに正比例する", "加速度は物体の質量に反比例する", "物体に作用する力は質量と加速度の積である"], "ans": 0, "essential": false}, {"q": "錐体路に含まれないのはどれか。", "opts": ["脊髄後角細胞", "大脳皮質運動野", "内包", "大脳脚"], "ans": 0, "essential": false}, {"q": "上腕二頭筋反射に直接関与するのはどれか。", "opts": ["筋皮神経", "正中神経", "尺骨神経", "橈骨神経"], "ans": 0, "essential": false}, {"q": "脊髄に反射中枢をもたないのはどれか。", "opts": ["緊張性頚反射", "伸張反射", "交差性反射", "屈筋反射"], "ans": 0, "essential": false}, {"q": "翼状肩甲に関与するのはどれか。", "opts": ["前鋸筋", "小胸筋", "肩甲挙筋", "広背筋"], "ans": 0, "essential": false}, {"q": "正常乳児でモロー反射が生後消失する時期はどれか。", "opts": ["6ヶ月", "3ヶ月", "9ヶ月", "12ヶ月"], "ans": 0, "essential": false}, {"q": "小児の歩行に関する発達過程で誤っている組み合わせはどれか。", "opts": ["1歳・・・・・階段の昇り動作ができるようになる", "5ヶ月・・・・体幹を支えて立位保持すると、下肢で支えて立位姿勢を保つ", "8ヶ月・・・・物につかまりひとりで立ち上がる", "2歳・・・・・転倒しないで走ることができる"], "ans": 0, "essential": false}, {"q": "自然歩行周期で両側支持期の占める比率はどれか。", "opts": ["20%", "5%", "10%", "40%"], "ans": 0, "essential": false}, {"q": "パーキンソン（Parkinson）病患者にみられるのはどれか。", "opts": ["小きざみ歩行", "トレンデレンブルグ歩行", "鶏歩", "失調性歩行"], "ans": 0, "essential": false}, {"q": "正常歩行として誤っているのはどれか。", "opts": ["踵接地の足関節底屈", "骨盤の回旋", "骨盤の傾斜", "立脚期の膝屈曲"], "ans": 0, "essential": true}, {"q": "誤っている組合せはどれか。", "opts": ["中殿筋による片脚立ちでのつりあい　−　第2のてこ", "頸部伸筋群による頭部のつりあい　　−　第1のてこ", "腕橈骨筋による肘屈曲　　　　　　　−　第2のてこ", "上腕二頭筋による肘屈曲　　　　　　−　第3のてこ"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["海綿骨の骨組織は層板構造になっている。", "骨は骨膜、骨質、骨髄および関節軟骨からなる。", "骨質は緻密骨と海綿骨に区分される。", "骨膜には血管と感覚神経が密に分布している。"], "ans": 0, "essential": false}, {"q": "大脳皮質が関与しないのはどれか。", "opts": ["陽性支持反応", "踏み直り反応", "足踏み反応", "跳び直り反応"], "ans": 0, "essential": false}, {"q": "小脳について誤っているのはどれか。", "opts": ["脊髄のα運動ニューロンに直接連絡", "運動企画・プログラミング", "フィードバック調節機能", "閉ループ制御"], "ans": 0, "essential": false}, {"q": "強制呼気のときに働くのはどれか。", "opts": ["腹筋", "横隔膜", "胸鎖乳突筋", "外肋間筋"], "ans": 0, "essential": false}, {"q": "足の外がえしをするのはどれか。", "opts": ["長指伸筋", "前脛骨筋", "後脛骨筋", "足底筋"], "ans": 0, "essential": false}, {"q": "立位姿勢の安定性で誤っているのはどれか。", "opts": ["重心線の位置が支持基底内の中心から離れている。", "重心が低い。", "支持基底の面積が広い。", "床と接触面の摩擦抵抗が大きい。"], "ans": 0, "essential": false}, {"q": "原始反射でないのはどれか。", "opts": ["パラシュート反射", "モロー反射", "ランドウ反射", "ガラント反射"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["スキップ　　　−　36か月", "寝返り　　　　−　3〜4か月", "つかまり立ち　−　5〜9か月", "独り歩き　　　−　11〜14か月"], "ans": 0, "essential": false}, {"q": "小児の歩行開始段階の特徴はどれか。", "opts": ["支持基底を広くとる。", "独り歩きが可能となるころの歩行は踵接地である。", "歩行率（ケイデンス）が低い。", "上肢の振りが多い。"], "ans": 0, "essential": false}, {"q": "静止性収縮はどれか。", "opts": ["等尺性収縮", "等運動性収縮", "遠心性収縮", "等張性収縮"], "ans": 0, "essential": true}, {"q": "加速度で誤っているのはどれか。", "opts": ["物体の運動を保ち続ける。", "物体の質量に反比例する。", "力の大きさに正比例する。", "力の働く方向と同一方向に働く。"], "ans": 0, "essential": false}, {"q": "1ニュートン（N）の定義で正しいのはどれか。", "opts": ["1kgのおもりに1m／sec2の加速度を生じさせる力", "1kgのおもりを1m運ぶ力", "1kgのおもりに垂直方向に加わる力", "1kgのおもりを1mの高さから落とした時に加わる力"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["ハバース管は骨単位の中心部にある。", "骨の主な無機質は炭酸カルシウムである。", "関節軟骨は血管の分布が豊富である。", "骨細胞は骨の石灰化促進作用をもつ。"], "ans": 0, "essential": false}, {"q": "二関節筋でないのはどれか。", "opts": ["ヒラメ筋", "上腕三頭筋（長頭）", "縫工筋", "大腿直筋"], "ans": 0, "essential": false}, {"q": "膝蓋腱反射で誤っているのはどれか。", "opts": ["多シナプス反射", "脊髄反射", "伸張反射", "深部反射"], "ans": 0, "essential": false}, {"q": "手根管を通過しないのはどれか。", "opts": ["尺側手根屈筋腱", "浅指屈筋腱", "深指屈筋腱", "長母指屈筋腱"], "ans": 0, "essential": false}, {"q": "身体の腹側に位置する抗重力筋はどれか。", "opts": ["腸腰筋", "下腿三頭筋", "大殿筋", "ハムストリングス"], "ans": 0, "essential": false}, {"q": "動機づけで誤っているのはどれか。", "opts": ["外的動機づけは自己関与にかかわる。", "内的動機づけは個人的な喜びを見いだす。", "内的動機づけは自己実現にかかわる。", "外的動機づけには物的報酬を利用する。"], "ans": 0, "essential": false}, {"q": "正常歩行で踵接地に筋活動が少ないのはどれか。", "opts": ["下腿三頭筋", "前脛骨筋", "大腿四頭筋", "大腿二頭筋"], "ans": 0, "essential": false}, {"q": "高齢者の歩行で誤っているのはどれか。", "opts": ["筋活動の低下", "速度の低下", "歩幅の短縮", "歩行率（ケイデンス）の低下"], "ans": 0, "essential": false}, {"q": "僧帽筋の支配神経はどれか。", "opts": ["副神経", "腋窩神経", "肩甲上神経", "肩甲背神経"], "ans": 0, "essential": true}, {"q": "身体の運動軸と頭部の運動との組合せで正しいのはどれか。", "opts": ["水平前頭軸　&#8722;　屈曲", "垂直軸　　　&#8722;　側屈", "水平矢状軸　&#8722;　回旋", "垂直前頭軸　&#8722;　伸展"], "ans": 0, "essential": false}, {"q": "運動単位の構成要素で誤っているのはどれか。", "opts": ["筋紡錘", "脊髄前角細胞", "α運動神経線維", "筋線維"], "ans": 0, "essential": false}, {"q": "骨代謝で正しい組合せはどれか。", "opts": ["副甲状腺ホルモン　&#8722;　活性型ビタミンＤの合成", "破骨細胞　　　　　&#8722;　骨石灰化の促進", "骨芽細胞　　　　　&#8722;　骨の貪食吸収", "カルシトニン　　　&#8722;　骨吸収促進"], "ans": 0, "essential": false}, {"q": "頭部を右に回旋した時の非対称性緊張性頸反射で正しいのはどれか。", "opts": ["左肘関節は屈曲する。", "左肩関節は外転する。", "右股関節は屈曲する。", "右膝関節は屈曲する。"], "ans": 0, "essential": false}, {"q": "肩関節を外旋する筋はどれか。", "opts": ["棘下筋", "大円筋", "前鋸筋", "肩甲下筋"], "ans": 0, "essential": false}, {"q": "生理的彎曲と頂椎との組合せで正しいのはどれか。", "opts": ["胸椎後弯　　　&#8722;　第8胸椎", "頸椎前弯　　　&#8722;　第7頸椎", "腰椎前弯　　　&#8722;　第1腰椎", "仙・尾椎後弯　&#8722;　第1仙椎"], "ans": 0, "essential": false}, {"q": "正常な立位姿勢の重心線で正しいのはどれか。", "opts": ["股関節の後方", "足関節の後方", "膝関節の後方", "第4腰椎の後方"], "ans": 0, "essential": false}, {"q": "運動技能の練習効果で正しいのはどれか。", "opts": ["遂行時間の短縮", "遂行時努力量の増加", "自由度の減少", "運動パターン恒常性の低下"], "ans": 0, "essential": false}, {"q": "通常歩行時（毎分80ｍの速さ）のエネルギー消費は安静臥床時の約何倍か。", "opts": ["4倍", "2倍", "6倍", "8倍"], "ans": 0, "essential": false}, {"q": "小脳の障害でみられる異常歩行はどれか。", "opts": ["酩酊歩行", "鶏状歩行", "分回し歩行", "トレンデレンブルグ歩行"], "ans": 0, "essential": false}, {"q": "原始反射はどれか。〔必〕", "opts": ["ガラント反射", "下肢伸展反射", "足底反射", "パラシュート反応"], "ans": 0, "essential": false}, {"q": "ベクトル量に含まれないのはどれか。", "opts": ["質量", "大きさ", "速度", "方向"], "ans": 0, "essential": false}, {"q": "誤っているのはどれか。", "opts": ["関節軟骨内には血管が豊富に存在する。", "関節軟骨は滑液によって栄養される。", "骨端軟骨は骨成長期の骨幹端に存在する。", "骨端の関節面は関節軟骨に覆われる。"], "ans": 0, "essential": false}, {"q": "脊椎の生理的弯曲で誤っているのはどれか。", "opts": ["胸椎前弯", "頸椎前弯", "腰椎前弯", "仙・尾椎骨後弯"], "ans": 0, "essential": false}, {"q": "伸張反射の興奮メカニズムで誤っているのはどれか。", "opts": ["興奮は多シナプス性に伝えられる。", "筋が伸張されると筋紡錘が興奮する。", "筋紡錘の興奮はIa群線維を経由する。", "α運動ニューロンを経由して支配筋が収縮する。"], "ans": 0, "essential": false}, {"q": "小脳のフィードバック調整による誤差修正過程に要する時間で正しいのはどれか。採点除外", "opts": ["200msec", "5msec", "20msec", "50msec"], "ans": 0, "essential": false}, {"q": "肩関節で誤っているのはどれか。", "opts": ["関節包内を上腕三頭筋の長頭が通過する。", "烏口上腕靱帯は前壁を補強する靱帯である。", "棘上筋は外転筋である。", "大円筋は腋窩の後壁を形成する。"], "ans": 0, "essential": false}, {"q": "足関節の背屈に作用しない筋はどれか。", "opts": ["長腓骨筋", "前脛骨筋", "長指伸筋", "第3腓骨筋"], "ans": 0, "essential": false}, {"q": "正常な立位姿勢を保持するときの組合せで誤っているのはどれか。", "opts": ["ハムストリングス　&#8722;　膝関節の固定のために活動する。", "ヒラメ筋　　　&#8722;　身体が前へ倒れないように活動する。", "腸腰筋　　　　&#8722;　股関節の過伸展を防ぐために活動する。", "脊柱起立筋群　&#8722;　脊柱の前屈を防ぐために活動する。"], "ans": 0, "essential": false}, {"q": "乳幼児の運動行動発達で正しいのはどれか。", "opts": ["5歳でスキップ動作ができる。", "3ヶ月で背臥位から腹臥位への寝返りができる。", "8ヶ月で歩行が可能となる。", "3歳で20秒以上の片足立ちができる。"], "ans": 0, "essential": false}, {"q": "正常歩行における重心位置の上下移動で誤っているのはどれか。", "opts": ["歩行速度を速めると上下移動の振幅は減少する。", "重心の位置は立脚中期で最高となる。", "重心の位置は踵接地で最低となる。", "重心移動の軌跡は正弦曲線となる。"], "ans": 0, "essential": false}, {"q": "筋収縮で筋の全長が一定なのはどれか。〔必〕", "opts": ["静止性収縮", "遠心性収縮", "等張性収縮", "相動性収縮"], "ans": 0, "essential": false}, {"q": "第1のてこで正しいのはどれか。", "opts": ["特徴は安定性にある。", "荷重点が力点と支点の間にある。", "力点が支点と荷重点の間にある。", "小さな力で大きな荷重に対抗できる。"], "ans": 0, "essential": false}, {"q": "運動単位で正しいのはどれか。", "opts": ["精密な働きをする筋の神経支配比は小さい。", "一本の筋線維は複数のα運動ニューロンにより支配されている。", "一本の筋線維とそれを支配するニューロンを運動単位という。", "一本の筋線維を支配するニューロンの数を神経支配比という。"], "ans": 0, "essential": false}, {"q": "骨端軟骨（成長軟骨板）に作用して骨成長を促進するのはどれか。", "opts": ["ビタミンA", "副甲状腺ホルモン", "カルシトニン", "ビタミンD"], "ans": 0, "essential": false}, {"q": "深部腱反射の反射弓に含まれないのはどれか。", "opts": ["γ運動ニューロン", "筋紡錘", "Ia線維", "α運動ニューロン"], "ans": 0, "essential": false}, {"q": "腱紡錘で正しいのはどれか。", "opts": ["求心路はIb群線維である。", "錘内線維で形成されている。", "錘外線維と並列の位置関係にある。", "筋の自動的収縮では作用しない。"], "ans": 0, "essential": false}, {"q": "肩関節の伸展に作用するのはどれか。", "opts": ["三角筋後部", "棘上筋", "烏口腕筋", "肩甲下筋"], "ans": 0, "essential": false}, {"q": "肘関節屈曲に作用しないのはどれか。", "opts": ["肘　筋", "上腕二頭筋", "上腕筋", "腕橈骨筋"], "ans": 0, "essential": false}, {"q": "重心で誤っているのはどれか。", "opts": ["幼児では成人に比べて相対的に低位にある。", "身体各部の重量が相互に平衡な点である。", "骨盤内の仙骨のやや前方にある。", "成人男性では身長の約56％の高さにある。"], "ans": 0, "essential": false}, {"q": "3歳児ができなければ運動発達の遅れが疑われるのはどれか。", "opts": ["手指の分離運動", "スキップ", "階段を降りる", "片足ケンケン"], "ans": 0, "essential": false}, {"q": "3歳児ができなければ運動発達の遅れが疑われるのはどれか。", "opts": ["物を投げる動作", "スキップ", "階段を降りる", "５秒間の片足立ち"], "ans": 0, "essential": false}, {"q": "歩行周期の立脚期全般に活動し、末期に強く働くのはどれか。", "opts": ["下腿三頭筋", "大腿四頭筋", "ハムストリングス", "前脛骨筋"], "ans": 0, "essential": false}, {"q": "力の単位で誤っているのはどれか。", "opts": ["力の（絶対）単位ダイン（dyn）はＭＫＳ単位である。", "力の重力単位は質量1kgの物体に作用する地球の引力を1kgwという。", "力の重力単位の測定には測定場所の指定が必要となる。", "力の（絶対）単位にはニュートン（Ｎ）が用いられる。"], "ans": 0, "essential": false}, {"q": "多軸性関節でないのはどれか。", "opts": ["距腿関節", "肩関節", "手根間関節", "股関節"], "ans": 0, "essential": false}, {"q": "下肢の運動に関与する大脳皮質はどれか。", "opts": ["前頭葉後上部", "頭頂葉前上部", "後頭葉下部", "側頭葉上部"], "ans": 0, "essential": false}, {"q": "頭部を体幹に対して回旋させると顔面の向いた側の四肢が伸展し後頭側の四肢が屈曲した姿勢になるのはどれか。", "opts": ["非対称性緊張性頸反射", "モロー反射", "交差性伸展反射", "対称性緊張性頸反射"], "ans": 0, "essential": false}, {"q": "随意運動で正しいのはどれか。", "opts": ["随意運動ではまず意志の発動がある。", "運動プログラムとは活動する筋群名をいう。", "体性感覚は運動プログラムに関与しない。", "姿勢保持に運動プログラムは関与しない。"], "ans": 0, "essential": false}, {"q": "呼吸筋と脊髄レベルとの組合せで誤っているのはどれか。", "opts": ["横隔膜　―――　第9胸髄〜第11胸髄", "肋骨挙筋　――　第8頸髄〜第11胸髄", "胸横筋　―――　第2胸髄〜第6胸髄", "外肋間筋　――　第1胸髄〜第11胸髄"], "ans": 0, "essential": false}, {"q": "肩甲骨に付着しないのはどれか。", "opts": ["大胸筋", "前鋸筋", "上腕二頭筋", "上腕三頭筋"], "ans": 0, "essential": false}, {"q": "姿勢保持で正しいのはどれか。", "opts": ["踏み直り反射の感覚受容器は前庭迷路である。", "脊柱が後方へ曲がるように働く重力に対抗し脊柱起立筋群が活動する。", "立位姿勢では抗重力筋が働き左右動揺が起こる。", "視覚は姿勢制御に関与しない。"], "ans": 0, "essential": false}, {"q": "上肢運動の発達で、目的物に手を伸ばしてつかみ手から手へ持ちかえることができるようになる時期はどれか。", "opts": ["6か月", "3か月", "1歳6か月", "2歳"], "ans": 0, "essential": false}, {"q": "歩行で正しいのはどれか。", "opts": ["踏み出した足の長軸と進行方向のなす角度を足角という。", "一側の踵が接地して次に同側の踵が接地するまでの動作を1歩という。", "1歩の距離を歩隔という。", "単位時間あたりの歩行距離を歩行率という。"], "ans": 0, "essential": false}, {"q": "動筋の関節運動と逆の働きをする筋はどれか。〔必〕", "opts": ["拮抗筋", "中和筋", "共同筋", "固定筋"], "ans": 0, "essential": false}, {"q": "運動の法則で誤っているのはどれか。", "opts": ["加速度は物体の質量に正比例する。", "静止している物体はいつまでも静止している。", "作用・反作用は運動の第３法則である。", "一様の運動をしている物体はいつまでも等速運動を続ける。"], "ans": 0, "essential": false}, {"q": "筋線維で正しいのはどれか。", "opts": ["FG線維（白筋）は疲労しやすい。", "SO線維（赤筋）の収縮速度は速い。", "SO線維（赤筋）はミトコンドリアの量が少ない。", "FG線維（白筋）はミオグロビンの含有量が多い。"], "ans": 0, "essential": false}, {"q": "骨の機能でないのはどれか。", "opts": ["血球の貯蔵", "造　血", "無機塩類の貯蔵", "内臓諸器官の保護"], "ans": 0, "essential": false}, {"q": "脊髄に中枢を持つ反射はどれか。", "opts": ["伸張反射", "緊張性頸反射", "緊張性迷路反射", "立ち直り反射"], "ans": 0, "essential": false}, {"q": "筋とその起始・停止との組合せで正しいのはどれか。", "opts": ["大円筋　　　　&#8722;　肩甲骨・上腕骨", "烏口腕筋　　　&#8722;　鎖骨　・上腕骨", "三角筋　　　　&#8722;　鎖　骨・肩甲骨", "橈骨手根屈筋　&#8722;　橈　骨・中手骨"], "ans": 0, "essential": false}, {"q": "前腕を回外するのはどれか。", "opts": ["上腕二頭筋", "肘　筋", "上腕筋", "上腕三頭筋"], "ans": 0, "essential": false}, {"q": "安定性のよい立位姿勢の条件はどれか。", "opts": ["重心線が支持基底内の中心に近い。", "重心の位置が高い。", "支持基底の面積が狭い。", "床との接触面の摩擦抵抗が小さい。"], "ans": 0, "essential": false}, {"q": "成人の錐体路障害時に出現する病的反射はどれか。", "opts": ["バビンスキー反射", "手掌把握反射", "ランドウ反射", "交差性伸展反射"], "ans": 0, "essential": false}, {"q": "スキップ動作が遂行可能となる年齢はどれか。", "opts": ["５ 歳", "２ 歳", "３ 歳", "７ 歳"], "ans": 0, "essential": false}, {"q": "運動学習で誤っているのはどれか。", "opts": ["学習を直接観察することができる。", "学習は比較的永続する変化である。", "学習は結果として行動に変化を起こす。", "学習は経験または練習の結果として生じる。"], "ans": 0, "essential": false}, {"q": "運動の欲求や動機付けに関与する大脳の部位はどれか。〔必〕", "opts": ["辺縁系", "後頭葉", "基底核", "感覚野"], "ans": 0, "essential": false}, {"q": "関節運動の表示で正しいのはどれか。〔必〕", "opts": ["足関節の屈曲は底屈をさす。", "肩関節の屈曲は後方拳上をさす。", "手関節の屈曲は背屈をさす。", "体幹の屈曲は後屈をさす。"], "ans": 0, "essential": false}, {"q": "橋に神経核がある脳神経はどれか。", "opts": ["外転神経", "動眼神経", "滑車神経", "舌咽神経"], "ans": 0, "essential": false}, {"q": "アキレス腱反射で正しいのはどれか。", "opts": ["伸張反射である。", "多シナプス反射である。", "脳幹反射である。", "表在反射である。"], "ans": 0, "essential": false}, {"q": "随意運動発現の情報伝達で正しいのはどれか。", "opts": ["大脳辺縁系 → 大脳連合野 → 大脳運動野 → 脊髄", "大脳辺縁系 → 大脳運動野 → 大脳連合野 → 脊髄", "大脳連合野 → 大脳運動野 → 大脳辺縁系 → 脊髄", "大脳運動野 → 大脳辺縁系 → 大脳連合野 → 脊髄"], "ans": 0, "essential": false}, {"q": "肩関節屈曲に働くのはどれか。", "opts": ["大胸筋鎖骨部", "三角筋後部", "大円筋", "上腕二頭筋長頭"], "ans": 0, "essential": false}, {"q": "スカルパ三角を構成しないのはどれか。", "opts": ["半膜様筋", "長内転筋", "鼡径靭帯", "縫工筋"], "ans": 0, "essential": false}, {"q": "機能肢位（良肢位）で正しいのはどれか。", "opts": ["肘関節屈曲90°", "肩関節外転0°", "股関節屈曲90°", "膝関節屈曲90°"], "ans": 0, "essential": false}, {"q": "人体の重心で正しいのはどれか。", "opts": ["重心とは身体各部の重量が相互に平衡である点と規定される。", "小児では重心の位置が相対的に低位にある。", "重心線は耳垂の前方と外果の後方を通る。", "重心は仙骨やや後方にある。"], "ans": 0, "essential": false}, {"q": "反射出現の時期で正しいのはどれか。", "opts": ["足底反射　　　　−　新生児", "腱反射　　　　　−　３か月", "頭の支持反射　　−　10か月", "四肢の平衡反応　−　16か月"], "ans": 0, "essential": false}, {"q": "運動制御の部位で運動学習の過程に関与するのはどれか。", "opts": ["小　脳", "大脳基底核", "延　髄", "視　床"], "ans": 0, "essential": false}, {"q": "一側の踵が接地して次に同じ足の踵が接地するまでの動作はどれか。", "opts": ["重複歩", "１　歩", "歩　幅", "歩　隔"], "ans": 0, "essential": false}, {"q": "タイプIIb線維と比べタイプI線維の特性で正しいのはどれか。〔必〕", "opts": ["単収縮の速度は遅い。", "筋線維は太い。", "グリコーゲン含有量は高い。", "ミトコンドリア量は少ない。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["てこは棒が軸の回りを回転できる状態である。", "第１のてこは力のてこである。", "第２のてこは運動のてこである。", "第３のてこは安定のてこである。"], "ans": 0, "essential": false}, {"q": "膜性骨化で誤っているのはどれか。", "opts": ["骨の長径成長を行う。", "結合組織性の骨化である。", "間葉細胞が骨芽細胞に変化する。", "頭蓋冠にみられる。"], "ans": 0, "essential": false}, {"q": "神経線維で正しいのはどれか。", "opts": ["有髄線維はシュワン細胞の細胞膜で幾重にも取り巻かれている。", "加えられた刺激による興奮は神経線維の一方向に伝導される。", "１本の神経線維が興奮すると隣接する神経線維に興奮が伝わる。", "有髄線維の直径が一定でも伝導速度は変化する。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["行動は身体内外からの刺激により誘発される。", "皮膚感覚は体性感覚に含まれない。", "刺激が感覚受容器で感知されることを感覚の投射という。", "平衡感覚は体性感覚である。"], "ans": 0, "essential": false}, {"q": "咀嚼筋はどれか。", "opts": ["側頭筋", "前頭筋", "口輪筋", "小頬骨筋"], "ans": 0, "essential": false}, {"q": "安静時の吸息運動で重要な役割を担うのはどれか。", "opts": ["外肋間筋", "僧帽筋", "胸鎖乳突筋", "小胸筋"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["肩甲骨の運動は常に鎖骨の動きを伴って起こる。", "肩甲骨の位置は第4〜10肋骨の高さにある。", "肩甲骨は前頭面と約60度の角度をなす。", "肩甲骨は最大上下方向に５cm、内外側方向に５cmの可動性がある。"], "ans": 0, "essential": false}, {"q": "抗重力筋はどれか。", "opts": ["前斜角筋", "咬　筋", "前頭筋", "大頬骨筋"], "ans": 0, "essential": false}, {"q": "原始反射はどれか。", "opts": ["足底把握", "足底反射", "下肢伸展反射", "パラシュート反応"], "ans": 0, "essential": false}, {"q": "ひとり歩きを始めた小児の歩行の特徴で正しいのはどれか。", "opts": ["上肢を高く挙上する。", "歩行率（ケイデンス）が低い。", "踵から接地する。", "支持基底面が狭い。"], "ans": 0, "essential": false}, {"q": "運動の形で正しいのはどれか。", "opts": ["机上の食物は口まで線運動で運ばれる。", "並進運動とはある点から別の点に全体として移動する回転運動である。", "線運動に曲線運動は含まれない。", "身体運動の多くは関節を運動軸とする体節の線運動からなる。"], "ans": 0, "essential": false}, {"q": "多軸関節はどれか。", "opts": ["平面関節", "らせん関節", "車軸関節", "鞍関節"], "ans": 0, "essential": false}, {"q": "随意運動の発現で正しいのはどれか。", "opts": ["随意運動が発現するときは始めに欲求・意図がある。", "随意運動への意欲・動機づけは大脳運動野で行われる。", "随意運動の計画・プログラムは大脳辺縁系で行われる。", "随意運動プログラムは大脳感覚野から脊髄に伝達される。"], "ans": 0, "essential": false}, {"q": "開口に働く筋はどれか。", "opts": ["外側翼突筋", "側頭筋", "咬　筋", "内側翼突筋"], "ans": 0, "essential": false}, {"q": "胸郭の動きで正しいのはどれか。", "opts": ["胸郭下部の拡張は横隔膜を伸張しその収縮力を増大させる。", "左右方向の拡大は主に上位肋骨の運動による。", "前後方向の拡大は主に下位肋骨の運動による。", "上下方向の拡大は下位肋骨の運動による。"], "ans": 0, "essential": false}, {"q": "膝関節を伸展するのはどれか。", "opts": ["大腿筋膜張筋", "半腱様筋", "半膜様筋", "大腿二頭筋"], "ans": 0, "essential": false}, {"q": "立位姿勢の制御で正しいのはどれか。", "opts": ["膝関節では重力のモーメントが膝屈曲を防ぐ。", "股関節では大殿筋が過伸展を防ぐ。", "脊柱では腹筋群が前方へ曲がるのを防ぐ。", "足関節では前脛骨筋が前方へ倒れるのを防ぐ。"], "ans": 0, "essential": false}, {"q": "正常発達において終生持続するのはどれか。", "opts": ["パラシュート反応", "モロー反射", "手掌把握", "非対称性緊張性頚反射"], "ans": 0, "essential": false}, {"q": "運動技能学習で正しいのはどれか。", "opts": ["結果の知識は付加的フィードバックである。", "初期相は協調運動へと融合していく時期である。", "中間相は言語的要素が強いため言語・運動段階ともいう。", "最終相は順序や段取りを特に意識する段階である。"], "ans": 0, "essential": false}, {"q": "走行で正しいのはどれか。", "opts": ["両足がともに地面から離れている時期がある。", "走行の歩行周期は歩行と異なる。", "重心の上下方向への移動が歩行より小さい。", "走行可能になるのは３歳前後である。"], "ans": 0, "essential": false}, {"q": "両側同時収縮で体幹が屈曲するのはどれか。［必］", "opts": ["内腹斜筋", "脊柱起立筋", "腰方形筋", "短背筋群"], "ans": 0, "essential": false}, {"q": "力の単位で正しいのはどれか。", "opts": ["重力単位は質量1kgの分銅に作用する地球の引力を1kgwの力という。", "絶対単位の測定には測定場所の指定が必要である。", "質量1kgの物体に1cm/sec2の加速度が生じる力を1ニュートン（N）という。", "質量1gの物体に1m/sec2の加速度が生じる力を1ダイン（dyn）という。"], "ans": 0, "essential": false}, {"q": "指の完全伸展に関与するのはどれか。", "opts": ["虫様筋の緊張", "背側骨間筋の緊張", "指伸筋の弛緩", "掌側骨間筋の弛緩"], "ans": 0, "essential": false}, {"q": "反射運動で正しいのはどれか。", "opts": ["目的性をもった運動である。", "随意運動である。", "意思が直接関与する。", "応答パターンは複雑である。"], "ans": 0, "essential": false}, {"q": "随意運動発現の過程で「タイミングの決定」の後に起こるのはどれか。", "opts": ["力の調整", "意思の発動", "使用筋の選定", "動作目標の決定"], "ans": 0, "essential": false}, {"q": "顎関節で誤っているのはどれか。", "opts": ["水平運動は筋突起で起こる。", "楕円関節である。", "頭蓋で唯一の動関節である。", "蝶番運動を行う。"], "ans": 0, "essential": false}, {"q": "肩関節運動で小円筋と同一の作用をもつのはどれか。", "opts": ["棘下筋", "広背筋", "烏口腕筋", "肩甲下筋"], "ans": 0, "essential": false}, {"q": "前腕回内位で肘関節を屈曲させる主動筋はどれか。", "opts": ["上腕筋", "上腕二頭筋", "腕橈骨筋", "円回内筋"], "ans": 0, "essential": false}, {"q": "股関節の運動で正しいのはどれか。", "opts": ["大腿骨頭靱帯は骨頭固定のためには機能していない。", "下肢機能軸は垂直軸に平行である。", "骨盤を固定し片側の股関節を外転すると対側も外転する。", "股関節の外転に働くのは恥骨筋である。"], "ans": 0, "essential": false}, {"q": "足関節伸展に働くのはどれか。", "opts": ["第3腓骨筋", "長腓骨筋", "腓腹筋", "ヒラメ筋"], "ans": 0, "essential": false}, {"q": "物を投げる動作が正確にできるようになる時期はどれか。", "opts": ["3　歳", "6か月", "1　歳", "2　歳"], "ans": 0, "essential": false}, {"q": "骨格筋の最も小さい構造はどれか。", "opts": ["筋フィラメント", "筋原線維", "筋線維", "筋　束"], "ans": 0, "essential": false}, {"q": "脊椎とその数の組合せで正しいのはどれか。", "opts": ["仙　椎　−　5", "頚　椎　−　8", "胸　椎　−　11", "腰　椎　−　4"], "ans": 0, "essential": false}, {"q": "随意運動の発現で正しいのはどれか。", "opts": ["小脳には運動のフィードバック調節機能がある。", "運動への動機づけは大脳連合野が担う。", "大脳辺縁系からの信号は大脳感覚野に伝達される。", "大脳運動野からの運動指令は基底核に伝達される。"], "ans": 0, "essential": false}, {"q": "胸鎖乳突筋で正しいのはどれか。", "opts": ["右側の収縮で頭部は左側に回旋する。", "両側同時に収縮することはない。", "左側の収縮で頭部は右側に側屈する。", "呼吸運動に作用しない。"], "ans": 0, "essential": false}, {"q": "後腹壁を構成するのはどれか。", "opts": ["腰方形筋", "腹直筋", "外腹斜筋", "内腹斜筋"], "ans": 0, "essential": false}, {"q": "大腿骨に起始があるのはどれか。", "opts": ["腓腹筋", "長腓骨筋", "短腓骨筋", "ヒラメ筋"], "ans": 0, "essential": false}, {"q": "立位姿勢の安定性が良いのはどれか。", "opts": ["接触面との摩擦抵抗が大きい。", "重心の位置が高い。", "支持基底の面積が狭い。", "重心線が支持基底の辺縁に近い。"], "ans": 0, "essential": false}, {"q": "ニューロンの髄鞘形成が遅いのはどれか。", "opts": ["大脳交連", "運動神経根", "小　脳", "錐体路"], "ans": 0, "essential": false}, {"q": "乳幼児の運動と初めて可能となる時期の組合せで誤っているのはどれか。", "opts": ["頭位保持　　　−　６か月", "つかまり立ち　−　８か月", "独り歩き　　　−　１　歳", "スキップ　　　−　５　歳"], "ans": 0, "essential": false}, {"q": "床反力で正しいのはどれか。", "opts": ["垂直分力は歩行周期で2つの主峰を持つ。", "前後分力は踵接地で前向きに働く。", "側方分力は片脚支持期の間は外向きに働く。", "垂直分力は下向きに働くことが多い。"], "ans": 0, "essential": false}, {"q": "肩関節の内旋に働くのはどれか。〔必〕", "opts": ["広背筋", "三角筋", "棘上筋", "小円筋"], "ans": 0, "essential": false}, {"q": "解剖学的立位姿勢で正しいのはどれか。", "opts": ["前腕を回外する。", "顔面を上方に向ける。", "踵を離す。", "つま先を閉じる。"], "ans": 0, "essential": false}, {"q": "筋収縮で筋長が長くなっていくのはどれか。", "opts": ["遠心性収縮", "求心性収縮", "静止性収縮", "等尺性収縮"], "ans": 0, "essential": false}, {"q": "多シナプス反射はどれか。", "opts": ["屈筋反射", "膝蓋腱反射", "伸張反射", "アキレス腱反射"], "ans": 0, "essential": false}, {"q": "痙性片麻痺で健側下肢を外転させると患側下肢が外転するのはどれか。[疑義問題]", "opts": ["レミスト反応", "同側性連合反応", "屈筋共同運動", "伸筋共同運動"], "ans": 0, "essential": false}, {"q": "痙性片麻痺で健側下肢を外転させると患側下肢が外転するのはどれか。[疑義問題]", "opts": ["対側性連合反応", "屈筋共同運動", "伸筋共同運動", "トレンデレンブルグ徴候"], "ans": 0, "essential": false}, {"q": "長胸神経麻痺による翼状肩甲の原因となる筋はどれか。", "opts": ["前鋸筋", "菱形筋", "小胸筋", "鎖骨下筋"], "ans": 0, "essential": false}, {"q": "前腕の回内・回外運動で誤っているのはどれか。", "opts": ["尺骨が回旋する。", "腕橈骨筋は両方向の運動に作用する。", "肘関節90 度屈曲位では両方向に 90 度可動する。", "肘関節伸展位では肩関節の運動が加わる。"], "ans": 0, "essential": false}, {"q": "姿勢の安定性で正しいのはどれか。", "opts": ["分節構造よりも単一構造の方が良い。", "座位よりも立位の方が良い。", "重心線の位置が支持基底の辺縁に近い方が良い。", "上位分節の重心線が下位分節との接触面外にある方が良い。"], "ans": 0, "essential": false}, {"q": "自然歩行周期で遊脚相の占める比率はどれか。", "opts": ["40 %", "10 %", "20 %", "60 %"], "ans": 0, "essential": false}, {"q": "正常の立脚期で歩行を加速させるのはどれか。", "opts": ["下腿三頭筋", "前脛骨筋", "大腿四頭筋", "ハムストリングス"], "ans": 0, "essential": false}, {"q": "生後10か月の正常児で認められるのはどれか。", "opts": ["パラシュート反応", "手掌把握", "モロー反射", "非対称性緊張性頸反射"], "ans": 0, "essential": false}, {"q": "前頭面と水平矢状軸で行われる関節運動はどれか。", "opts": ["外　転", "屈　曲", "伸　展", "内　旋"], "ans": 0, "essential": false}, {"q": "運動神経はどれか。", "opts": ["副神経", "嗅神経", "視神経", "内耳神経"], "ans": 0, "essential": false}, {"q": "反射中枢が延髄にあるのはどれか。", "opts": ["緊張性迷路反射", "伸張反射", "屈筋反射", "交差性反射"], "ans": 0, "essential": false}, {"q": "回旋の可動域が最も大きいのはどれか。", "opts": ["頸　椎", "胸　椎", "腰　椎", "仙　椎"], "ans": 0, "essential": false}, {"q": "肘の屈曲に関与しないのはどれか。", "opts": ["烏口腕筋", "上腕筋", "腕橈骨筋", "円回内筋"], "ans": 0, "essential": false}, {"q": "嗅ぎたばこ入れを生じるのはどれか。", "opts": ["長母指伸筋腱", "橈側手根屈筋腱", "長橈側手根伸筋腱", "総指伸筋腱"], "ans": 0, "essential": false}, {"q": "側方からみた立位姿勢で前後方向のバランスの指標となるのはどれか。", "opts": ["肩　峰", "恥骨結合", "腓骨頭", "内　果"], "ans": 0, "essential": false}, {"q": "正常歩行時の下腿三頭筋の筋活動で正しいのはどれか。", "opts": ["蹴り出しの力として働く。", "立脚相初期に強く働く。", "遊脚相で足関節を背屈位に保つ。", "内転方向のモーメントを制御する。"], "ans": 0, "essential": false}, {"q": "トレンデレンブルグ徴候を引き起こすのはどれか。", "opts": ["中殿筋", "大殿筋", "大腿四頭筋", "前脛骨筋"], "ans": 0, "essential": false}, {"q": "正常な運動発達で可能となる時期が最も遅いのはどれか。", "opts": ["スキップができる。", "階段を昇ることができる。", "転倒しないで走ることができる。", "2秒間の片足立ちができる。"], "ans": 0, "essential": false}, {"q": "内耳で回転加速度を感知するのはどれか。", "opts": ["三半規管", "卵形嚢", "球形嚢", "蝸　牛"], "ans": 0, "essential": false}, {"q": "ニューロンの髄鞘化が最も早く終了するのはどれか。", "opts": ["運動神経根", "小　脳", "網様体", "感覚神経根"], "ans": 0, "essential": false}, {"q": "肩甲骨の上方回旋に関わるのはどれか。", "opts": ["前鋸筋", "小胸筋", "肩甲挙筋", "菱形筋"], "ans": 0, "essential": false}, {"q": "示指の運動と筋の組合せで正しいのはどれか。", "opts": ["MP 関節外転  −−−−−− 背側骨間筋", "MP 関節伸展  −−−−−− 虫様筋", "DIP 関節屈曲 −−−−−− 浅指屈筋", "PIP 関節屈曲 −−−−−− 掌側骨間筋"], "ans": 0, "essential": false}, {"q": "脛骨の後方への逸脱を防ぐのはどれか。", "opts": ["後十字靭帯", "前十字靭帯", "内側側副靭帯", "外側側副靭帯"], "ans": 0, "essential": false}, {"q": "足の横アーチを構成するのはどれか。", "opts": ["中足骨", "踵　骨", "距　骨", "末節骨"], "ans": 0, "essential": false}, {"q": "縫工筋の股関節に対する作用で誤っているのはどれか。", "opts": ["内　転", "屈　曲", "外　転", "外　旋"], "ans": 0, "essential": false}, {"q": "重心動揺面積が最小となるのはどれか。", "opts": ["25 歳", "10 歳", "50 歳", "75 歳"], "ans": 0, "essential": false}, {"q": "正常歩行時に重心の位置が最も高くなる時期はどれか。", "opts": ["立脚中期", "頭接地", "足底接地", "踵離地"], "ans": 0, "essential": false}, {"q": "パーキンソン(Parkinson)病でみられるのはどれか。", "opts": ["すくみ足", "酩酊歩行", "片麻痺歩行", "間欠性跛行"], "ans": 0, "essential": false}, {"q": "関節運動で正しいのはどれか。", "opts": ["分回し運動は体節が円錐形を描く。", "伸展は体節同士のなす角度が小さくなる。", "内転は体節が身体の中心線から遠ざかる。", "内旋は開始肢位での前面が外側に向く。"], "ans": 0, "essential": false}, {"q": "関節運動を起こさない筋収縮はどれか。", "opts": ["等尺性", "遠心性", "求心性", "等運動性"], "ans": 0, "essential": false}, {"q": "伸張反射で正しいのはどれか。", "opts": ["Ia 群線維を通じて刺激が求心的に伝達される。", "多シナプス反射である。", "γ運動ニューロンを通じて錘外筋に刺激が伝達される。", "緊張性頸反射が該当する。"], "ans": 0, "essential": false}, {"q": "肩関節を内旋するのはどれか。", "opts": ["肩甲下筋", "小円筋", "棘上筋", "棘下筋"], "ans": 0, "essential": false}, {"q": "股関節を伸展するのはどれか。", "opts": ["大殿筋", "腸腰筋", "長内転筋", "大腿筋膜張筋"], "ans": 0, "essential": false}, {"q": "一側が収縮することで体幹を反対側に回旋させるのはどれか。", "opts": ["外腹斜筋", "脊柱起立筋", "腰方形筋", "内腹斜筋"], "ans": 0, "essential": false}, {"q": "立位姿勢の重心線が後方を通るのはどれか。", "opts": ["股関節", "足関節", "膝関節", "第4腰椎"], "ans": 0, "essential": false}, {"q": "歩行時の関節運動で正しいのはどれか。", "opts": ["膝関節は1回の歩行周期に2度屈曲する。", "支持脚の股関節は踵接地後ただちに屈曲する。", "支持脚の膝関節は踵接地後ただちに過伸展する。", "足関節は1回の歩行周期に1度背屈、底屈する。"], "ans": 0, "essential": false}, {"q": "歩行開始の段階の小児歩行に特徴的なのはどれか。", "opts": ["上肢の振りがない。", "踵から接地する。", "左右の足の間隔が狭い。", "歩行率が低い。"], "ans": 0, "essential": false}, {"q": "記憶の3つの過程の順で正しいのはどれか。", "opts": ["記　銘 → 保　持 → 想　起", "想　起 → 保　持 → 記　銘", "保　持 → 記　銘 → 想　起", "想　起 → 記　銘 → 保　持"], "ans": 0, "essential": false}, {"q": "運動の第2法則における加速度で正しいのはどれか。", "opts": ["物体の質量に反比例する", "力の大きさに反比例する。", "物体の体積に反比例する。", "力の働く方向と反対方向に働く。"], "ans": 0, "essential": false}, {"q": "関節と分類の組合せで正しいのはどれか。", "opts": ["橈骨手根関節──────顆状関節", "示指近位指節間関節───車軸関節", "母指手根中手関節────らせん関節", "肩関節─────────鞍関節"], "ans": 0, "essential": false}, {"q": "伸筋共同運動で正しい組合せはどれか。", "opts": ["肩関節───内　転", "肩甲帯───挙　上", "前　 腕───回　外", "手関節───尺　屈"], "ans": 0, "essential": false}, {"q": "長掌筋で正しいのはどれか。", "opts": ["手関節の屈曲に関わる。", "手根管内を通る。", "第5中手骨底に停止する。", "橈骨神経の支配を受ける。"], "ans": 0, "essential": false}, {"q": "単関節筋はどれか。", "opts": ["長内転筋", "大腿二頭筋", "半膜様筋", "大腿直筋"], "ans": 0, "essential": false}, {"q": "正常吸気に関与するのはどれか。", "opts": ["横隔膜", "肋骨挙筋", "胸横筋", "腹横筋"], "ans": 0, "essential": false}, {"q": "機能肢位で正しいのはどれか。", "opts": ["膝関節屈曲10度", "肘関節屈曲10度", "手関節掌屈10度", "股関節伸展10度"], "ans": 0, "essential": false}, {"q": "歩行周期の中で歩行が速くなると増加するのはどれか。", "opts": ["遊脚期/1歩行周期", "1歩行周期の時間", "両脚支持期/1歩行周期", "立脚期/1歩行周期"], "ans": 0, "essential": false}, {"q": "異常歩行と原因疾患の組合せで正しいのはどれか。", "opts": ["小刻み歩行───多発性ラクナ型脳梗塞", "酩酊歩行────腰部脊柱管狭窄症", "尖足歩行────パーキンソン(Parkinson)病", "間欠性跛行───脳性麻痺"], "ans": 0, "essential": false}, {"q": "健常成人でみられるのはどれか。", "opts": ["バランス反応", "ガラント反射", "モロー反射", "非対称性緊張性頚反射"], "ans": 0, "essential": false}, {"q": "健常成人でみられるのはどれか。", "opts": ["パラシュート反応", "手掌把握", "ガラント反射", "非対称性緊張性頚反射"], "ans": 0, "essential": false}, {"q": "前方面・水平矢状軸の動きで体節が身体から遠ざかる運動はどれか。", "opts": ["外　転", "屈　曲", "外　旋", "外がえし"], "ans": 0, "essential": false}, {"q": "2軸性はどれか。", "opts": ["顆状関節", "蝶番関節", "車軸関節", "平面関節"], "ans": 0, "essential": false}, {"q": "筋紡錘で正しいのはどれか。", "opts": ["深部感覚受容器である。", "筋腱移行部に存在する。", "粗大な働きをする筋では密度が高い。", "筋の自動伸展時にインパルスを発射する。"], "ans": 0, "essential": false}, {"q": "屈筋共同運動に含まれるのはどれか。", "opts": ["膝関節の屈曲", "股関節の内転", "足関節の底屈", "趾(指)の屈曲"], "ans": 0, "essential": false}, {"q": "肩関節の外旋に作用するのはどれか。", "opts": ["小円筋", "肩甲下筋", "大円筋", "大胸筋"], "ans": 0, "essential": false}, {"q": "足のアーチで正しいのはどれか。", "opts": ["足部骨格配列は上方に隆起した弯曲を示す。", "横アーチは2歳で完成する。", "外側縦アーチの中心となるのは舟状骨である。", "内側縦アーチを構成する靱帯として長足底靱帯がある。"], "ans": 0, "essential": false}, {"q": "頭部を対側に回旋させるのはどれか。", "opts": ["胸鎖乳突筋", "板状筋", "後頭下筋", "脊柱起立筋"], "ans": 0, "essential": false}, {"q": "立位姿勢が安定するのはどれか。", "opts": ["質量が大きい。", "重心が高い。", "支持基底が狭い。", "分節構造をとる。"], "ans": 0, "essential": false}, {"q": "正常な10か月の乳児でみられるのはどれか。", "opts": ["足底把握反射", "モロー反射", "ガラント反射", "非対称性緊張性頸反射"], "ans": 0, "essential": false},{"q": "第1のてこの構造を持つのはどれか。","opts": ["中殿筋による片脚立位","上腕二頭筋による肘関節屈曲", "腕橈骨筋による肘関節屈曲", "ハムストリングスによる膝関節屈曲"], "ans": 0, "essential": false},{"q": "図（近位橈尺関節）に示す関節はどれか。", "opts": ["車軸関節", "鞍関節", "蝶番関節", "らせん関節"], "ans": 0, "essential": false},{"q": "正常成人の四肢末梢運動神経の伝導速度はどれか。","opts": ["約50 m/sec", "約50 cm/sec", "約5 m/sec", "約200 m/sec"], "ans": 0, "essential": false},{"q": "伸張反射で正しいのはどれか。","opts": ["単シナプス反射である。","反射中枢は延髄にある。","逃避反射とも呼ばれる。","成長に伴い消失する。"], "ans": 0, "essential": false},{"q": "筋と母指の関節運動の組合せ正しいのはどれか。", "opts": ["短母指外転筋───掌側外転", "長母指屈筋────橈側外転", "長母指伸筋────尺側内転", "母指対立筋────掌側内転"], "ans": 0, "essential": false},{"q": "膝関節の屈曲時に緊張するのはどれか。", "opts": ["後十字靱帯","内側側副靱帯","外側側副靱帯","前十字靱帯"], "ans": 0, "essential": false},{"q": "頸椎の回旋運動の大部分を担うのはどれか。", "opts": ["第1頸椎〜第2頸椎","第3頸椎〜第4頸椎","第4頸椎〜第5頸椎","第5頸椎〜第6頸椎"], "ans": 0, "essential": false},{"q": "人体の重心で正しいのはどれか。","opts": ["新生児では臍よりも高い。","成人では仙骨のやや後方にある。","成人では女性よりも男性の方が低い。","大腿の重心は中央よりも遠位側にある。"], "ans": 0, "essential": false},{"q": "自然歩行の歩行周期で立脚相が占める比率はどれか。","opts": ["60％","20％","40％","80％"], "ans": 0, "essential": false},{"q": "踵打ち歩行が特徴的なのはどれか。", "opts": ["脊髄性運動失調", "痙直型脳性麻痺","両側性小脳性障害", "パーキンソン (Parkinson)症候群" ], "ans": 0, "essential": false}];
+
+let questions = [], current = 0, selected = null, results = [], optMap = [], shuffleOpts = true;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const numVal = parseInt(document.getElementById('selectNum').value);
+  const isRandom = document.getElementById('selectOrder').value === '1';
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  let pool = [...ALL_DATA];
+  if (isRandom) pool = shuffle(pool);
+  questions = numVal === 0 ? pool : pool.slice(0, numVal);
+  current = 0; results = [];
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current];
+  const total = questions.length;
+  document.getElementById('progressBar').style.width = (current / total * 100) + '%';
+  document.getElementById('headerSub').textContent = `${current + 1} / ${total} 問`;
+  document.getElementById('qNum').textContent = `問${current + 1}`;
+  document.getElementById('qText').textContent = q.q;
+  const badge = document.getElementById('qBadge');
+  badge.style.display = q.essential ? 'inline-block' : 'none';
+
+  let indices = [0, 1, 2, 3];
+  if (shuffleOpts) indices = shuffle(indices);
+  optMap = indices;
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  const labels = ['ア', 'イ', 'ウ', 'エ'];
+  indices.forEach((origIdx, dispIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[dispIdx]}</span><span class="opt-text">${q.opts[origIdx]}</span>`;
+    btn.onclick = () => selectOption(dispIdx, origIdx, q.ans);
+    grid.appendChild(btn);
+  });
+
+  selected = null;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('btnNext').disabled = true;
+  document.getElementById('btnNext').textContent = current < questions.length - 1 ? '次の問題 →' : '結果を見る';
+}
+
+function selectOption(dispIdx, origIdx, ans) {
+  if (selected !== null) return;
+  selected = origIdx;
+  const btns = document.querySelectorAll('.opt-btn');
+  const isCorrect = origIdx === ans;
+  btns.forEach((btn, i) => {
+    btn.onclick = null;
+    if (optMap[i] === ans) btn.classList.add('correct');
+    if (i === dispIdx && !isCorrect) btn.classList.add('wrong');
+    if (i === dispIdx && isCorrect) btn.classList.add('correct');
+  });
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'ng');
+  fb.innerHTML = isCorrect ? '✅ 正解！' : `❌ 不正解　正解：${questions[current].opts[ans]}`;
+  results.push({ q: questions[current], chosen: origIdx, correct: isCorrect });
+  recordAnswer(questions[current], isCorrect);
+  document.getElementById('btnNext').disabled = false;
+  if (navigator.vibrate) navigator.vibrate(isCorrect ? 30 : [50, 30, 50]);
+}
+
+function nextQuestion() {
+  if (selected === null) return;
+  current++;
+  if (current >= questions.length) { showResult(); } else { showQuestion(); }
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  document.getElementById('progressBar').style.width = '100%';
+  const total = results.length;
+  const correct = results.filter(r => r.correct).length;
+  const score = Math.round(correct / total * 100);
+  saveSession(total, correct, score);
+  setTimeout(refreshWeakBtn, 100);
+  document.getElementById('resultScore').innerHTML = `${score}<span>点</span>`;
+  document.getElementById('resultDetail').textContent = `${total}問中 ${correct}問正解`;
+  document.getElementById('headerSub').textContent = '結果';
+  let emoji = '😢', msg = 'もう少し頑張りましょう！';
+  if (score >= 60) { emoji = '🙂'; msg = '合格ライン到達！'; }
+  if (score >= 80) { emoji = '😊'; msg = 'よくできました！'; }
+  if (score === 100) { emoji = '🎉'; msg = 'Perfect!! おめでとう！'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultMsg').textContent = msg;
+  setTimeout(() => { document.getElementById('scoreBar').style.width = score + '%'; }, 100);
+  const wrongCount = results.filter(r => !r.correct).length;
+  const btnRetry = document.getElementById('btnRetry');
+  btnRetry.style.display = wrongCount > 0 ? 'block' : 'none';
+  btnRetry.textContent = `間違えた${wrongCount}問をやり直す`;
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (r.correct ? 'correct-item' : 'wrong-item');
+    div.innerHTML = `
+      <div class="review-q">問${i+1}：${r.q.q}</div>
+      <div class="review-ans">
+        ${r.correct
+          ? `<span class="label-correct">✅ 正解：${r.q.opts[r.q.ans]}</span>`
+          : `<span class="label-wrong">❌ あなた：${r.q.opts[r.chosen]}</span>　正解：<span class="label-correct">${r.q.opts[r.q.ans]}</span>`
+        }
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function retryWrong() {
+  const wrongItems = results.filter(r => !r.correct).map(r => r.q);
+  if (wrongItems.length === 0) return;
+  questions = wrongItems; current = 0; results = [];
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function backToStart() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('headerSub').textContent = '第14回〜第33回 国家試験問題';
+}
+
+
+
+// ===== 苦手問題・成績履歴機能 =====
+var SKEY = (document.title || '').replace(/（第\d+回〜第\d+回）/, '').trim();
+var sessionStart = null;
+var weakData = {};
+var historyData = [];
+
+function loadData() {
+  try {
+    var w = localStorage.getItem('wk_' + SKEY);
+    var h = localStorage.getItem('hs_' + SKEY);
+    weakData    = w ? JSON.parse(w) : {};
+    historyData = h ? JSON.parse(h) : [];
+  } catch(e) { weakData = {}; historyData = []; }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('wk_' + SKEY, JSON.stringify(weakData));
+    localStorage.setItem('hs_' + SKEY, JSON.stringify(historyData));
+  } catch(e) {}
+}
+
+function getWeakList() {
+  return ALL_DATA.filter(function(q, i) {
+    var d = weakData[String(i)];
+    if (!d) return false;
+    var t = d.c + d.w;
+    return t >= 2 && (d.c / t) < 0.5;
+  });
+}
+
+function refreshWeakBtn() {
+  var btn = document.getElementById('btnWeak');
+  if (!btn) return;
+  var wl = getWeakList();
+  if (wl.length === 0) {
+    btn.textContent = '⚡ 苦手問題なし（まず通常クイズを解いてください）';
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+  } else {
+    btn.textContent = '⚡ 苦手問題だけ出題する（' + wl.length + '問）';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+}
+
+function doStartQuiz() {
+  sessionStart = Date.now();
+  startQuiz();
+}
+
+function doStartWeak() {
+  var wl = getWeakList();
+  if (wl.length === 0) { alert('苦手問題がありません。まず通常クイズを解いてください。'); return; }
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  questions = wl;
+  current = 0; results = [];
+  sessionStart = Date.now();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function recordAnswer(qObj, isCorrect) {
+  var i = String(ALL_DATA.indexOf(qObj));
+  if (i === '-1') return;
+  if (!weakData[i]) weakData[i] = { c: 0, w: 0 };
+  if (isCorrect) weakData[i].c++; else weakData[i].w++;
+  saveData();
+}
+
+function saveSession(total, correct, score) {
+  var mins = sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart) / 60000)) : 0;
+  var now = new Date();
+  var d = now.getFullYear() + '/' +
+    String(now.getMonth()+1).padStart(2,'0') + '/' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  historyData.unshift({ date: d, score: score, total: total, correct: correct, mins: mins });
+  if (historyData.length > 50) historyData.length = 50;
+  saveData();
+  sessionStart = null;
+}
+
+function openHistory() {
+  loadData();
+  var n  = historyData.length;
+  var tq = historyData.reduce(function(a,b){ return a+b.total; }, 0);
+  var as = n ? Math.round(historyData.reduce(function(a,b){ return a+b.score; }, 0) / n) : 0;
+  var tt = historyData.reduce(function(a,b){ return a+(b.mins||0); }, 0);
+  var wl = getWeakList();
+  document.getElementById('hSessions').textContent   = n;
+  document.getElementById('hQuestions').textContent  = tq;
+  document.getElementById('hAvgScore').textContent   = as + '%';
+  document.getElementById('hTime').textContent       = tt + '分';
+  document.getElementById('hWeakCount').textContent  = wl.length + '問';
+  var list = document.getElementById('hSessionList');
+  list.innerHTML = n === 0
+    ? '<div style="color:#718096;font-size:13px;text-align:center;padding:20px">まだ履歴がありません</div>'
+    : historyData.map(function(h){
+        return '<div class="hist-row"><div>' +
+          '<div style="font-weight:600">' + h.correct + '/' + h.total + '問正解　' + (h.mins||0) + '分</div>' +
+          '<div class="hist-date">' + h.date + '</div></div>' +
+          '<div class="hist-score">' + h.score + '点</div></div>';
+      }).join('');
+  document.getElementById('historyPanel').classList.add('show');
+}
+
+// ===== イベント登録（iOS Safari対応）=====
+window.addEventListener('load', function() {
+  loadData();
+  refreshWeakBtn();
+
+  function tap(id, fn) {
+    var el = typeof id === 'string' ? document.getElementById(id) : id;
+    if (!el) return;
+    el.addEventListener('click', fn);
+    el.addEventListener('touchend', function(e){ e.preventDefault(); fn(); });
+  }
+
+  tap('btnStart',    doStartQuiz);
+  tap('btnWeak',     doStartWeak);
+  tap('btnNext',     nextQuestion);
+  tap('btnRetry',    function(){ sessionStart = Date.now(); retryWrong(); });
+  tap('btnRestart', backToStart);
+  tap('historyBtn',  openHistory);
+  tap('historyClose', function(){ document.getElementById('historyPanel').classList.remove('show'); });
+  tap('btnClear', function(){
+    if (confirm('履歴と苦手データをすべてリセットしますか？')) {
+      weakData = {}; historyData = [];
+      saveData(); openHistory(); refreshWeakBtn();
+    }
+  });
+  var panel = document.getElementById('historyPanel');
+  if (panel) panel.addEventListener('click', function(e){ if(e.target===panel) panel.classList.remove('show'); });
+});
+</script>
+
+<button class="history-btn" id="historyBtn">📊</button>
+<div class="history-panel" id="historyPanel">
+  <div class="history-inner">
+    <div class="history-header">
+      <h2>📊 成績・履歴</h2>
+      <button class="history-close" id="historyClose">✕</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="hSessions">0</div><div class="stat-label">総セッション数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hQuestions">0</div><div class="stat-label">総解答問題数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hAvgScore">0%</div><div class="stat-label">平均正答率</div></div>
+      <div class="stat-card"><div class="stat-val" id="hTime">0分</div><div class="stat-label">総学習時間</div></div>
+    </div>
+    <div class="weak-stat">
+      <div class="weak-count" id="hWeakCount">0問</div>
+      <div style="font-size:13px;color:#e65100;margin-top:4px;">苦手問題数（正答率50%未満・2回以上解いた問題）</div>
+    </div>
+    <div class="hist-section-title">📅 セッション履歴（最新50件）</div>
+    <div id="hSessionList"></div>
+    <button class="btn-clear" id="btnClear">🗑 履歴・苦手データをリセット</button>
+  </div>
+</div>
+</body>
+</html>
