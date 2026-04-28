@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>外科学クイズ（第14回〜第34回）</title>
+<style>
+  :root {
+    --primary: #6b3a7d;
+    --primary-light: #f3edf7;
+    --correct: #27ae60;
+    --wrong: #e74c3c;
+    --bg: #f5f0f8;
+    --card: #ffffff;
+    --text: #1a202c;
+    --text-sub: #718096;
+    --border: #e2e8f0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 14px;
+    --option-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif; color: var(--text); }
+
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 14px 16px 10px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .progress-bar-wrap { height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin-top: 10px; }
+  .progress-bar { height: 100%; background: #ffd700; border-radius: 2px; transition: width 0.4s ease; }
+
+  #startScreen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 80px); padding: 24px;
+  }
+  .start-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 32px 24px; width: 100%; max-width: 420px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .start-icon { font-size: 56px; margin-bottom: 16px; }
+  .start-card h2 { font-size: 22px; color: var(--primary); margin-bottom: 8px; }
+  .start-card p { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 24px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px 14px; background: var(--bg); border-radius: 10px; }
+  .setting-label { font-size: 14px; font-weight: 600; }
+  .setting-row select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--border); background: white; color: var(--text); appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+  .btn-start {
+    width: 100%; padding: 16px; font-size: 18px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; letter-spacing: 1px; margin-top: 8px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 14px rgba(107,58,125,0.4);
+  }
+  .btn-start:active { transform: scale(0.97); }
+
+  #quizScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .q-num { background: var(--primary); color: white; font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .q-badge-hissu { background: #ff9500; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .q-card { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .q-text { font-size: 17px; line-height: 1.65; font-weight: 600; }
+  .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .opt-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; cursor: pointer;
+    font-size: 15px; line-height: 1.4; text-align: left;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    min-height: var(--option-h);
+    box-shadow: var(--shadow);
+    -webkit-user-select: none; user-select: none;
+  }
+  .opt-btn:active { transform: scale(0.98); }
+  .opt-btn.selected { border-color: var(--primary); background: var(--primary-light); }
+  .opt-btn.correct { border-color: var(--correct); background: #eafaf1; }
+  .opt-btn.wrong { border-color: var(--wrong); background: #fdecea; }
+  .opt-label {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%; background: var(--border); font-weight: 700; font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .opt-btn.selected .opt-label { background: var(--primary); color: white; }
+  .opt-btn.correct .opt-label { background: var(--correct); color: white; }
+  .opt-btn.wrong .opt-label { background: var(--wrong); color: white; }
+  .opt-text { flex: 1; }
+
+  .feedback { display: none; padding: 14px 16px; border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 15px; align-items: center; gap: 10px; }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: #eafaf1; color: var(--correct); border: 1.5px solid var(--correct); }
+  .feedback.ng { background: #fdecea; color: var(--wrong); border: 1.5px solid var(--wrong); }
+
+  .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .btn-next {
+    flex: 1; padding: 16px; font-size: 16px; font-weight: 700;
+    background: var(--primary); color: white; border: none; border-radius: 12px;
+    cursor: pointer; transition: transform 0.1s;
+    box-shadow: 0 4px 14px rgba(107,58,125,0.35);
+  }
+  .btn-next:active { transform: scale(0.97); }
+  .btn-next:disabled { background: var(--border); color: var(--text-sub); box-shadow: none; }
+
+  #resultScreen { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .result-hero {
+    background: var(--card); border-radius: var(--radius); padding: 32px 24px;
+    text-align: center; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .result-emoji { font-size: 64px; margin-bottom: 12px; }
+  .result-score { font-size: 56px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .result-score span { font-size: 24px; font-weight: 400; }
+  .result-msg { font-size: 17px; font-weight: 600; color: var(--text); margin: 10px 0; }
+  .result-detail { font-size: 14px; color: var(--text-sub); margin-bottom: 4px; }
+  .score-bar-wrap { background: var(--bg); border-radius: 8px; height: 12px; margin: 14px 0; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--primary), #a96cc0); transition: width 0.8s ease; }
+  .btn-retry, .btn-restart {
+    width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer; margin-bottom: 10px;
+    transition: transform 0.1s;
+  }
+  .btn-retry { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(107,58,125,0.35); }
+  .btn-restart { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-retry:active, .btn-restart:active { transform: scale(0.97); }
+  .review-section { margin-top: 8px; }
+  .review-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
+  .review-item { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid var(--border); }
+  .review-item.wrong-item { border-left-color: var(--wrong); }
+  .review-item.correct-item { border-left-color: var(--correct); }
+  .review-q { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .review-ans { font-size: 13px; color: var(--text-sub); }
+  .review-ans .label-correct { color: var(--correct); font-weight: 700; }
+  .review-ans .label-wrong { color: var(--wrong); font-weight: 700; }
+
+  .btn-weak {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 700;
+    background: #fff3e0; color: #e65100; border: 2px solid #ffb74d;
+    border-radius: 12px; cursor: pointer; margin-top: 10px;
+    -webkit-user-select: none; user-select: none; display: block; text-align: center;
+  }
+  .btn-weak:active { transform: scale(0.97); }
+  .history-btn {
+    position: fixed; bottom: 24px; right: 20px; z-index: 200;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--primary); color: white; border: none;
+    font-size: 22px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .history-panel {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.55); overflow-y: auto;
+  }
+  .history-panel.show { display: block; }
+  .history-inner {
+    background: white; border-radius: 16px 16px 0 0;
+    padding: 24px 16px 60px; margin-top: 60px;
+    min-height: calc(100vh - 60px);
+  }
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .history-header h2 { font-size: 18px; font-weight: 700; }
+  .history-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f0f0f0; border: none; font-size: 18px; cursor: pointer;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: #f8f9fa; border-radius: 12px; padding: 14px; text-align: center; }
+  .stat-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+  .stat-label { font-size: 11px; color: #718096; margin-top: 2px; }
+  .weak-stat { background: #fff3e0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .weak-count { font-size: 24px; font-weight: 800; color: #e65100; }
+  .hist-section-title { font-size: 13px; font-weight: 700; color: #718096; margin: 16px 0 10px; }
+  .hist-row {
+    background: #f8f9fa; border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 8px; font-size: 13px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .hist-score { font-weight: 800; font-size: 18px; color: var(--primary); }
+  .hist-date { color: #718096; font-size: 12px; }
+  .btn-clear {
+    width: 100%; padding: 12px; font-size: 13px;
+    background: white; color: #e74c3c; border: 1.5px solid #e74c3c;
+    border-radius: 10px; cursor: pointer; margin-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔬 外科学クイズ</h1>
+  <div class="header-sub" id="headerSub">第14回〜第34回 国家試験問題</div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+</div>
+
+<div id="startScreen">
+  <div class="start-card">
+    <div class="start-icon">🔬</div>
+    <h2>外科学クイズ</h2>
+    <p>国家試験（第14回〜第34回）から<br>出題された外科学問題を学習しましょう。<br>全<strong>250問</strong>収録</p>
+    <div class="setting-row">
+      <span class="setting-label">出題数</span>
+      <select id="selectNum">
+        <option value="10">10問</option>
+        <option value="20">20問</option>
+        <option value="30" selected>30問</option>
+        <option value="50">50問</option>
+        <option value="100">100問</option>
+        <option value="0">全問（250問）</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">出題順</span>
+      <select id="selectOrder">
+        <option value="1" selected>ランダム</option>
+        <option value="0">番号順</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">選択肢順</span>
+      <select id="selectShuffle">
+        <option value="1" selected>ランダム</option>
+        <option value="0">固定</option>
+      </select>
+    </div>
+    <button class="btn-start" id="btnStart">スタート ▶</button>
+    <button class="btn-weak" id="btnWeak">⚡ 苦手問題だけ出題する</button>
+  </div>
+</div>
+
+<div id="quizScreen">
+  <div class="q-meta">
+    <span class="q-num" id="qNum">問1</span>
+    <span class="q-badge-hissu" id="qBadge" style="display:none">必修</span>
+  </div>
+  <div class="q-card">
+    <p class="q-text" id="qText"></p>
+  </div>
+  <div class="options-grid" id="optionsGrid"></div>
+  <div class="feedback" id="feedback"></div>
+  <div class="action-row">
+    <button class="btn-next" id="btnNext" disabled>次の問題 →</button>
+  </div>
+</div>
+
+<div id="resultScreen">
+  <div class="result-hero">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-score" id="resultScore">0<span>点</span></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <div class="score-bar-wrap"><div class="score-bar" id="scoreBar" style="width:0%"></div></div>
+  </div>
+  <button class="btn-retry" id="btnRetry">間違えた問題をやり直す</button>
+  <button class="btn-restart" id="btnRestart">トップへ戻る</button>
+  <div class="review-section">
+    <div class="review-title">📝 解答一覧</div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<script>
+const ALL_DATA = [{"q": "59歳の男性。1年前に小さな脳動脈瘤を指摘された。今朝、突然後から金づちで殴られたような激しい頭痛が出現した。最も考えられるのはどれか。", "opts": ["くも膜下出血", "脳内出血", "硬膜外血腫", "脳梗塞"], "ans": 0, "essential": true}, {"q": "熱傷で正しいのはどれか。", "opts": ["広範囲熱傷患者のストレス潰瘍をカーリング（Carling）潰瘍という。", "凍傷は低温熱傷である。", "熱傷は皮膚損傷の面積によってI〜III度に分類される。", "乳幼児の熱傷面積の概算には「9の法則」を用いる。"], "ans": 0, "essential": false}, {"q": "急性炎症の四主徴でないのはどれか。", "opts": ["滲 出", "発 赤", "腫 脹", "疼 痛"], "ans": 0, "essential": false}, {"q": "リンパ行性転移はどれか。", "opts": ["ウィルヒョウ（Virchow）転移", "大腸癌の肝転移", "シュニッツラー（Schnitzler）転移", "髄膜癌腫症"], "ans": 0, "essential": false}, {"q": "夏の炎天下でテニスをしていて、めまいを生じ、顔面蒼白となり倒れた。処置として適切でないのはどれか。", "opts": ["冷たい水を飲ませる。", "涼しい場所に運び、衣服をゆるめて寝かせる。", "水や濡れタオルをかけ扇ぐ。", "頭・腋窩・鼠径部を冷やす。"], "ans": 0, "essential": false}, {"q": "CT施行中、造影剤を注入したところ、収縮期血圧80mmHg以下となり意識混濁を生じた。この疾患で最も考えられるのはどれか。", "opts": ["アナフィラキシーショック", "心原性ショック", "敗血症性ショック", "出血性ショック"], "ans": 0, "essential": false}, {"q": "35歳の男性。乗用車を運転中に、交通事故で右側胸部をハンドルに強打した。意識は清明で目立った外傷はない。右側胸部に著明な疼痛があり、呼吸苦を訴えている。胸部単純エックス線検査で右の第7肋骨骨折と右肺の完全虚脱を認めた。行うべき治療はどれか。", "opts": ["胸腔穿刺", "気管内挿管", "緊急開胸手術", "外固定による経過観察"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["同系移植では免疫抑制剤は不要である。", "角膜移植では拒絶反応は起こらない。", "同種移植では組織適合性抗原がすべて同一である。", "黄色人種と白色人種の間での移植は異種移植である。"], "ans": 0, "essential": false}, {"q": "誤っている組み合わせはどれか。", "opts": ["拍動性胃潰瘍出血　−　ゼラチンフォーム", "食道静脈瘤破裂　　−　ブレークモアのチューブ", "急性動脈閉塞　　　−　フォーガティのカテーテル", "難治性鼻出血　　　−　ベロックのタンポン"], "ans": 0, "essential": false}, {"q": "頭部・顔面外傷で誤っている組み合わせはどれか。", "opts": ["脳実質損傷　　−　急性硬膜外血腫", "頭蓋底骨折　　−　髄液鼻漏", "耳下腺部損傷　−　顔面神経麻痺", "頬骨弓骨折　　−　開口障害"], "ans": 0, "essential": false}, {"q": "脳死判定規準に含まれないのはどれか。", "opts": ["四肢腱反射の消失", "平坦脳波", "対光反射の消失", "深昏睡"], "ans": 0, "essential": false}, {"q": "胸部外傷で誤っているのはどれか。", "opts": ["ショック肺は受傷直後から発症する。", "flail chestでは奇異呼吸がみられる。", "外開放性気胸では縦隔動揺がみられる。", "心タンポナーデでは頻脈がみられる。"], "ans": 0, "essential": false}, {"q": "急性炎症の四主徴でないのはどれか。", "opts": ["壊 死", "発 赤", "腫 脹", "疼 痛"], "ans": 0, "essential": true}, {"q": "正しいのはどれか。", "opts": ["開放創を多量の生理的食塩水で洗浄した。", "脊椎損傷が疑われたため側臥位で搬送した。", "創の止血の目的でデブリドマンを行った。", "交通事故では多発外傷の発生は稀である。"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["交通事故では多発外傷の有無に注意した。", "開放創を多量の消毒用エタノールで洗浄した。", "脊椎損傷が疑われたため側臥位で搬送した。", "創の止血の目的でデブリドマンを行った。"], "ans": 0, "essential": false}, {"q": "76歳の女性。調理中、衣服に火が燃え移り、胸腹部全体と左右上肢全体にII度＋III度の熱傷を受けた。「9の法則」による正しい熱傷面積はどれか。", "opts": ["36％", "18％", "27％", "45％"], "ans": 0, "essential": false}, {"q": "正しい組み合わせはどれか。", "opts": ["毛嚢炎　　−　黄色ブドウ球菌", "丹毒　　　−　緑膿菌", "梅毒　　　−　ウェルシュ菌", "ガス壊疽　−　破傷風菌"], "ans": 0, "essential": false}, {"q": "播種性転移はどれか。", "opts": ["胃癌のシュニッツラー転移", "胃癌のウィルヒョウ転移", "大腸癌の肝転移", "前立腺癌の骨転移"], "ans": 0, "essential": false}, {"q": "経静脈的高カロリー輸液について正しいのはどれか。", "opts": ["消化管の術後で長期間経口摂取できないときに行う。", "蛋白質の補給には主として血漿を用いる。", "輸液はまず50％糖液から始める。", "末梢静脈から注入する。"], "ans": 0, "essential": false}, {"q": "誤っている組み合わせはどれか。", "opts": ["腹腔穿刺　&#8722;　大腸穿孔の治療", "心嚢穿刺　&#8722;　心タンポナーデの治療", "胸腔穿刺　&#8722;　膿胸の治療", "関節穿刺　&#8722;　関節水腫の治療"], "ans": 0, "essential": false}, {"q": "全身麻酔の前投薬で誤っているのはどれか。", "opts": ["昇圧薬", "気道分泌抑制薬", "鎮痛薬", "鎮静薬"], "ans": 0, "essential": false}, {"q": "一次救命処置で誤っているのはどれか。", "opts": ["保温", "人工呼吸", "自動体外式除細動器（AED）", "心臓マッサージ"], "ans": 0, "essential": false}, {"q": "顔面外傷で誤っている組み合わせはどれか。", "opts": ["鼻骨骨折　　&#8722;　顔面神経麻痺", "頬骨骨折　　&#8722;　開口障害", "耳介血腫　　&#8722;　カリフラワー耳", "上顎骨骨折　&#8722;　咬合異常"], "ans": 0, "essential": false}, {"q": "28歳の男性。オートバイ運転中に転倒、頭部を強く打撲した。受傷時一過性の意識障害があったが、その後意識清明となり普通に会話をしていた。6時間後に頭痛を訴え、次第に呼びかけに応じなくなった。最も考えられるのはどれか。", "opts": ["急性硬膜外血腫", "脳挫傷", "外傷性クモ膜下出血", "急性硬膜下血腫"], "ans": 0, "essential": false}, {"q": "腹膜炎でみられる反跳性圧痛はどれか。", "opts": ["ブルンベルグ徴候", "グレイ・ターナー徴候", "クールボアジェ徴候", "カレン徴候"], "ans": 0, "essential": false}, {"q": "嫌気性菌はどれか。", "opts": ["破傷風菌", "ブドウ球菌", "溶血性連鎖球菌", "結核菌"], "ans": 0, "essential": true}, {"q": "熱傷の重症度判定に有用でないのはどれか。", "opts": ["性別", "年齢", "範囲", "深度"], "ans": 0, "essential": false}, {"q": "腺癌はどれか。", "opts": ["腎癌", "肝臓癌", "舌癌", "皮膚癌"], "ans": 0, "essential": false}, {"q": "腺癌はどれか。", "opts": ["大腸癌", "食道癌", "舌癌", "皮膚癌"], "ans": 0, "essential": false}, {"q": "麻酔に使用しないのはどれか。", "opts": ["メタンガス", "酸素", "笑気", "エーテル"], "ans": 0, "essential": false}, {"q": "同系移植で正しいのはどれか。", "opts": ["一卵性双生児間", "同一個体内", "ヒト対ヒト", "ヒト対チンパンジー"], "ans": 0, "essential": false}, {"q": "救急蘇生術のABCで誤っているのはどれか。", "opts": ["強心剤投与", "気道確保", "人工呼吸", "心臓マッサージ"], "ans": 0, "essential": false}, {"q": "自動体外式除細動器（AED）の使用上誤っているのはどれか。", "opts": ["使用者は医師か訓練を受けた看護師に限られる。", "使用されているAEDが医療用具として薬事法上の承認を得ている。", "放電ボタンを押すとき、対象者から離れなければならない。", "使用者が対象者の意識がないことを確認している。"], "ans": 0, "essential": false}, {"q": "74歳の男性。階段で転落し頭部打撲。受傷時、神経学的検査、頭部CT検査で異常所見を認めなかったが、2か月後歩行がふらつき、尿失禁がみられた。考えられる病態はどれか。", "opts": ["慢性硬膜下血腫", "脳挫傷", "クモ膜下出血", "急性硬膜外血腫"], "ans": 0, "essential": false}, {"q": "交通事故による多発外傷で誤っている組合せはどれか。", "opts": ["硬膜外血腫　−　クリッピング", "血気胸　　　−　胸腔ドレナージ", "腹腔内出血　−　開腹止血", "脊椎損傷　　−　脊柱固定"], "ans": 0, "essential": false}, {"q": "脳死判定基準として誤っているのはどれか。", "opts": ["瞳孔縮小", "深昏睡", "自発呼吸消失", "平坦脳波"], "ans": 0, "essential": false}, {"q": "ジャクソン（Jackson）型痙攣発作と関係するのはどれか。", "opts": ["頭部打撲", "心筋梗塞", "腰椎損傷", "低血糖"], "ans": 0, "essential": false}, {"q": "腹腔内遊離ガス像を認めるのはどれか。", "opts": ["消化管穿孔", "腸閉塞", "腎損傷", "肝損傷"], "ans": 0, "essential": false}, {"q": "乳幼児熱傷の範囲診断で成人より全体表面積に対する割合が大きいのはどれか。", "opts": ["頭頚部", "上腕部", "大腿部", "背　部"], "ans": 0, "essential": true}, {"q": "体表の損傷で誤っているのはどれか。", "opts": ["壊死とは皮下組織に膿瘍を形成した状態", "びらんとは表皮が欠損した状態", "瘻孔とは深部組織と外部との間に生じた病的な管状構造物", "潰瘍とは真皮の欠損を伴う状態"], "ans": 0, "essential": false}, {"q": "外科的感染症で正しいのはどれか。", "opts": ["挫滅創は切創に比べて感染しやすい。", "抗菌薬を全身投与すれば創感染は生じない。", "ガス壊疽では痛みを伴わない。", "破傷風トキソイドの接種歴があれば破傷風に罹患しない。"], "ans": 0, "essential": false}, {"q": "ショックで誤っているのはどれか。", "opts": ["心原性ショックでは中心静脈圧が低下する。", "神経原性ショックでは末梢血管が拡張する。", "出血性ショックでは血中カテコールアミンが増加する。", "エンドトキシンショックはグラム陰性桿菌の感染で生じる。"], "ans": 0, "essential": false}, {"q": "全身麻酔下での手術中、輸血後まもなく血圧低下と赤色尿とをきたした。まず行う処置で誤っているのはどれか。", "opts": ["麻酔薬を変更する。", "輸血を中止して血液型交叉試験の結果を確認する。", "尿の潜血反応を調べる。", "遠心分離して血清の色調をみる。"], "ans": 0, "essential": false}, {"q": "消毒と滅菌で正しいのはどれか。", "opts": ["微生物によって消毒薬の適用が異なる。", "消毒薬自体が汚染されることはない。", "高圧蒸気滅菌は光学機器の滅菌に有用である。", "アルコールは粘膜の消毒に有用である。"], "ans": 0, "essential": false}, {"q": "境界明瞭な2cm大の充実性皮下腫瘤に対する根治的な治療法はどれか。", "opts": ["摘出術", "切断術", "切開術", "穿刺術"], "ans": 0, "essential": false}, {"q": "気管切開で誤っているのはどれか。", "opts": ["喉頭部に炎症があれば適応外である。", "第2気管軟骨輪以下の高さで行う。", "小児では気管カニューレの抜去困難が生じやすい。", "給湿が不十分であると無気肺を起こしやすい。"], "ans": 0, "essential": false}, {"q": "55歳の男性。救命処置を受けながら来院した。心電図は心室細動である。電気的除細動で最初に用いられるエネルギーレベルはどれか。", "opts": ["200ジュール", "10ジュール", "50ジュール", "500ジュール"], "ans": 0, "essential": false}, {"q": "けいれん発作を生じないのはどれか。", "opts": ["脳しんとう", "脳腫瘍", "頭蓋内出血", "脳動静脈奇形"], "ans": 0, "essential": false}, {"q": "30歳の男性。日常は健康で特記すべきことはない。散歩中、突然に頭を押さえてうずくまった。意識はあるが激しい頭痛を訴え嘔吐も認めた。麻痺はないが徐々に意識が低下してきた。考えられる疾患はどれか。", "opts": ["くも膜下出血", "脳挫傷", "慢性硬膜下血腫", "てんかん発作"], "ans": 0, "essential": false}, {"q": "腹部鈍的外傷で誤っている組合せはどれか。", "opts": ["脾破裂　　−　腹腔内遊離ガス", "肝破裂　　−　腹腔内出血", "腎破裂　　−　血　尿", "腸管破裂　−　汎発性腹膜炎"], "ans": 0, "essential": false}, {"q": "我が国で行われていない移植はどれか。", "opts": ["脳", "肺", "腎", "心"], "ans": 0, "essential": true}, {"q": "創傷治癒を遅らせる因子で誤っているのはどれか。", "opts": ["高尿酸血症", "低蛋白血症", "糖尿病", "亜鉛欠乏症"], "ans": 0, "essential": false}, {"q": "悪性腫瘍の病期を決める因子はどれか。", "opts": ["腫瘍の大きさ", "腫瘍占拠部位", "病悩期間", "年齢"], "ans": 0, "essential": false}, {"q": "消毒で正しいのはどれか。", "opts": ["ポビドンヨードは皮膚消毒に用いる。", "消毒液中で微生物は繁殖しない。", "アルコールは粘膜の消毒に用いる。", "高圧蒸気滅菌は医療用に用いない。"], "ans": 0, "essential": false}, {"q": "血清電解質濃度で正常値でないのはどれか。", "opts": ["Na：116mEq／l", "K ：4.3mEq／l", "Cl：101mEq／l", "Ca：10.2mg／l"], "ans": 0, "essential": false}, {"q": "AEDを必要とする不整脈はどれか。", "opts": ["心室細動", "心房細動", "房室ブロック", "上室性頻拍"], "ans": 0, "essential": false}, {"q": "意識障害で正しいのはどれか。", "opts": ["意識障害の程度を評価するのに3-3-9度方式が使われる。", "自分の名前は言えないが覚醒しているので意識障害はない。", "眠っているが呼ぶと開眼するので意識障害はない。", "ジャパン・コーマスケールの300は軽度である。"], "ans": 0, "essential": false}, {"q": "てんかんの重積状態の処置で誤っているのはどれか。", "opts": ["筋電図検査", "気道確保", "静脈確保", "脳波検査"], "ans": 0, "essential": false}, {"q": "脳卒中で誤っている組合せはどれか。", "opts": ["脳動静脈奇形　−　老化", "クモ膜下出血　−　脳動脈瘤", "脳塞栓　　　　−　不整脈", "脳出血　　　　−　高血圧"], "ans": 0, "essential": false}, {"q": "胸部外傷で誤っているのはどれか。", "opts": ["ショック肺は受傷直後から発症する。", "フレイルチェストでは奇異呼吸がみられる。", "外開放性気胸では縦隔動揺がみられる。", "心タンポナーデでは頻脈がみられる。"], "ans": 0, "essential": false}, {"q": "腹部鈍的外傷で正しい組み合わせはどれか。", "opts": ["膵損傷　　−　後腹膜血腫", "肝損傷　　−　腫瘤形成", "腸管破裂　−　腹鳴亢進", "脾損傷　　−　腹腔内遊離ガス"], "ans": 0, "essential": false}, {"q": "72歳の男性．2週前から軽度の頭痛が生じ、言葉がもつれるようになった．数日前からは足ももつれるようになり、歩けなくなった．2ヵ月前に自転車で転倒し、頭部を打撲したが、その時のCT検査では異常を認めなかった．考えられるのはどれか。", "opts": ["慢性硬膜下血腫", "頭蓋底骨折", "脳挫傷", "急性硬膜外血腫"], "ans": 0, "essential": false}, {"q": "II度熱傷の局所徴候で正しいのはどれか。〔必〕", "opts": ["水疱形成", "炭 化", "感覚消失", "硬 化"], "ans": 0, "essential": false}, {"q": "急性虫垂炎の腹部圧痛点でないのはどれか。", "opts": ["ブルンベルグ", "マックバーネ", "ランツ", "キュンメル"], "ans": 0, "essential": false}, {"q": "腫瘍診断で誤っている組合せはどれか。", "opts": ["超音波検査　−　肺腫瘍", "内視鏡検査　−　消化管腫瘍", "MRI検査　　−　骨腫瘍", "細胞診検査　−　甲状腺腫瘍"], "ans": 0, "essential": false}, {"q": "ショックの症状で誤っているのはどれか。", "opts": ["大　脈", "虚　脱", "冷　汗", "顔面蒼白"], "ans": 0, "essential": false}, {"q": "輸血で誤っているのはどれか。", "opts": ["不適合輸血の死亡率は低い。", "血液型が同じでも交差適合試験を行う。", "成分輸血を行う。", "肝炎などの感染症が発症する。"], "ans": 0, "essential": false}, {"q": "消毒と滅菌で誤っているのはどれか。", "opts": ["消毒用エタノールは粘膜に用いる。", "消毒薬そのものにも微生物感染は起こる。", "光学レンズはガス滅菌を行う。", "オートクレーブは高圧蒸気滅菌装置である。"], "ans": 0, "essential": false}, {"q": "各種外科疾患と切開法との組合せで誤っているのはどれか。", "opts": ["胆石症　−　左肋骨弓下斜切開", "心室中隔欠損　−　胸骨正中切開", "肺　癌　−　胸部後側方切開", "胃　癌　−上腹部正中切開"], "ans": 0, "essential": false}, {"q": "出血で正しい組合せはどれか。", "opts": ["血　尿　　−　腎損傷", "タール便　−　下部消化管出血", "喀　血　　−　胃潰瘍", "外出血　　−　腹腔内出血"], "ans": 0, "essential": false}, {"q": "疾患と症状との組合せで誤っているのはどれか。", "opts": ["脳動静脈奇形　　−　眼球突出", "高血圧性脳出血　−　片麻痺", "クモ膜下出血　　−　頭　痛", "脳梗塞　　　　　−　失語症"], "ans": 0, "essential": false}, {"q": "頭部外傷の初期症状で適切でないのはどれか。", "opts": ["胸　痛", "頭　痛", "悪心嘔吐", "頚部運動制限"], "ans": 0, "essential": false}, {"q": "胸壁穿通性挫傷で起こる可能性が高いのはどれか。", "opts": ["血気胸", "肺気腫", "気腫性肺嚢胞", "肺動脈瘤"], "ans": 0, "essential": false}, {"q": "21歳の男性．剣道の試合中、踏み込んだ際に左前胸部痛を感じた。その後、息切れも出現したため救急受診した。胸部聴診上、左肺野の呼吸音減弱を認めた。この病態で考えられるのはどれか。", "opts": ["自然気胸", "狭心症", "解離性大動脈瘤", "胸骨骨折"], "ans": 0, "essential": false}, {"q": "ショックの症状はどれか。〔必〕", "opts": ["冷　汗", "顔面紅潮", "興　奮", "多　尿"], "ans": 0, "essential": false}, {"q": "外傷と合併症との組合せで誤っているのはどれか。", "opts": ["頭部外傷　−　マロリー・ワイス（Mallory−Weiss）症候群", "多発性肋骨骨折　−　胸壁動揺", "ハンドル外傷　−　膵断裂", "熱　傷　−　カーリング（Curling）潰瘍"], "ans": 0, "essential": false}, {"q": "蜂巣炎で正しいのはどれか。", "opts": ["皮下の疎性結合織に好発する。", "起炎菌は嫌気性菌である。", "境界は明瞭である。", "早期に切開する。"], "ans": 0, "essential": false}, {"q": "正しい組合せはどれか。", "opts": ["上部消化管出血　−　タール便", "静脈性出血　　　−　拍動性", "くも膜下出血　　−　外出血", "喀　血　　　　　−　内出血"], "ans": 0, "essential": false}, {"q": "消毒と滅菌で正しいのはどれか。", "opts": ["金属は高圧蒸気滅菌を行う。", "消毒薬はすべての細菌に有効である。", "損傷皮膚は消毒用エタノールで消毒する。", "病室はホルムアルデヒドガスで燻蒸する。"], "ans": 0, "essential": false}, {"q": "術後に消化吸収障害を起こしやすいのはどれか。", "opts": ["胃全摘", "肝切除", "直腸切除", "胆嚢摘出"], "ans": 0, "essential": false}, {"q": "正しいのはどれか。", "opts": ["血管縫合は外翻縫合である。", "皮膚切開はランゲル皮膚割線に垂直に行う。", "顔面の縫合創は約10日後に抜糸する。", "ナイロン糸は吸収性縫合糸である。"], "ans": 0, "essential": false}, {"q": "不適合輸血による初期症状で正しいのはどれか。", "opts": ["発　疹", "肝　炎", "下腿浮腫", "無　尿"], "ans": 0, "essential": false}, {"q": "止血法と適応との組合せで正しいのはどれか。", "opts": ["圧迫タンポナーデ　−　びまん性出血に行う。", "緊縛法　　　−　内臓出血に行う。", "電気凝固法　−　大血管の出血に行う。", "指圧法　　　−　動脈の末梢側を圧迫する。"], "ans": 0, "essential": false}, {"q": "症候性てんかんの原因とならないのはどれか。", "opts": ["群発頭痛", "頭部外傷", "脳腫瘍", "脳梗塞"], "ans": 0, "essential": false}, {"q": "交通事故の受傷機転と損傷部位との組合せで正しいのはどれか。", "opts": ["ハンドル外傷　−　縦隔損傷", "フロントガラス外傷　−　骨盤損傷", "ダッシュボード外傷　−　頚椎損傷", "シートベルト外傷　−　下腿損傷"], "ans": 0, "essential": false}, {"q": "58歳の男性。肩こりが強いため鍼治療を受けていた。いつものように鍼治療を受けて帰宅したが、左胸部痛が出現したため救急外来を受診した。発熱はない。単純エックス線写真（別冊No.1）を別に示す。この病態で正しいのはどれか。図", "opts": ["気　胸", "狭心症", "大動脈瘤破裂", "胸膜炎"], "ans": 0, "essential": false}, {"q": "循環血液量異常によるショックの症状で誤っているのはどれか。〔必〕", "opts": ["顔面紅潮", "冷 汗", "呼吸不全", "脈拍触知不可"], "ans": 0, "essential": false}, {"q": "創傷の種類と説明との組合せで正しいのはどれか。", "opts": ["裂 創　―――　引き裂かれた創傷", "切 創　―――　鋭利な器具による刺傷", "挫 創　―――　鋭利な器具による切開創", "剥離創　――　咬まれた創傷"], "ans": 0, "essential": false}, {"q": "消毒薬で正しいのはどれか。", "opts": ["クロルへキシジンはＭＲＳＡに対して有効である。", "アルコールは粘膜の消毒に有効である。", "ポビドンヨードは塩分の存在下で殺菌力が低下する。", "グルタラールは粘膜に対して刺激性が弱い。"], "ans": 0, "essential": false}, {"q": "縫合で誤っているのはどれか。", "opts": ["合成糸は組織反応が強い。", "縫合糸は材料により天然と合成の2種類がある。", "抜糸の時期は縫合部位により異なる。", "縫合部に感染が生じたら直ちに抜糸する。"], "ans": 0, "essential": false}, {"q": "腰椎麻酔に伴う合併症で正しいのはどれか。", "opts": ["頭　痛", "悪性高熱症", "気管支けいれん", "誤嚥性肺炎"], "ans": 0, "essential": false}, {"q": "移植臓器で使用されないのはどれか。", "opts": ["副 腎", "肝", "腎", "小 腸"], "ans": 0, "essential": false}, {"q": "内出血はどれか。", "opts": ["皮下出血", "下　血", "血　尿", "鼻出血"], "ans": 0, "essential": false}, {"q": "ショック状態にある原疾患と治療法との組合せで正しいのはどれか。", "opts": ["汎発性腹膜炎　―――　輸　液", "心タンポナーデ　――　胸腔穿刺", "緊張性気胸　――――　心嚢穿刺", "骨盤骨折　―――――　静脈塞栓術"], "ans": 0, "essential": false}, {"q": "ショック状態にある原疾患と治療法との組合せで正しいのはどれか。", "opts": ["骨盤骨折　―――――　動脈塞栓術", "汎発性腹膜炎　―――　輸　血", "心タンポナーデ　――　胸腔穿刺", "緊張性気胸　――――　心嚢穿刺"], "ans": 0, "essential": false}, {"q": "頭部外傷で誤っているのはどれか。", "opts": ["帽状腱膜下血腫は高齢者に多い。", "頭蓋底骨折で髄液漏を生じる。", "急性硬膜外血腫で意識清明期がみられる。", "急性硬膜下出血は予後不良である。"], "ans": 0, "essential": false}, {"q": "ジャパン・コーマスケールIII-100の状態で正しいのはどれか。", "opts": ["痛み刺激に対し払いのける動作をする。", "見当識障害がある。", "開眼しているが自分の名前がいえない。", "普通の呼びかけで容易に開眼する。"], "ans": 0, "essential": false}, {"q": "けいれんが生じる可能性の高いのはどれか。", "opts": ["脳挫傷", "脳しんとう", "慢性硬膜下血腫", "一過性脳虚血発作"], "ans": 0, "essential": false}, {"q": "18歳の男性。バイク運転中にスリップして転倒した。明らかな出血はみられないが動く気配がない。近くに居合わせた通行人が救急要請した。救急車到着を待つ間、最初に行うべきことは何か。", "opts": ["声を掛けて開眼するか確認する。", "人工呼吸を行う。", "心臓マッサージを行う。", "ＡＥＤを装着する。"], "ans": 0, "essential": false}, {"q": "急性炎症の徴候で誤っているのはどれか。〔必〕", "opts": ["冷　感", "発　赤", "腫　脹", "疼　痛"], "ans": 0, "essential": false}, {"q": "損傷の原因の中で機械的損傷はどれか。", "opts": ["減　圧", "高　熱", "電　気", "レーザー光線"], "ans": 0, "essential": false}, {"q": "感染症と原因菌との組合せで正しいのはどれか。", "opts": ["丹　毒　　&#8722;　A群溶連菌", "破傷風　　&#8722;　ウェルシュ菌", "ガス壊疽　&#8722;　梅毒トレポネーマ", "毛嚢炎　　&#8722;　結核菌"], "ans": 0, "essential": false}, {"q": "血液分布不均衡によるショックの原因はどれか。", "opts": ["アナフィラキシー", "出　血", "心筋梗塞", "緊張性気胸"], "ans": 0, "essential": false}, {"q": "生体に対して使用できない消毒薬はどれか。", "opts": ["グルタラール", "ポビドンヨード", "クロルヘキシジン", "アルコール"], "ans": 0, "essential": false}, {"q": "縫合で正しいのはどれか。", "opts": ["抜糸の時期は成人でおよそ第７病日である。", "絹糸は吸収性の糸である。", "合成糸は組織反応が強い。", "汚染していても創面はそのまま縫合する。"], "ans": 0, "essential": false}, {"q": "麻酔で誤っているのはどれか。", "opts": ["腰椎麻酔では筋弛緩剤を併用する。", "腰椎穿刺後の頭痛は体動で悪化する。", "悪性高熱症では異常高体温が起こる。", "気管支けいれんは気管挿管時に起こりやすい。"], "ans": 0, "essential": false}, {"q": "出血で正しい組合せはどれか。", "opts": ["動脈性出血　−　拍動性噴出", "内出血　　　−　吐　血", "外出血　　　−　血　胸", "静脈性出血　−　鮮紅色"], "ans": 0, "essential": false}, {"q": "救急蘇生ガイドライン(2006年版)で胸骨圧迫心臓マッサージの圧迫頻度は１分間に何回を目指すのが正しいか。", "opts": ["100回", "60回", "80回", "120回"], "ans": 0, "essential": false}, {"q": "ジャパン・コーマ・スケールIII−300の状態で正しいのはどれか。", "opts": ["痛み刺激に反応しない。", "見当識障害がある。", "痛み刺激で顔をしかめる。", "呼びかけで容易に開眼する。"], "ans": 0, "essential": false}, {"q": "頭部・顔面外傷で誤っている組合せはどれか。", "opts": ["脳実質損傷　　−　急性硬膜外血腫", "頭蓋底骨折　　−　髄液鼻漏", "耳下腺部損傷　−　顔面神経麻痺", "頬骨弓骨折　　−　開口障害"], "ans": 0, "essential": false}, {"q": "40歳の男性。自転車走行中に転倒し右側腹部を打撲した。すぐに歩いて来院したが、待っている間に、冷汗が生じ顔面が蒼白となった。下腿浮腫はみられない。収縮期血圧80mmHg、脈拍120/分であった。考えられる病態はどれか。", "opts": ["出血性ショック", "心原性ショック", "敗血症性ショック", "アナフィラキシーショック"], "ans": 0, "essential": false}, {"q": "ショックをきたす病態とその治療との組合せで正しいのはどれか。〔必〕", "opts": ["重症熱傷　　　　　−　急速輸液", "アナフィラキシー　−　輸　血", "心タンポナーデ　　−　胸腔ドレナージ", "外傷性脾損傷　　　−　腹腔穿刺"], "ans": 0, "essential": false}, {"q": "感染とその原因菌との組合せで正しいのはどれか。", "opts": ["化膿性骨髄炎　　　　　　−　ブドウ球菌", "ＩＶＨのカテーテル感染　−　アスペルギルス", "丹　毒　　　　　　　　　−　ウェルシュ菌", "ガス壊疽　　　　　　　　−　溶血性連鎖球菌"], "ans": 0, "essential": false}, {"q": "癌腫と比較した肉腫の特徴で正しい組合せはどれか。", "opts": ["年　齢　−−−　若年者", "頻　度　−−−　多　い", "発達速度　−−　遅　い", "予　後　−−−　良　い"], "ans": 0, "essential": false}, {"q": "滅菌効果があるのはどれか。", "opts": ["酸化エチレンガス", "アルコール", "クロルヘキシジン", "次亜塩素酸ナトリウム"], "ans": 0, "essential": false}, {"q": "基本的外科手技で正しいのはどれか。", "opts": ["抜糸の時期は顔面の方が体幹部より早い。", "男結びより女結びの方が緩みにくい。", "糸の周囲に炎症が及ぶときは抜糸を遅らせる。", "皮下膿瘍の切開はランゲル皮膚割線に垂直に行う。"], "ans": 0, "essential": false}, {"q": "麻酔で正しいのはどれか。", "opts": ["腰椎穿刺後の頭痛は座位で悪化する。", "悪性高熱症は麻酔終了後に発生する。", "硬膜外麻酔では筋弛緩薬を併用する。", "ラリンジアルマスクでは誤嚥性肺炎を予防できる。"], "ans": 0, "essential": false}, {"q": "一卵性双生児間の臓器移植はどれか。", "opts": ["同系移植", "自家移植", "異系移植", "異種移植"], "ans": 0, "essential": false}, {"q": "出血時の一次止血に関与するのはどれか。", "opts": ["血小板", "白血球", "赤血球", "フィブリン"], "ans": 0, "essential": false}, {"q": "60歳の男性。突然の激しい頭痛で来院した。最も考えられる疾患はどれか。", "opts": ["くも膜下出血", "脳梗塞", "脳腫瘍", "てんかん"], "ans": 0, "essential": false}, {"q": "腰随損傷に起こる症状で誤っているのはどれか。", "opts": ["呼吸障害", "歩行障害", "膀胱障害", "直腸障害"], "ans": 0, "essential": false}, {"q": "シートベルトを着用しないで運転中、交通事故が発生し搬入された。緊急CT検査で後腹膜腔に多量の血腫を認めた。損傷を受けている臓器はどれか。", "opts": ["膵　臓", "小　腸", "肝　臓", "脾　臓"], "ans": 0, "essential": false}, {"q": "25歳男性。バイク運転中に転倒し救急外来に搬入された。来院時上腹部痛を訴えた。施行した立位胸部エックス線写真（別冊No.1）を別に示す。所見として正しいのはどれか。図", "opts": ["腹腔内遊離ガス", "心拡大", "胸水貯留", "横隔膜ヘルニア"], "ans": 0, "essential": false}, {"q": "創傷の処置で正しいのはどれか。〔必〕", "opts": ["開放創の挫滅組織は切除する。", "開放創は消毒液で洗浄する。", "開放創は乾燥するように保つことが重要である。", "縫合閉鎖後96時間まで消毒液を塗布する。"], "ans": 0, "essential": false}, {"q": "熱傷で正しいのはどれか。", "opts": ["気道熱傷を合併した場合は重症に分類される。", "乳幼児の熱傷範囲の診断に9の法則を用いる。", "III度熱傷で強い痛みを感じる。", "広範囲熱傷患者では胃粘膜障害は発生しにくい。"], "ans": 0, "essential": false}, {"q": "蜂窩織炎で正しいのはどれか。", "opts": ["びまん性化膿性炎症である。", "発赤を伴わない腫脹がある。", "原因として真菌感染が多い。", "治療は切開排膿が基本となる。"], "ans": 0, "essential": false}, {"q": "犬に手の甲を約2cm長咬まれた。適切でない処置はどれか。", "opts": ["一次縫合", "生理食塩水での洗浄", "デブリドマン", "抗菌薬投与"], "ans": 0, "essential": false}, {"q": "輸血の副作用で正しいのはどれか。", "opts": ["移植片対宿主反応(GVHD)がある。", "滴下速度と無関係に発生する。", "発疹は出現すると長時間持続する。", "腎不全は不適合輸血直後に起こる。"], "ans": 0, "essential": false}, {"q": "麻酔で誤っているのはどれか。", "opts": ["悪性高熱症ではアルカローシスを起こす。", "胃液の誤嚥による肺炎をメンデルソン(Mendelson)症候群という。", "筋弛緩薬使用時は呼吸管理が必要である。", "前投薬の目的の一つに気道分泌の抑制がある。"], "ans": 0, "essential": false}, {"q": "対処法で誤っている組合せはどれか。", "opts": ["心タンポナーデ　─　冠動脈ステント留置", "喀　血　　　　　─　気管支動脈カテーテル塞栓術", "鼻出血　　　　　─　ベロックのタンポン法", "出血性胃潰瘍　　─　内視鏡的止血術"], "ans": 0, "essential": false}, {"q": "循環血液量減少性ショックをきたしうる病態はどれか。", "opts": ["熱　傷", "急性心筋梗塞", "敗血症", "緊張性気胸"], "ans": 0, "essential": false}, {"q": "心臓マッサージで正しいのはどれか。", "opts": ["肘はまっすぐに伸ばして圧迫する。", "両手は重ねず広く圧迫する。", "心窩部を強く速く圧迫する。", "1分間に80回圧迫する。"], "ans": 0, "essential": false}, {"q": "胸部外傷で正しいのはどれか。", "opts": ["第5〜8肋骨の連続性多発骨折で胸郭動揺を起こしやすい。", "肋骨骨折の好発部位は第1〜3肋骨である。", "緊張性気胸の治療は酸素療法である。", "内開放性気胸では膿胸を起こしやすい。"], "ans": 0, "essential": false}, {"q": "腹部外傷で正しいのはどれか。", "opts": ["脾損傷の治療に血管塞栓術がある。", "鋭的外傷の多くは交通事故が原因である。", "肝損傷で腹腔内フリーエアーがみられる。", "腹部交通外傷では単発外傷のことが多い。"], "ans": 0, "essential": false}, {"q": "16歳の男子。柔道練習中、畳に激しく頭をぶつけて10秒間の意識消失を起こした。1時間後には神経症状もなく、頭痛もなかった。正しいのはどれか。", "opts": ["セカンドインパクトシンドロームに注意する。", "２度脳しんとうに相当する。", "意識が改善すれば神経学的検査は必要ない。", "翌日の練習を許可する。"], "ans": 0, "essential": false}, {"q": "末梢血管抵抗減弱によるショックの原因はどれか。〔必〕", "opts": ["アナフィラキシー", "急性心筋梗塞", "熱　傷", "緊張性気胸"], "ans": 0, "essential": false}, {"q": "感染症で誤っているのはどれか。", "opts": ["猫咬傷では一次縫合を行う。", "肺アスペルギルス症では菌球形成がみられる。", "破傷風による感染では開口障害がみられる。", "真菌のIVHカテーテル感染では抗真菌薬の全身投与を行う。"], "ans": 0, "essential": false}, {"q": "消毒と滅菌で正しいのはどれか。", "opts": ["皮膚消毒は一時的フローラの消毒を行う。", "粘膜消毒には消毒用エタノールを用いる。", "高圧蒸気滅菌は金属の消毒ができない。", "酸化エチレンガス滅菌は熱に弱い素材に使用しない。"], "ans": 0, "essential": false}, {"q": "移植で正しいのはどれか。", "opts": ["免疫抑制薬の副作用として二次発癌がある。", "改正臓器移植法では15歳未満の脳死判定は行なわない。", "移植臓器の生着には主要組織適合抗原は関係しない。", "臓器保存可能時間は各臓器とも一定である。"], "ans": 0, "essential": false}, {"q": "けいれんで誤っているのはどれか。", "opts": ["間代性けいれんでは手足を強直させる。", "脳腫瘍は症候性てんかんの原因となる。", "一部の筋肉にとどまるものは部分発作という。", "一部の筋肉に始まり全身に広がる場合を二次性全般化という。"], "ans": 0, "essential": false}, {"q": "輸血の副作用と症状の組合せで正しいのはどれか。", "opts": ["不適合輸血 　 -　血圧低下", "空気塞栓 　　 -　乏　尿", "クエン酸中毒　-　発　熱", "ウイルス感染　-　けいれん"], "ans": 0, "essential": false}, {"q": "結紮縫合法で正しいのはどれか。", "opts": ["糸の周囲に炎症が及ぶときは早めに抜糸する。", "女結びは男結びより緩みにくい。", "体幹部は顔面より抜糸時期が早い。", "人工血管吻合に吸収性縫合糸を用いる。"], "ans": 0, "essential": false}, {"q": "脊髄くも膜下麻酔で正しいのはどれか。", "opts": ["脳脊髄液が漏れると頭痛が起こる。", "多くは胸椎で穿刺する。", "上腹部の手術で使用する。", "サドルブロックは側臥位で行う。"], "ans": 0, "essential": false}, {"q": "心肺蘇生で誤っている組合せはどれか。", "opts": ["心臓マッサージの部位 　-　胸骨の上半分", "ハイムリック法 　　　　-　異物除去法", "ＡＥＤ 　　　　　　　　-　自動体外式除細動器", "蘇生着手 　　　　　　　-　胸骨圧迫"], "ans": 0, "essential": false}, {"q": "頭部打撲で救急搬入時、随意運動なく四肢伸展を認めた。GLasgow Coma Scale(GCS)のうち運動機能の判定で正しいのはどれか。", "opts": ["Ｍ２", "Ｍ１", "Ｍ３", "Ｍ４"], "ans": 0, "essential": false}, {"q": "高所からの転落による右第５〜８肋骨の連続多発骨折で奇異呼吸を認める。誤っているのはどれか。", "opts": ["骨折部胸壁は吸気時に膨隆する。", "縦隔は吸気･呼気で左右に動揺する。", "人工呼吸の陽圧換気が有効である。", "弾性包帯固定で胸郭を補強する。"], "ans": 0, "essential": false}, {"q": "70歳の男性。40km／時で乗用車を運転中、前方からの軽自動車のはみ出し走行により正面衝突し、ハンドルで前胸部を強打した。緊急搬入時、前胸部痛、頻脈、血圧低下を認めた。最も損傷の可能性が高い臓器はどれか。", "opts": ["大動脈", "肺静脈", "横隔膜", "肝　臓"], "ans": 0, "essential": false}, {"q": "循環血液量減少性ショックはどれか。［必］", "opts": ["広範囲熱傷", "心筋梗塞", "緊張性気胸", "アナフィラキシー"], "ans": 0, "essential": false}, {"q": "熱傷で正しいのはどれか。", "opts": ["II 度は水疱を形成しやすい。", "III 度は植皮の適応とならない。", "Ｉ 度は瘢痕を形成する。", "II 度は痛みを感じない。"], "ans": 0, "essential": false}, {"q": "治療で誤っている組合せはどれか。", "opts": ["破傷風  − 抗ウイルス薬", "蜂刺傷  − 抗ヒスタミン薬", "ガス壊疽 − テトラサイクリン", "梅　毒  − ペニシリン"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["犬咬傷  −  一次縫合", "血管縫合  −  外翻縫合", "消化管吻合  −  内翻縫合", "感染創  −  デブリドマン"], "ans": 0, "essential": false}, {"q": "全身麻酔の前投薬の目的で誤っているのはどれか。", "opts": ["感染症の予防", "気道分泌の抑制", "胃内容誤嚥の予防", "不安の除去"], "ans": 0, "essential": false}, {"q": "止血法で誤っているのはどれか。", "opts": ["静脈性出血では中枢側を圧迫する。", "緊縛法では一時的に止血帯を緩める。", "鼻出血ではベロックのタンポン法を用いる。", "食道静脈瘤では硬化療法を用いる。"], "ans": 0, "essential": false}, {"q": "意識障害で正しいのはどれか。", "opts": ["傾眠は刺激がなくなると眠ってしまう。", "見当識障害では痛み刺激に反応しない。", "昏睡では呼びかけると覚醒する。", "開眼していれば意識障害はない。"], "ans": 0, "essential": false}, {"q": "脳卒中の初期症状で誤っているのはどれか。", "opts": ["くも膜下出血 − 眼　振", "橋出血 − 呼吸異常", "被殻出血 − 片麻痺", "小脳出血 − 回転性めまい"], "ans": 0, "essential": false}, {"q": "ポビドンヨードの殺菌力を低下させるのはどれか。", "opts": ["蛋白質", "脂　肪", "炭水化物", "アルコール"], "ans": 0, "essential": false}, {"q": "急性拒絶反応の出現時期として正しいのはどれか。", "opts": ["2か月以内", "24時間以内", "1週間以内", "4か月以内"], "ans": 0, "essential": false}, {"q": "補助器具を用いない人工呼吸法の際、息を吹き込む時間で適切なのはどれか。", "opts": ["1　秒", "3　秒", "5　秒", "7　秒"], "ans": 0, "essential": false}, {"q": "悪性腫瘍で誤っているのはどれか。〔必〕", "opts": ["膨張性に発育する。", "発育が速い。", "形態が不正である。", "境界が不明瞭である。"], "ans": 0, "essential": false}, {"q": "機械的損傷はどれか。", "opts": ["気圧による減圧症", "低温による凍傷", "紫外線による熱傷", "電気による電撃傷"], "ans": 0, "essential": false}, {"q": "III度の広範囲熱傷の治療で適切でないのはどれか。", "opts": ["抗菌薬の全身投与", "十分な輸液", "抗潰瘍薬の投与", "血漿膠質浸透圧の補正"], "ans": 0, "essential": false}, {"q": "感染症の治療で正しい組合せはどれか。", "opts": ["皮膚カンジダ症 −  抗真菌薬", "破傷風         −  ペニシリン", "ガス壊疽 　　　− 抗毒素血清（テタノブリン）", "アスペルギルス症 − テトラサイクリン"], "ans": 0, "essential": false}, {"q": "輸血で正しいのはどれか。", "opts": ["凝固因子の補充には新鮮凍結血漿を用いる。", "採血後6日以内のものを新鮮血という。", "保存血輸血は血小板の補給が期待できる。", "循環血液量の維持には血小板輸血を用いる。"], "ans": 0, "essential": false}, {"q": "クロルヘキシジンで殺菌効果が期待できないのはどれか。", "opts": ["Ｂ型肝炎ウィルス", "結核菌", "多剤耐性菌", "グラム陽性球菌"], "ans": 0, "essential": false}, {"q": "縫合で誤っているのはどれか。", "opts": ["汚染創では一次縫合を行う。", "神経縫合では神経鞘を縫合する。", "感染創ではデブリドマンを行う。", "消化管吻合では自動吻合器が使用される。"], "ans": 0, "essential": false}, {"q": "脳死と臓器移植で誤っているのはどれか。", "opts": ["脳死とは脳幹を含む全脳髄の可逆的な機能喪失の状態である。", "急性拒絶反応の時期は移植後2〜3か月以内である。", "心臓移植後の生存率は3年生存率70〜80％である。", "改正臓器移植法では家族の同意を得れば脳死下の臓器摘出が可能である。"], "ans": 0, "essential": false}, {"q": "心肺蘇生で誤っている組合せはどれか。", "opts": ["用手的気道確保 −−−−−−− 上顎挙上法", "気道異物除去 −−−−−−−− 上腹部圧迫法", "胸骨圧迫心臓マッサージ −−− 5cm以上圧迫", "AED(自動体外式除細動器) −− 心室細動"], "ans": 0, "essential": false}, {"q": "頭部外傷と症状の組合せで誤っているのはどれか。", "opts": ["慢性硬膜下血腫 　−  激しい頭痛", "脳しんとう 　　　−  セカンドインパクトシンドローム", "頭蓋底骨折 　　　−  髄液鼻漏", "急性硬膜下血腫 　−  意識障害"], "ans": 0, "essential": false}, {"q": "交通外傷により損傷を受けた臓器と胸腹部CT検査所見の組合せで誤っているのはどれか。", "opts": ["脾 　　−  後腹膜出血", "肺 　　−  気　胸", "肝 　　−  腹腔内出血", "消化管 −  腹腔内遊離ガス像"], "ans": 0, "essential": false}, {"q": "28歳の男性。バイクを運転中に転倒し右側胸部を強打した。意識は清明。右側胸部に著明な疼痛があり、呼吸困難を訴えている。胸部エックス線検査で右第5・6肋骨骨折と右肺完全虚脱がみられた。まず行うべき治療はどれか。", "opts": ["胸腔ドレナージ", "外固定", "開胸手術", "気管内挿管"], "ans": 0, "essential": false}, {"q": "熱傷で誤っているのはどれか。", "opts": ["皮膚損傷の面積によってI〜III度に分類される。", "低温熱傷は難治性である。", "成人の熱傷面積概算には「9の法則」を用いる。", "広範囲熱傷患者のストレス潰瘍をカーリング(Curling) 潰瘍という。"], "ans": 0, "essential": false}, {"q": "外科的感染で誤っている組合せはどれか。", "opts": ["IVHカテーテル感染−−−−−−アスペルギルス", "丹　毒−−−−−−−−−−−−−−−−−A群溶連菌", "ガス壊疸−−−−−−−−−−−−−−−ウェルシュ菌", "化膿性骨髄炎−−−−−−−−−−−黄色ブドウ球菌"], "ans": 0, "essential": false}, {"q": "腫瘍で正しい組合せはどれか。", "opts": ["機能性腫瘍−−−−−−−インスリノーマ", "皮膚癌−−−−−−−−−−−腺　癌", "大腸癌−−−−−−−−−−−扁平上皮癌", "卵巣転移−−−−−−−−−シュニッツラー転移"], "ans": 0, "essential": false}, {"q": "血液分布異常性ショックを起こしうるのはどれか。", "opts": ["アナフィラキシー", "熱　傷", "肺塞栓症", "心タンポナーデ"], "ans": 0, "essential": false}, {"q": "輸血で正しいのはどれか。", "opts": ["血漿交換は劇症肝炎に有効である。", "新鮮血輸血では凝固因子の補給ができない。", "保存血輸血では血小板の補給が期待できる。", "血小板輸血は循環血漿量の補充に用いる。"], "ans": 0, "essential": false}, {"q": "消毒と滅菌で誤っているのはどれか。", "opts": ["グルタラールは粘膜に対して刺激性が弱い。", "オートクレーブは高圧蒸気滅菌装置である。", "クロルヘキシジンはMRSAに対して有効である。", "ポビドンヨードは蛋白質の存在下で殺菌力が低下する。"], "ans": 0, "essential": false}, {"q": "手術法で正しいのはどれか。", "opts": ["皮膚切開はランゲル皮膚割線と平行に行う。", "感染創では一次縫合を行う。", "血管吻合は内翻縫合で行う。", "神経縫合はアルベル・ランベール縫合で行う。"], "ans": 0, "essential": false}, {"q": "全身麻酔の導入で正しいのはどれか。", "opts": ["患者の不安を除去し鎮静を図る。", "抗コリン剤投与は気道分泌を促す。", "筋弛緩薬は気管内挿管を困難にする。", "栄養管理のため直前に経口摂取を行う。"], "ans": 0, "essential": false}, {"q": "外出血で誤っているのはどれか。", "opts": ["皮下出血", "鼻出血", "肺結核", "消化性潰瘍"], "ans": 0, "essential": false}, {"q": "腹部外傷で腹腔内遊離ガス像を認めるのはどれか。", "opts": ["消化管穿孔", "肝損傷", "腎損傷", "脾損傷"], "ans": 0, "essential": false}, {"q": "49 歳の男性。3年前に脳ドックで脳動脈瘤を指摘されていた。今朝、突然頭の中が爆発するような激しい頭痛が出現した。考えられるのはどれか。", "opts": ["くも膜下出血", "脳梗塞", "脳内出血", "硬膜外血腫"], "ans": 0, "essential": false}, {"q": "外科的感染症で正しいのはどれか。", "opts": ["挫滅創は切創に比べて感染しやすい。", "ガス壊疽では痛みを伴わない。", "抗菌薬を全身投与すれば感染は生じない。", "破傷風トキソイドの接種歴があれば破傷風に罹患しない。"], "ans": 0, "essential": false}, {"q": "悪性腫瘍の病期分類を構成する因子で誤っているのはどれか。", "opts": ["癌性疼痛の有無", "遠隔転移の有無", "原発腫瘍の広がり", "所属リンパ節転移の有無"], "ans": 0, "essential": false}, {"q": "ショックの原因と病態の組合せで正しいのはどれか。", "opts": ["緊張性気胸 −−−−−−− 閉塞性", "アナフィラキシー −−−− 心原性", "敗血症 −−−−−−−−−循環血液量減少性", "重度下痢 −−−−−−− 血液分布異常性"], "ans": 0, "essential": false}, {"q": "新鮮凍結血漿の適応はどれか。", "opts": ["肝不全", "失　血", "肺水腫", "低栄養"], "ans": 0, "essential": false}, {"q": "消毒あるいは滅菌の説明で誤っているのはどれか。", "opts": ["高圧蒸気は光学機器の滅菌に有用である。", "消毒薬自体が汚染されることがある。", "アルコールは皮膚の消毒に使用できる。", "滅菌はすべての微生物を死滅させることである。"], "ans": 0, "essential": false}, {"q": "根治的手術はどれか。", "opts": ["鼠径ヘルニアに対する修復術", "幽門狭窄に対する胃腸吻合術", "脳圧亢進に対するシャント術", "直腸癌に対する人工肛門造設術"], "ans": 0, "essential": false}, {"q": "全身麻酔前投薬の目的で誤っているのはどれか。", "opts": ["深部静脈血栓予防", "不安除去", "気道分泌抑制", "胃内容誤嚥予防"], "ans": 0, "essential": false}, {"q": "移植で使用されない臓器はどれか。", "opts": ["副　腎", "小　腸", "腎　臓", "肝　臓"], "ans": 0, "essential": false}, {"q": "ジャパン・コーマスケールIII-100の状態で正しいのはどれか。", "opts": ["痛み刺激に対し払いのける動作をする。", "見当識障害がある。", "普通の呼びかけで容易に開眼する。", "痛み刺激に反応しない。"], "ans": 0, "essential": false}, {"q": "胸腔ドレナージを直ちに必要とするのはどれか。", "opts": ["緊張性気胸", "膿　胸", "縦隔気腫", "肋骨骨折"], "ans": 0, "essential": false}, {"q": "23歳の男性。バイクを運転中に転倒し、救急車にて搬入された。ＣＴ検査で後腹膜腔に多量の血腫を認めた。 損傷を受けている臓器はどれか。", "opts": ["膵　臓", "小　腸", "肝　臓", "脾　臓"], "ans": 0, "essential": false}, {"q": "広範囲熱傷の処置で誤っているのはどれか。", "opts": ["抗菌薬の全身投与", "無菌的な操作", "壊死組織の切除", "植皮による創閉鎖"], "ans": 0, "essential": false}, {"q": "急性炎症の症状で誤っているのはどれか。", "opts": ["冷　感", "発　赤", "腫　脹", "疼　痛"], "ans": 0, "essential": false}, {"q": "蜂窩織炎で正しいのはどれか。", "opts": ["びまん性化膿性炎症である。", "発赤を伴わない。", "真菌感染が多い。", "切開排膿が基本となる。"], "ans": 0, "essential": false}, {"q": "腫瘍診断の検査の組合せで正しいのはどれか。", "opts": ["細胞診 　−−−−−− 悪性度判定", "超音波検査 −−−−− 侵襲的検査", "MRI検査 　−−−−− 放射線被曝", "腫瘍マーカー −−−− 早期癌検出"], "ans": 0, "essential": false}, {"q": "輸血する際の指標で誤っているのはどれか。", "opts": ["呼吸数", "血　圧", "尿　量", "中心静脈圧"], "ans": 0, "essential": false}, {"q": "基本的外科手技で誤っているのはどれか。", "opts": ["人工血管吻合に吸収性縫合糸を用いる。", "外科結びは女結びより緩みにくい。", "抜糸の時期は顔面の方が体幹部より早い。", "消化管吻合に自動吻合器が使用されることが多い。"], "ans": 0, "essential": false}, {"q": "組織適合性抗原がすべて同じである2個体間での移植はどれか。", "opts": ["同系移植", "自家移植", "同種移植", "異種移植"], "ans": 0, "essential": false}, {"q": "誤っている組合せはどれか。", "opts": ["下部消化管出血 −−−− タール便", "静脈性出血  　−−−−− 非拍動性", "鼻出血 　　−−−−−− キーゼルバッハ", "血　尿  　−−−−−−− 尿管結石"], "ans": 0, "essential": false}, {"q": "回転性めまい、ふらつき、頭痛を訴えた場合、脳内出血の部位で疑うのはどれか。", "opts": ["小　脳", "被　殻", "視　床", "くも膜下"], "ans": 0, "essential": false}, {"q": "腹部外傷で誤っているのはどれか。", "opts": ["肝損傷で腹腔内フリーエアーがみられる。", "鈍的外傷の多くは交通事故が原因である。", "脾損傷の治療に血管塞栓術がある。", "腹部外傷では多発外傷のことが多い。"], "ans": 0, "essential": false}, {"q": "28歳の男性。バイク走行中に転倒し右側腹部を打撲した。意識清明、自立歩行可能で救急車にて来院した。待っている間に、冷汗が生じ顔面が蒼白となった。下腿浮腫はみられない。収縮期血圧 60 mmHg、脈拍 126/分であった。考えられるのはどれか。", "opts": ["出血性ショック", "心原性ショック", "アナフィラキシーショック", "敗血症性ショック"], "ans": 0, "essential": false}, {"q": "創傷分類と説明の組合せで誤っているのはどれか。", "opts": ["挫　創 ── 鋭利な器具による切開創", "刺　創 ── 鋭利な刃物などによる刺し傷", "擦過傷 ── 擦過による皮膚表面の断続的な剥離", "銃　創 ── 銃弾による傷"], "ans": 0, "essential": false}, {"q": "蜂窩織炎の症状で誤っているのはどれか。", "opts": ["排　膿", "びまん性腫脹", "熱　感", "疼　痛"], "ans": 0, "essential": false}, {"q": "感染症で誤っているのはどれか。", "opts": ["丹毒はウェルシュ菌によるものが多い。", "破傷風では開口障害がみられる。", "肺アスペルギルス症では菌球形成がみられる。", "化膿性骨髄炎は黄色ブドウ球菌によるものが多い。"], "ans": 0, "essential": false}, {"q": "ショックと原因の組合せで正しいのはどれか。", "opts": ["血液分布異常性ショック ─── アナフィラキシー", "循環血液量減少性ショック ── 緊張性気胸", "心原性ショック ─────── 肺塞栓", "閉塞性ショック ─────── 心筋梗塞"], "ans": 0, "essential": false}, {"q": "輸血の副作用で正しいのはどれか。", "opts": ["移植片対宿主反応がある。", "滴下速度と無関係である。", "発疹は出現すると長時間持続する。", "腎不全は不適合輸血直後に起こる。"], "ans": 0, "essential": false}, {"q": "消毒と滅菌で誤っているのはどれか。", "opts": ["グルタラールは粘膜に対して刺激性が弱い。", "クロルヘキシジンは MRSA に対して有効である。", "次亜塩素酸ソーダはウイルスに対する効果が高い。", "ポビドンヨードは蛋白質の存在下で殺菌力が低下する。"], "ans": 0, "essential": false}, {"q": "外出血の部位と症候の組合せで誤っているのはどれか。", "opts": ["小　腸 ─── 吐　血", "気　管 ─── 喀　血", "膀　胱 ─── 血　尿", "子　宮 ─── 性器出血"], "ans": 0, "essential": false}, {"q": "成人に対する胸骨圧迫心臓マッサージのテンポで適切なのはどれか。", "opts": ["100 回/分", "40回/分", "60回/分", "80回/分"], "ans": 0, "essential": false}, {"q": "心原性脳塞栓症の治療に続いて起こり得るのはどれか。", "opts": ["出血性梗塞", "ウイリス動脈輪閉塞症", "脳動静脈奇形", "動脈瘤破裂"], "ans": 0, "essential": false}, {"q": "胸部外傷で正しいのはどれか。", "opts": ["第5〜8肋骨の多発骨折で胸壁動揺を起こしやすい。", "緊張性気胸の治療は酸素療法である。", "内開放性気胸では膿胸を起こしやすい。", "肋骨骨折の好発部位は第1〜3肋骨である。"], "ans": 0, "essential": false}, {"q": "20歳の男性。大学でラグビー部に所属している。練習中、グランドに激しく頭をぶつけて10秒間の意識消失を起こした。1時間後には症状は何もなかった。正しいのはどれか。", "opts": ["セカンドインパクトシンドロームに注意する。", "2度脳しんとうである。", "意識が改善すれば神経学的検査は必要ない。", "翌日の練習を許可する。"], "ans": 0, "essential": false}, {"q": "汚染創の管理で誤っているのはどれか。", "opts": ["消毒薬塗布", "創洗浄", "デブリドマン", "ドレッシング"], "ans": 0, "essential": false}, {"q": "熱傷で誤っているのはどれか。", "opts": ["成人の熱傷面積の概算には「5の法則」を用いる。", "熱傷とは熱による皮膚・粘膜の損傷である。", "熱傷は皮膚損傷の深度によってI〜III度に分類される。", "広範囲熱傷患者のストレス潰瘍をカーリング(Curling)潰瘍という。"], "ans": 0, "essential": false}, {"q": "感染と原因菌の組合せで誤っているのはどれか。", "opts": ["中心静脈カテーテル感染──アスペルギルス", "術後尿路感染───────大腸菌", "術後呼吸器感染──────緑膿菌", "抗菌薬関連腸炎──────ＭＲＳＡ"], "ans": 0, "essential": false}, {"q": "腫瘍に対する非侵襲的な検査はどれか。", "opts": ["超音波検査", "ＣＴ(コンピューター断層撮影検査)", "シンチグラフィ", "ＰＥＴ(陽電子放射断層撮影検査)"], "ans": 0, "essential": false}, {"q": "抗原抗体反応(不適合輸血)の早期症状で誤っているのはどれか。", "opts": ["けいれん", "発　熱", "発　疹", "悪心・嘔吐"], "ans": 0, "essential": false}, {"q": "消毒と滅菌で正しいのはどれか。", "opts": ["微生物によって消毒薬が異なる。", "消毒薬自体が汚染されることはない。", "光学機器の滅菌は高圧蒸気を用いる。", "粘膜の消毒にはアルコールを用いる。"], "ans": 0, "essential": false}, {"q": "麻酔で誤っているのはどれか。", "opts": ["ラリンジアルマスクでは誤嚥性肺炎を予防できる。", "腰椎穿刺後の頭痛は体動で悪化する。", "悪性高熱症では異常高体温が起こる。", "気管支けいれんは気管挿管時に起こりやすい。"], "ans": 0, "essential": false}, {"q": "出血と症状や処置の組合せで正しいのはどれか。", "opts": ["四肢の比較的太い動脈からの出血──緊縛法を用いる。", "鼻出血────────嚥下を促す。", "吐　血────────気管からの出血である。", "静脈性出血──────勢いよく拍動性に噴出する。"], "ans": 0, "essential": false}, {"q": "成人に対する胸骨圧迫心臓マッサージで誤っているのはどれか。", "opts": ["1分間に80回のテンポで行う。", "肘をまっすぐに伸ばして圧迫する。", "胸骨圧迫の深さは5ｃｍ以上で押す。", "胸の真ん中を圧迫する。"], "ans": 0, "essential": false}, {"q": "交通外傷後、緊急ＣＴ検査で後腹膜腔に著明な血腫がみられる場合、考えられる損傷臓器はどれか。", "opts": ["膵　臓", "脾　臓", "肝　臓", "空　腸"], "ans": 0, "essential": false}, {"q": "20歳の男性。高所作業中に転落し腹部を強打して救急搬送された。到着時血圧 68/48mmHg、脈拍数122 拍/分、ＣＴで腹腔内に大量の出血がみられた。 考えられるのはどれか。", "opts": ["循環血液量減少性ショック", "心原性ショック", "血液分布異常性ショック", "閉塞性ショック"], "ans": 0, "essential": false}, {"q": "損傷で誤っているのはどれか。", "opts": ["開放創の洗浄には消毒液を用いる。", "縫合した創は48時間で上皮化される。", "III度熱傷は皮膚全層に及ぶ損傷である。", "熱傷範囲の診断には9の法則が用いられる。"], "ans": 0, "essential": false}, {"q": "全身感染症の原因巣に対する治療で誤っているのはどれか。", "opts": ["留置カテーテルの洗浄", "切　開", "排　膿", "ドレナージ"], "ans": 0, "essential": false}, {"q": "蜂巣炎で正しいのはどれか。", "opts": ["皮下の疎性結合織に好発する。", "真菌感染が多い。", "境界は明瞭である。", "早期に切開排膿する。"], "ans": 0, "essential": false}, {"q": "輸血で誤っているのはどれか。", "opts": ["献血の1回採血量は500mLである。", "交差適合試験では血液と輸血製剤間の抗原抗体反応を調べる。", "循環血液量の3分の1以上を失うと生命の危険がある。", "不適合輸血では発熱、呼吸困難がみられる。"], "ans": 0, "essential": false}, {"q": "消毒と滅菌で誤っているのはどれか。", "opts": ["イソプロパノールは粘膜の消毒に用いる。", "光学レンズはガス滅菌を行う。", "微生物によって消毒薬の適用が異なる。", "オートクレーブは高圧蒸気滅菌装置である。"], "ans": 0, "essential": false}, {"q": "姑息的手術でないのはどれか。", "opts": ["鼠径ヘルニアに対する前方修復術", "直腸癌に対する人工肛門造設術", "幽門狭窄に対する胃腸吻合術", "脳圧亢進に対するシャント術"], "ans": 0, "essential": false}, {"q": "脳死と臓器移植で正しいのはどれか。", "opts": ["脳死とは脳幹を含む全脳の不可逆的な機能喪失の状態である。", "家族の同意があっても脳死下の臓器摘出は不可能である。", "臓器移植の急性拒絶反応の時期は3週以内である。", "心臓移植の1年生存率は70〜80％である。"], "ans": 0, "essential": false}, {"q": "脳死と臓器移植で正しいのはどれか。", "opts": ["家族の同意があれば脳死下の臓器摘出は可能である。", "脳死では脳幹の一部が機能しているため回復の可能性がある状態である。", "臓器移植の急性拒絶反応の時期は3週以内である。", "心臓移植の1年生存率は70〜80％である。"], "ans": 0, "essential": false}, {"q": "急性出血の症状で誤っているのはどれか。", "opts": ["徐　脈", "血圧低下", "全身蒼白", "冷　汗"], "ans": 0, "essential": false}, {"q": "心肺蘇生で誤っているのはどれか。", "opts": ["除細動後は1分間蘇生を休止する。", "意識、呼吸、循環の順で評価する。", "胸骨圧迫部位は左右の乳頭を結ぶ線の真ん中である。", "胸骨圧迫は1分間に100回以上のテンポで行う。"], "ans": 0, "essential": false}, {"q": "非高血圧性脳内出血で正しいのはどれか。", "opts": ["アミロイドアンギオパチー", "被殻出血", "視床出血", "小脳出血"], "ans": 0, "essential": false}, {"q": "16歳の女子。ハチに刺された後に顔面蒼白となり意識消失した。脈拍も触知不可となった。半年前にもハチ刺傷の既往がある。緊急で投与が必要な薬剤はどれか。", "opts": ["アドレナリン", "ドパミン", "ドブタミン", "ニトログリセリン"], "ans": 0, "essential": false},{"q": "機械的損傷はどれか。", "opts": ["気圧による減圧症","低温による凍傷","紫外線による熱傷","電気による電撃傷"], "ans": 0, "essential": false},{"q": "院内感染で正しいのはどれか。", "opts": ["医療従事者が感染した場合も含まれる。","術後呼吸器感染の原因菌は大腸菌が多い。","手術中の感染は含まない。","患者の皮膚に常在する菌による感染は外因性感染と呼ぶ。"], "ans": 0, "essential": false},{"q": "腫瘍の組合せで誤っているのはどれか。", "opts": ["卵巣転移────シュニッツラー(Schnitzler) 転移","扁平上皮癌───皮膚癌","未分化癌────悪性度が高い","機能性腫瘍───褐色細胞腫"], "ans": 0, "essential": false},{"q": "輸血の副作用と症状の組合せで正しいのはどれか。", "opts": ["不適合輸血────血圧低下","空気塞栓─────乏　尿","クエン酸中毒───発　熱","ウイルス感染───けいれん"], "ans": 0, "essential": false},{"q": "手術で正しいのはどれか。", "opts": ["皮膚切開はランゲル皮膚割線と平行して行う。","開腹手術は日帰りで行う。","姑息的手術は完全治癒を目指す手術である。","感染創には一次縫合を行う。"], "ans": 0, "essential": false},{"q": "麻酔で正しいのはどれか。", "opts": ["腰椎穿刺後の頭痛は体動で増悪する。","悪性高熱症ではアルカローシスを起こす。","麻酔による肺炎をメンデルソン(Mendelson)症候群という。","誤嚥性肺炎はラリンジアルマスクで予防できる。"], "ans": 0, "essential": false},{"q": "麻酔で正しいのはどれか。", "opts": ["胃液の誤嚥による肺炎をメンデルソン(Mendelson)症候群という。","腰椎穿刺後の頭痛は体動で軽減する。","悪性高熱症ではアルカローシスを起こす。","誤嚥性肺炎はラリンジアルマスクで予防できる。"], "ans": 0, "essential": false},{"q": "2010年に施行された改正臓器移植法で誤っているのはどれか。", "opts": ["本人の意思がなければ、家族の同意があっても臓器提供は不可となった。","15歳未満での法的脳死判定が可能となった。","虐待から脳死にいたった小児からの移植は禁止された。","親族への優先提供が容認された。"], "ans": 0, "essential": false},{"q": "胸骨圧迫心臓マッサージで正しいのはどれか。", "opts": ["肘はまっすぐに伸ばして圧迫する。","気道確保の後に開始する。","胸骨圧迫部位は左右の乳頭を結ぶ線の左側である。","80回/分のテンポで圧迫する。"], "ans": 0, "essential": false},{"q": "胸骨圧迫心臓マッサージで正しいのはどれか。", "opts": ["胸骨圧迫部位は左右の乳頭を結ぶ線の真ん中である。","肘は十分に曲げて圧迫する。","気道確保の後に開始する。","80回/分のテンポで圧迫する。"], "ans": 0, "essential": false},{"q": "アルコール多飲者に多い頭蓋内出血はどれか。", "opts": ["慢性硬膜下血腫 ","急性硬膜下血腫 ","急性硬膜外血腫 ","外傷性脳内出血 "], "ans": 0, "essential": false},{"q": "脳梗塞で正しいのはどれか。", "opts": ["20〜30％で一過性脳虚血が先行する。","アテローム血栓性脳梗塞は心房細動を合併する。","心原性脳梗塞は階段状に進行する。","ラクナ梗塞は意識障害を伴う。"], "ans": 0, "essential": false},{"q": "18歳の男子。バイクで転倒し左側胸部を強打した。意識は清明。左側胸部に著明な疼痛があり、呼吸困難を訴えている。胸部単純エックス線検査で左第4・5肋骨骨折と左肺完全虚脱がみられた。まず行うべき治療はどれか。", "opts": ["胸腔ドレナージ","外固定","開胸手術","気管内挿管"], "ans": 0, "essential": false}];
+
+let questions = [], current = 0, selected = null, results = [], optMap = [], shuffleOpts = true;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const numVal = parseInt(document.getElementById('selectNum').value);
+  const isRandom = document.getElementById('selectOrder').value === '1';
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  let pool = [...ALL_DATA];
+  if (isRandom) pool = shuffle(pool);
+  questions = numVal === 0 ? pool : pool.slice(0, numVal);
+  current = 0; results = [];
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current];
+  const total = questions.length;
+  document.getElementById('progressBar').style.width = (current / total * 100) + '%';
+  document.getElementById('headerSub').textContent = `${current + 1} / ${total} 問`;
+  document.getElementById('qNum').textContent = `問${current + 1}`;
+  document.getElementById('qText').textContent = q.q;
+  const badge = document.getElementById('qBadge');
+  badge.style.display = q.essential ? 'inline-block' : 'none';
+
+  let indices = [0, 1, 2, 3];
+  if (shuffleOpts) indices = shuffle(indices);
+  optMap = indices;
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  const labels = ['ア', 'イ', 'ウ', 'エ'];
+  indices.forEach((origIdx, dispIdx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[dispIdx]}</span><span class="opt-text">${q.opts[origIdx]}</span>`;
+    btn.onclick = () => selectOption(dispIdx, origIdx, q.ans);
+    grid.appendChild(btn);
+  });
+
+  selected = null;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('btnNext').disabled = true;
+  document.getElementById('btnNext').textContent = current < questions.length - 1 ? '次の問題 →' : '結果を見る';
+}
+
+function selectOption(dispIdx, origIdx, ans) {
+  if (selected !== null) return;
+  selected = origIdx;
+  const btns = document.querySelectorAll('.opt-btn');
+  const isCorrect = origIdx === ans;
+  btns.forEach((btn, i) => {
+    btn.onclick = null;
+    if (optMap[i] === ans) btn.classList.add('correct');
+    if (i === dispIdx && !isCorrect) btn.classList.add('wrong');
+    if (i === dispIdx && isCorrect) btn.classList.add('correct');
+  });
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'ng');
+  fb.innerHTML = isCorrect ? '✅ 正解！' : `❌ 不正解　正解：${questions[current].opts[ans]}`;
+  results.push({ q: questions[current], chosen: origIdx, correct: isCorrect });
+  recordAnswer(questions[current], isCorrect);
+  document.getElementById('btnNext').disabled = false;
+  if (navigator.vibrate) navigator.vibrate(isCorrect ? 30 : [50, 30, 50]);
+}
+
+function nextQuestion() {
+  if (selected === null) return;
+  current++;
+  if (current >= questions.length) { showResult(); } else { showQuestion(); }
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  document.getElementById('progressBar').style.width = '100%';
+  const total = results.length;
+  const correct = results.filter(r => r.correct).length;
+  const score = Math.round(correct / total * 100);
+  saveSession(total, correct, score);
+  setTimeout(refreshWeakBtn, 100);
+  document.getElementById('resultScore').innerHTML = `${score}<span>点</span>`;
+  document.getElementById('resultDetail').textContent = `${total}問中 ${correct}問正解`;
+  document.getElementById('headerSub').textContent = '結果';
+  let emoji = '😢', msg = 'もう少し頑張りましょう！';
+  if (score >= 60) { emoji = '🙂'; msg = '合格ライン到達！'; }
+  if (score >= 80) { emoji = '😊'; msg = 'よくできました！'; }
+  if (score === 100) { emoji = '🎉'; msg = 'Perfect!! おめでとう！'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultMsg').textContent = msg;
+  setTimeout(() => { document.getElementById('scoreBar').style.width = score + '%'; }, 100);
+  const wrongCount = results.filter(r => !r.correct).length;
+  const btnRetry = document.getElementById('btnRetry');
+  btnRetry.style.display = wrongCount > 0 ? 'block' : 'none';
+  btnRetry.textContent = `間違えた${wrongCount}問をやり直す`;
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'review-item ' + (r.correct ? 'correct-item' : 'wrong-item');
+    div.innerHTML = `
+      <div class="review-q">問${i+1}：${r.q.q}</div>
+      <div class="review-ans">
+        ${r.correct
+          ? `<span class="label-correct">✅ 正解：${r.q.opts[r.q.ans]}</span>`
+          : `<span class="label-wrong">❌ あなた：${r.q.opts[r.chosen]}</span>　正解：<span class="label-correct">${r.q.opts[r.q.ans]}</span>`
+        }
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function retryWrong() {
+  const wrongItems = results.filter(r => !r.correct).map(r => r.q);
+  if (wrongItems.length === 0) return;
+  questions = wrongItems; current = 0; results = [];
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function backToStart() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('headerSub').textContent = '第14回〜第33回 国家試験問題';
+}
+
+
+
+// ===== 苦手問題・成績履歴機能 =====
+var SKEY = (document.title || '').replace(/（第\d+回〜第\d+回）/, '').trim();
+var sessionStart = null;
+var weakData = {};
+var historyData = [];
+
+function loadData() {
+  try {
+    var w = localStorage.getItem('wk_' + SKEY);
+    var h = localStorage.getItem('hs_' + SKEY);
+    weakData    = w ? JSON.parse(w) : {};
+    historyData = h ? JSON.parse(h) : [];
+  } catch(e) { weakData = {}; historyData = []; }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('wk_' + SKEY, JSON.stringify(weakData));
+    localStorage.setItem('hs_' + SKEY, JSON.stringify(historyData));
+  } catch(e) {}
+}
+
+function getWeakList() {
+  return ALL_DATA.filter(function(q, i) {
+    var d = weakData[String(i)];
+    if (!d) return false;
+    var t = d.c + d.w;
+    return t >= 2 && (d.c / t) < 0.5;
+  });
+}
+
+function refreshWeakBtn() {
+  var btn = document.getElementById('btnWeak');
+  if (!btn) return;
+  var wl = getWeakList();
+  if (wl.length === 0) {
+    btn.textContent = '⚡ 苦手問題なし（まず通常クイズを解いてください）';
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+  } else {
+    btn.textContent = '⚡ 苦手問題だけ出題する（' + wl.length + '問）';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+  }
+}
+
+function doStartQuiz() {
+  sessionStart = Date.now();
+  startQuiz();
+}
+
+function doStartWeak() {
+  var wl = getWeakList();
+  if (wl.length === 0) { alert('苦手問題がありません。まず通常クイズを解いてください。'); return; }
+  shuffleOpts = document.getElementById('selectShuffle').value === '1';
+  questions = wl;
+  current = 0; results = [];
+  sessionStart = Date.now();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  showQuestion();
+}
+
+function recordAnswer(qObj, isCorrect) {
+  var i = String(ALL_DATA.indexOf(qObj));
+  if (i === '-1') return;
+  if (!weakData[i]) weakData[i] = { c: 0, w: 0 };
+  if (isCorrect) weakData[i].c++; else weakData[i].w++;
+  saveData();
+}
+
+function saveSession(total, correct, score) {
+  var mins = sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart) / 60000)) : 0;
+  var now = new Date();
+  var d = now.getFullYear() + '/' +
+    String(now.getMonth()+1).padStart(2,'0') + '/' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  historyData.unshift({ date: d, score: score, total: total, correct: correct, mins: mins });
+  if (historyData.length > 50) historyData.length = 50;
+  saveData();
+  sessionStart = null;
+}
+
+function openHistory() {
+  loadData();
+  var n  = historyData.length;
+  var tq = historyData.reduce(function(a,b){ return a+b.total; }, 0);
+  var as = n ? Math.round(historyData.reduce(function(a,b){ return a+b.score; }, 0) / n) : 0;
+  var tt = historyData.reduce(function(a,b){ return a+(b.mins||0); }, 0);
+  var wl = getWeakList();
+  document.getElementById('hSessions').textContent   = n;
+  document.getElementById('hQuestions').textContent  = tq;
+  document.getElementById('hAvgScore').textContent   = as + '%';
+  document.getElementById('hTime').textContent       = tt + '分';
+  document.getElementById('hWeakCount').textContent  = wl.length + '問';
+  var list = document.getElementById('hSessionList');
+  list.innerHTML = n === 0
+    ? '<div style="color:#718096;font-size:13px;text-align:center;padding:20px">まだ履歴がありません</div>'
+    : historyData.map(function(h){
+        return '<div class="hist-row"><div>' +
+          '<div style="font-weight:600">' + h.correct + '/' + h.total + '問正解　' + (h.mins||0) + '分</div>' +
+          '<div class="hist-date">' + h.date + '</div></div>' +
+          '<div class="hist-score">' + h.score + '点</div></div>';
+      }).join('');
+  document.getElementById('historyPanel').classList.add('show');
+}
+
+// ===== イベント登録（iOS Safari対応）=====
+window.addEventListener('load', function() {
+  loadData();
+  refreshWeakBtn();
+
+  function tap(id, fn) {
+    var el = typeof id === 'string' ? document.getElementById(id) : id;
+    if (!el) return;
+    el.addEventListener('click', fn);
+    el.addEventListener('touchend', function(e){ e.preventDefault(); fn(); });
+  }
+
+  tap('btnStart',    doStartQuiz);
+  tap('btnWeak',     doStartWeak);
+  tap('btnNext',     nextQuestion);
+  tap('btnRetry',    function(){ sessionStart = Date.now(); retryWrong(); });
+  tap('btnRestart', backToStart);
+  tap('historyBtn',  openHistory);
+  tap('historyClose', function(){ document.getElementById('historyPanel').classList.remove('show'); });
+  tap('btnClear', function(){
+    if (confirm('履歴と苦手データをすべてリセットしますか？')) {
+      weakData = {}; historyData = [];
+      saveData(); openHistory(); refreshWeakBtn();
+    }
+  });
+  var panel = document.getElementById('historyPanel');
+  if (panel) panel.addEventListener('click', function(e){ if(e.target===panel) panel.classList.remove('show'); });
+});
+</script>
+
+<button class="history-btn" id="historyBtn">📊</button>
+<div class="history-panel" id="historyPanel">
+  <div class="history-inner">
+    <div class="history-header">
+      <h2>📊 成績・履歴</h2>
+      <button class="history-close" id="historyClose">✕</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="hSessions">0</div><div class="stat-label">総セッション数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hQuestions">0</div><div class="stat-label">総解答問題数</div></div>
+      <div class="stat-card"><div class="stat-val" id="hAvgScore">0%</div><div class="stat-label">平均正答率</div></div>
+      <div class="stat-card"><div class="stat-val" id="hTime">0分</div><div class="stat-label">総学習時間</div></div>
+    </div>
+    <div class="weak-stat">
+      <div class="weak-count" id="hWeakCount">0問</div>
+      <div style="font-size:13px;color:#e65100;margin-top:4px;">苦手問題数（正答率50%未満・2回以上解いた問題）</div>
+    </div>
+    <div class="hist-section-title">📅 セッション履歴（最新50件）</div>
+    <div id="hSessionList"></div>
+    <button class="btn-clear" id="btnClear">🗑 履歴・苦手データをリセット</button>
+  </div>
+</div>
+</body>
+</html>
