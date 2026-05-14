@@ -306,27 +306,42 @@ QUIZZES.forEach(function(q) {
 });
 
 // メール送信
+var LAUNCHER_URL = 'https://kokushi-quiz.github.io/kokushi-quiz/kokushi_quiz_user.html';
+
 function sendEmail() {
   var to = document.getElementById('emailTo').value.trim();
-  var subject = encodeURIComponent('【国試クイズ】学習リンクをお送りします');
-  var body = '国試クイズの学習リンクをお送りします。\n以下のリンクをタップして学習を開始してください。\n\n';
+  var subject = encodeURIComponent('【国試クイズ】学習アプリのご案内');
+
+  var body =
+    '国試クイズ学習アプリのURLをお送りします。\n' +
+    '下記のURLをタップすると、全科目のクイズが一覧で表示されます。\n\n' +
+    '━━━━━━━━━━━━━━━━━━━━\n' +
+    '▼ 国試クイズ ランチャー\n' +
+    LAUNCHER_URL + '\n' +
+    '━━━━━━━━━━━━━━━━━━━━\n\n' +
+    '【収録科目】\n';
+
   QUIZZES.forEach(function(q) {
-    body += '■ ' + q.name + 'クイズ（' + q.count + '）\n' + q.url + '\n\n';
+    body += '  ' + q.icon + ' ' + q.name + 'クイズ（' + q.count + '）\n';
   });
-  body += '※ iPhone/iPadのSafariで開くと正常に動作します。';
+
+  body +=
+    '\nURLを開くと各科目のボタンが表示され、' +
+    'タップするだけで学習を開始できます。\n\n' +
+    '※ iPhone / iPad は Safari で開いてください。\n' +
+    '※ Android は Chrome で開いてください。';
 
   var mailto = 'mailto:' + to + '?subject=' + subject + '&body=' + encodeURIComponent(body);
   window.location.href = mailto;
 
-  // プレビュー表示
   var preview = document.getElementById('emailPreview');
   preview.classList.add('show');
-  var html = '<strong style="color:#e8eef8">送信内容プレビュー：</strong><br><br>';
-  QUIZZES.forEach(function(q) {
-    html += '■ ' + q.name + 'クイズ（' + q.count + '）<br>';
-    html += '<a class="preview-link" href="' + q.url + '" target="_blank">' + q.url + '</a><br><br>';
-  });
-  preview.innerHTML = html;
+  preview.innerHTML =
+    '<strong style="color:#e8eef8">📧 送信内容プレビュー</strong><br><br>' +
+    '<strong style="color:#f0c040">▼ 使用者用ランチャーURL</strong><br>' +
+    '<a class="preview-link" href="' + LAUNCHER_URL + '" target="_blank">' + LAUNCHER_URL + '</a><br><br>' +
+    '<strong style="color:#6b7fa3">収録科目：</strong><br>' +
+    QUIZZES.map(function(q) { return q.icon + ' ' + q.name + 'クイズ（' + q.count + '）'; }).join('<br>');
 
   showToast('メールアプリを起動しました！');
 }
