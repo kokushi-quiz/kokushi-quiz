@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>国試クイズ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #131929;
+    --border: #1e2d4a;
+    --text: #e8eef8;
+    --text-sub: #6b7fa3;
+    --gold: #f0c040;
+    --gold2: #e8a020;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  body {
+    background-image:
+      radial-gradient(ellipse at 10% 0%, rgba(240,192,64,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 100%, rgba(30,80,180,0.12) 0%, transparent 50%);
+  }
+  .header {
+    text-align: center;
+    padding: 48px 24px 32px;
+  }
+  .header-badge {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(240,192,64,0.3);
+    padding: 5px 16px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    background: rgba(240,192,64,0.05);
+  }
+  .header h1 {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: clamp(28px, 7vw, 48px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #ffffff 0%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+  .header-sub {
+    font-size: 14px;
+    color: var(--text-sub);
+    letter-spacing: 1px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+    padding: 0 20px 48px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .quiz-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 14px 16px;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .quiz-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-color, var(--gold));
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .quiz-card:active { transform: scale(0.96); }
+  .quiz-card:hover {
+    border-color: var(--card-color, var(--gold));
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    transform: translateY(-2px);
+  }
+  .card-icon { font-size: 36px; line-height: 1; }
+  .card-name { font-size: 13px; font-weight: 700; letter-spacing: 0.5px; line-height: 1.3; }
+  .card-count { font-size: 11px; color: var(--text-sub); margin-top: -4px; }
+  .card-arrow { font-size: 12px; color: var(--card-color, var(--gold)); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge">柔道整復師 国家試験</div>
+  <h1>国試クイズ<br>ランチャー</h1>
+  <div class="header-sub">科目をタップして学習スタート</div>
+</div>
+
+<div class="grid" id="quizGrid"></div>
+
+<script>
+const QUIZZES = [
+  { name: '解剖学', icon: '🧬', color: '#4f8ef7', count: '662問', url: 'https://kokushi-quiz.github.io/kokushi-quiz/kaibo-quiz_v3_fixed.html' },
+  { name: '生理学', icon: '🫀', color: '#2dd4a0', count: '555問', url: 'https://kokushi-quiz.github.io/kokushi-quiz/seiri-quiz_v3_fixed.html' },
+  { name: '運動学', icon: '🏃', color: '#f75f5f', count: '216問', url: 'https://kokushi-quiz.github.io/kokushi-quiz/undo-quiz_v3_fixed.html' },
+  { name: '病理学', icon: '🧫', color: '#c05a5a', count: '283問', url: 'https://kokushi-quiz.github.io/kokushi-quiz/byouri-quiz_v3_fixed.html' },
+  { name: '衛生学', icon: '🌍', color: '#0e9ea8', count: '268問', url: 'https://kokushi-quiz.github.io/kokushi-quiz/eisei-quiz_v3_fixed.html' },
+  { name: 'リハ医学', icon: '♿', color: '#d4720a', count: '243問', url: 'https://kokushi-quiz.github.io/kokushi-quiz/riha-quiz_v3_fixed.html' },
+  { name: '一般臨床', icon: '🏥', color: '#7c5ff7', count: '480問', url: 'https://kokushi-quiz.github.io/kokushi-quiz/ichirinsyo-quiz_v3_fixed.html' },
+  { name: '外科学', icon: '🔬', color: '#9b50b0', count: '238問', url: 'https://kokushi-quiz.github.io/kokushi-quiz/geka-quiz_v3_fixed.html' },
+  { name: '整形外科学', icon: '🦴', color: '#2c5f8a', count: '254問', url: 'https://kokushi-quiz.github.io/kokushi-quiz/seikei-quiz_v3_fixed.html' },
+  { name: '柔整理論', icon: '🥋', color: '#8b4513', count: '1432問', url: 'https://kokushi-quiz.github.io/kokushi-quiz/jyusei-quiz_v3_fixed.html' },
+];
+
+// グリッド生成
+const grid = document.getElementById('quizGrid');
+QUIZZES.forEach(function(q) {
+  var a = document.createElement('a');
+  a.href = q.url;
+  a.target = '_blank';
+  a.className = 'quiz-card';
+  a.style.setProperty('--card-color', q.color);
+  a.innerHTML =
+    '<div class="card-icon">' + q.icon + '</div>' +
+    '<div class="card-name">' + q.name + 'クイズ</div>' +
+    '<div class="card-count">' + q.count + '</div>' +
+    '<div class="card-arrow">→ 開く</div>';
+  grid.appendChild(a);
+});
+</script>
+</body>
+</html>
